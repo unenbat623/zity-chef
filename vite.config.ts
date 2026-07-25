@@ -5,6 +5,7 @@ import { defineConfig } from 'vite';
 
 export default defineConfig(() => {
   return {
+    root: './client',
     plugins: [react(), tailwindcss()],
 
     // ── Dev proxy: frontend on :3000 → backend on :3002 ─────────────────
@@ -20,6 +21,8 @@ export default defineConfig(() => {
 
     // ── Code splitting: split vendor chunks to reduce initial load ────────
     build: {
+      outDir: '../dist',
+      emptyOutDir: true,
       rollupOptions: {
         output: {
           manualChunks: {
@@ -34,14 +37,14 @@ export default defineConfig(() => {
 
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve(__dirname, './client/src'),
       },
     },
 
     test: {
       globals: true,
       environment: 'node',
-      include: ['src/**/*.test.{ts,tsx}', 'server/**/*.test.ts'],
+      include: ['src/**/*.test.{ts,tsx}', '../server/**/*.test.ts'],
     },
   };
 });

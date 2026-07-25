@@ -1,7 +1,7 @@
 import express from 'express';
 import { AuthenticatedRequest, authenticateToken } from '../middleware/auth.js';
 import { supabaseAdmin, isSupabaseConfigured } from '../supabase.js';
-import { Ingredient } from '../../src/types.js';
+import { Ingredient } from '../../client/src/types.js';
 
 const router = express.Router();
 router.use(authenticateToken);
