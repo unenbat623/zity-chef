@@ -17,7 +17,11 @@ export async function requestNotificationPermission(): Promise<boolean> {
 }
 
 export function sendExpiryNotification(expiringItems: Ingredient[]) {
-  if (typeof window === 'undefined' || !('Notification' in window) || Notification.permission !== 'granted') {
+  if (
+    typeof window === 'undefined' ||
+    !('Notification' in window) ||
+    Notification.permission !== 'granted'
+  ) {
     return;
   }
 

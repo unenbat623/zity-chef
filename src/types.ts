@@ -8,9 +8,9 @@ export type PaymentMethod = 'qpay' | 'socialpay' | 'card';
 
 export interface NutritionalInfo {
   calories: number; // kcal
-  protein: number;  // g
-  carbs: number;    // g
-  fat: number;      // g
+  protein: number; // g
+  carbs: number; // g
+  fat: number; // g
 }
 
 export interface Ingredient {
@@ -89,4 +89,3 @@ export interface BankApp {
   color: string;
   deepLink: string;
 }
-

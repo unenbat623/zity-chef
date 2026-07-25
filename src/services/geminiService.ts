@@ -16,14 +16,14 @@ async function fetchWithRetry(
       const response = await fetch(url, options);
       if (response.status === 429) {
         // Rate limited — wait longer
-        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+        await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
         continue;
       }
       return response;
     } catch (err) {
       lastError = err as Error;
       if (attempt < retries - 1) {
-        await new Promise(r => setTimeout(r, baseDelayMs * Math.pow(2, attempt)));
+        await new Promise((r) => setTimeout(r, baseDelayMs * Math.pow(2, attempt)));
       }
     }
   }
@@ -40,7 +40,7 @@ export async function getSisterAdvice(
   lang: Language = 'mn'
 ): Promise<string> {
   const inventoryContext = inventory
-    .map(i => `${i.name}: ${formatQuantity(i.quantity, i.unit)}`)
+    .map((i) => `${i.name}: ${formatQuantity(i.quantity, i.unit)}`)
     .join(', ');
 
   const requestKey = `${lang}|${message.slice(0, 50)}|${inventoryContext.slice(0, 100)}`;
@@ -55,7 +55,7 @@ export async function getSisterAdvice(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message, inventoryContext, lang }),
   })
-    .then(async res => {
+    .then(async (res) => {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       return data.text as string;
@@ -89,8 +89,22 @@ export async function parseReceiptImage(
   } catch {
     // Demo fallback for offline / server down
     return [
-      { name: 'Шинэ Сүү 1L', category: '🥛 Сүү, өндөг', quantity: 1, unit: 'л', expiryDays: 4, pricePerUnit: 3900 },
-      { name: 'Үхрийн Гуяны Мах', category: '🥩 Мах', quantity: 800, unit: 'гр', expiryDays: 3, pricePerUnit: 24000 },
+      {
+        name: 'Шинэ Сүү 1L',
+        category: '🥛 Сүү, өндөг',
+        quantity: 1,
+        unit: 'л',
+        expiryDays: 4,
+        pricePerUnit: 3900,
+      },
+      {
+        name: 'Үхрийн Гуяны Мах',
+        category: '🥩 Мах',
+        quantity: 800,
+        unit: 'гр',
+        expiryDays: 3,
+        pricePerUnit: 24000,
+      },
     ];
   }
 }

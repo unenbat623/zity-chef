@@ -20,7 +20,7 @@ export const CalendarView: React.FC = () => {
       unit: 'гр',
       quantity: 500,
       pricePerUnit: 22,
-      totalPrice: 11000
+      totalPrice: 11000,
     });
     addToCart({
       id: 'cart-cheese',
@@ -29,18 +29,19 @@ export const CalendarView: React.FC = () => {
       unit: 'гр',
       quantity: 300,
       pricePerUnit: 35,
-      totalPrice: 10500
+      totalPrice: 10500,
     });
     setActiveTab('store');
   };
 
   return (
     <div className="p-4 sm:p-6 space-y-5">
-
       <header>
         <h2 className="text-2xl font-black text-pestle-text tracking-tight">{t('tabCalendar')}</h2>
         <p className="text-xs font-semibold text-gray-400 mt-1">
-          {lang === 'mn' ? '7 хоногийн ухаалаг хоолны төлөвлөгөө ба илчлэг' : '7-Day Smart Meal Plan & Nutrition Tracker'}
+          {lang === 'mn'
+            ? '7 хоногийн ухаалаг хоолны төлөвлөгөө ба илчлэг'
+            : '7-Day Smart Meal Plan & Nutrition Tracker'}
         </p>
       </header>
 
@@ -58,7 +59,9 @@ export const CalendarView: React.FC = () => {
                   : 'bg-pestle-card border border-pestle-border text-gray-400 hover:text-pestle-text'
               }`}
             >
-              <span className="text-[10px] font-extrabold uppercase">{lang === 'mn' ? d.day : d.dayEn}</span>
+              <span className="text-[10px] font-extrabold uppercase">
+                {lang === 'mn' ? d.day : d.dayEn}
+              </span>
               <span className="text-xs font-black mt-1">{d.date.split('.')[1]}</span>
             </button>
           );
@@ -104,16 +107,22 @@ export const CalendarView: React.FC = () => {
             {/* Nutrition Breakdown Grid */}
             <div className="grid grid-cols-4 gap-2 bg-pestle-bg p-3 rounded-xl border border-pestle-border/60 text-center">
               <div>
-                <span className="text-[9px] font-bold text-gray-400 uppercase">{t('calories')}</span>
+                <span className="text-[9px] font-bold text-gray-400 uppercase">
+                  {t('calories')}
+                </span>
                 <p className="text-xs font-black text-mango">{activeRecipe.nutrition.calories}</p>
               </div>
               <div>
                 <span className="text-[9px] font-bold text-gray-400 uppercase">{t('protein')}</span>
-                <p className="text-xs font-black text-pestle-text">{activeRecipe.nutrition.protein}g</p>
+                <p className="text-xs font-black text-pestle-text">
+                  {activeRecipe.nutrition.protein}g
+                </p>
               </div>
               <div>
                 <span className="text-[9px] font-bold text-gray-400 uppercase">{t('carbs')}</span>
-                <p className="text-xs font-black text-pestle-text">{activeRecipe.nutrition.carbs}g</p>
+                <p className="text-xs font-black text-pestle-text">
+                  {activeRecipe.nutrition.carbs}g
+                </p>
               </div>
               <div>
                 <span className="text-[9px] font-bold text-gray-400 uppercase">{t('fat')}</span>

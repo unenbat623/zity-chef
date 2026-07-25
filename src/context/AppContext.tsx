@@ -43,7 +43,7 @@ interface AppContextType {
   closePaymentModal: () => void;
 
   // Translation helper
-  t: (key: keyof typeof translations['mn'], params?: Record<string, string | number>) => string;
+  t: (key: keyof (typeof translations)['mn'], params?: Record<string, string | number>) => string;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -98,19 +98,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('zity_cart', JSON.stringify(cart));
   }, [cart]);
 
-  const toggleDarkMode = () => setIsDark(prev => !prev);
+  const toggleDarkMode = () => setIsDark((prev) => !prev);
 
   const setSubscription = (tier: SubscriptionTier) => {
     setSubscriptionState(tier);
   };
 
   const addToCart = (item: CartItem) => {
-    setCart(prev => {
-      const existing = prev.find(i => i.name === item.name);
+    setCart((prev) => {
+      const existing = prev.find((i) => i.name === item.name);
       if (existing) {
-        return prev.map(i =>
+        return prev.map((i) =>
           i.name === item.name
-            ? { ...i, quantity: i.quantity + item.quantity, totalPrice: (i.quantity + item.quantity) * i.pricePerUnit }
+            ? {
+                ...i,
+                quantity: i.quantity + item.quantity,
+                totalPrice: (i.quantity + item.quantity) * i.pricePerUnit,
+              }
             : i
         );
       }
@@ -119,14 +123,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const removeFromCart = (id: string) => {
-    setCart(prev => prev.filter(i => i.id !== id));
+    setCart((prev) => prev.filter((i) => i.id !== id));
   };
 
   const clearCart = () => setCart([]);
 
   const totalCartAmount = cart.reduce((sum, item) => sum + item.totalPrice, 0);
 
-  const handleCreateOrder = (address: string, paymentMethod: 'qpay' | 'socialpay' | 'card'): Order => {
+  const handleCreateOrder = (
+    address: string,
+    paymentMethod: 'qpay' | 'socialpay' | 'card'
+  ): Order => {
     const newOrder: Order = {
       id: `ZITY-${Math.floor(100000 + Math.random() * 900000)}`,
       items: [...cart],
@@ -134,14 +141,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       status: 'paid',
       paymentMethod,
       createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      address
+      address,
     };
 
     createOrderMutation({
       items: cart,
       totalAmount: totalCartAmount,
       deliveryAddress: address,
-      paymentMethod
+      paymentMethod,
     });
 
     clearCart();
@@ -156,7 +163,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setPaymentModalState(null);
   };
 
-  const t = (key: keyof typeof translations['mn'], params?: Record<string, string | number>): string => {
+  const t = (
+    key: keyof (typeof translations)['mn'],
+    params?: Record<string, string | number>
+  ): string => {
     let str = translations[lang][key] || translations['mn'][key] || key;
     if (params) {
       Object.entries(params).forEach(([k, v]) => {
@@ -197,7 +207,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         paymentModalState,
         triggerPayment,
         closePaymentModal,
-        t
+        t,
       }}
     >
       {children}

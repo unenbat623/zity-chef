@@ -22,7 +22,7 @@ export const ReceiptScannerModal: React.FC = () => {
     reader.onload = async () => {
       const base64 = (reader.result as string).split(',')[1];
       setSelectedImage(reader.result as string);
-      
+
       // Start OCR
       setIsAnalyzing(true);
       const items = await parseReceiptImage(base64, file.type || 'image/jpeg');
@@ -34,14 +34,44 @@ export const ReceiptScannerModal: React.FC = () => {
 
   const handleSimulatePresetSample = async () => {
     // Demo sample receipt image
-    setSelectedImage('https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80');
+    setSelectedImage(
+      'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80'
+    );
     setIsAnalyzing(true);
     setTimeout(() => {
       setDetectedItems([
-        { name: 'Шинэ Сүү 1L', category: '🥛 Сүү, өндөг', quantity: 1, unit: 'л', expiryDays: 4, pricePerUnit: 3900 },
-        { name: 'Үхрийн Гуяны Мах', category: '🥩 Мах', quantity: 800, unit: 'гр', expiryDays: 3, pricePerUnit: 24000 },
-        { name: 'Шинэхэн Банан', category: '🍎 Жимс', quantity: 6, unit: 'ш', expiryDays: 5, pricePerUnit: 8900 },
-        { name: 'Сонгино', category: '🥦 Ногоо', quantity: 500, unit: 'гр', expiryDays: 14, pricePerUnit: 2200 }
+        {
+          name: 'Шинэ Сүү 1L',
+          category: '🥛 Сүү, өндөг',
+          quantity: 1,
+          unit: 'л',
+          expiryDays: 4,
+          pricePerUnit: 3900,
+        },
+        {
+          name: 'Үхрийн Гуяны Мах',
+          category: '🥩 Мах',
+          quantity: 800,
+          unit: 'гр',
+          expiryDays: 3,
+          pricePerUnit: 24000,
+        },
+        {
+          name: 'Шинэхэн Банан',
+          category: '🍎 Жимс',
+          quantity: 6,
+          unit: 'ш',
+          expiryDays: 5,
+          pricePerUnit: 8900,
+        },
+        {
+          name: 'Сонгино',
+          category: '🥦 Ногоо',
+          quantity: 500,
+          unit: 'гр',
+          expiryDays: 14,
+          pricePerUnit: 2200,
+        },
       ]);
       setIsAnalyzing(false);
     }, 1500);
@@ -97,7 +127,9 @@ export const ReceiptScannerModal: React.FC = () => {
               <div className="w-16 h-16 bg-mint/20 text-mint rounded-full flex items-center justify-center mb-4 animate-bounce">
                 <CheckCircle2 size={40} />
               </div>
-              <h3 className="text-xl font-bold text-pestle-text mb-1">Материал амжилттай нэмэгдлээ!</h3>
+              <h3 className="text-xl font-bold text-pestle-text mb-1">
+                Материал амжилттай нэмэгдлээ!
+              </h3>
               <p className="text-xs text-gray-400">Хөргөгчний жагсаалт шинэчлэгдлээ</p>
             </div>
           ) : (
@@ -109,10 +141,19 @@ export const ReceiptScannerModal: React.FC = () => {
                       <Camera size={28} />
                     </div>
                     <div className="text-center">
-                      <span className="text-sm font-bold text-pestle-text block">Зураг эсвэл баримт оруулах</span>
-                      <span className="text-[11px] text-gray-400">PNG, JPG эсвэл Камераар дарах</span>
+                      <span className="text-sm font-bold text-pestle-text block">
+                        Зураг эсвэл баримт оруулах
+                      </span>
+                      <span className="text-[11px] text-gray-400">
+                        PNG, JPG эсвэл Камераар дарах
+                      </span>
                     </div>
-                    <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
                   </label>
 
                   <button
@@ -155,7 +196,9 @@ export const ReceiptScannerModal: React.FC = () => {
                             className="bg-pestle-bg border border-pestle-border p-3 rounded-xl flex justify-between items-center"
                           >
                             <div className="flex items-center gap-3">
-                              <span className="text-xl">{item.category?.split(' ')[0] || '📦'}</span>
+                              <span className="text-xl">
+                                {item.category?.split(' ')[0] || '📦'}
+                              </span>
                               <div>
                                 <h4 className="text-xs font-bold text-pestle-text">{item.name}</h4>
                                 <span className="text-[10px] text-gray-400">

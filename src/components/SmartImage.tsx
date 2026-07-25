@@ -23,9 +23,7 @@ export const SmartImage: React.FC<SmartImageProps> = ({
   className = '',
   fallbackLabel,
 }) => {
-  const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>(
-    src ? 'loading' : 'error'
-  );
+  const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>(src ? 'loading' : 'error');
 
   const handleLoad = useCallback(() => setStatus('loaded'), []);
   const handleError = useCallback(() => setStatus('error'), []);
@@ -88,18 +86,15 @@ export const IngredientImage: React.FC<IngredientImageProps> = ({
   size = 'full',
 }) => {
   if (size === 'full') {
-    return (
-      <SmartImage
-        src={src}
-        alt={name}
-        emoji={emoji}
-        className="w-full h-full rounded-xl"
-      />
-    );
+    return <SmartImage src={src} alt={name} emoji={emoji} className="w-full h-full rounded-xl" />;
   }
 
   const sizeClass =
-    size === 'sm' ? 'w-12 h-12 text-2xl' : size === 'lg' ? 'w-full h-full text-4xl' : 'w-16 h-16 text-3xl';
+    size === 'sm'
+      ? 'w-12 h-12 text-2xl'
+      : size === 'lg'
+        ? 'w-full h-full text-4xl'
+        : 'w-16 h-16 text-3xl';
 
   return (
     <SmartImage

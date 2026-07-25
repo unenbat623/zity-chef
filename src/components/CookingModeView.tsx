@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Flame, Clock, ChevronLeft, ChevronRight, CheckCircle2, Sparkles, Volume2 } from 'lucide-react';
+import {
+  Flame,
+  Clock,
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle2,
+  Sparkles,
+  Volume2,
+} from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Recipe } from '../types';
 
@@ -42,7 +50,6 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
 
   return (
     <div className="p-4 sm:p-6 space-y-5">
-
       {/* Header */}
       <header className="flex justify-between items-center">
         <div>
@@ -86,7 +93,9 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
           {/* Progress Bar */}
           <div className="space-y-2">
             <div className="flex justify-between text-[11px] font-bold text-gray-400">
-              <span>{t('step')} {currentStep + 1} / {steps.length}</span>
+              <span>
+                {t('step')} {currentStep + 1} / {steps.length}
+              </span>
               <span className="text-mango font-black">
                 {Math.round(((currentStep + 1) / steps.length) * 100)}%
               </span>

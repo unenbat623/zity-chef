@@ -12,7 +12,10 @@ interface EditIngredientModalProps {
   onClose: () => void;
 }
 
-export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({ ingredient, onClose }) => {
+export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
+  ingredient,
+  onClose,
+}) => {
   const { updateIngredient, removeIngredient } = useApp();
 
   const [name, setName] = useState<string>(ingredient.name);
@@ -217,7 +220,10 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({ ingred
               <Trash2 size={16} />
               <span>Устгах</span>
             </button>
-            <button type="submit" className="btn-primary flex-1 py-3 text-xs shadow-md shadow-mango/20">
+            <button
+              type="submit"
+              className="btn-primary flex-1 py-3 text-xs shadow-md shadow-mango/20"
+            >
               Өөрчлөлтийг хадгалах
             </button>
           </div>

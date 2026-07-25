@@ -4,7 +4,8 @@ import { X, Sparkles, Check, Crown, Users } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export const SubscriptionModal: React.FC = () => {
-  const { showSubModal, setShowSubModal, subscription, setSubscription, triggerPayment, t } = useApp();
+  const { showSubModal, setShowSubModal, subscription, setSubscription, triggerPayment, t } =
+    useApp();
 
   if (!showSubModal) return null;
 
@@ -47,7 +48,9 @@ export const SubscriptionModal: React.FC = () => {
 
           <div className="space-y-4">
             {/* Free Tier */}
-            <div className={`p-5 rounded-2xl border transition-all ${subscription === 'free' ? 'border-mango bg-mango/5' : 'border-pestle-border bg-pestle-bg'}`}>
+            <div
+              className={`p-5 rounded-2xl border transition-all ${subscription === 'free' ? 'border-mango bg-mango/5' : 'border-pestle-border bg-pestle-bg'}`}
+            >
               <div className="flex justify-between items-center mb-2">
                 <h3 className="font-bold text-base text-pestle-text flex items-center gap-2">
                   {t('subFree')}
@@ -70,7 +73,9 @@ export const SubscriptionModal: React.FC = () => {
             </div>
 
             {/* Pro Chef Tier */}
-            <div className={`p-5 rounded-2xl border relative overflow-hidden transition-all ${subscription === 'pro' ? 'border-mango bg-mango/10 shadow-lg' : 'border-amber-400/50 bg-gradient-to-br from-amber-500/5 to-orange-500/10'}`}>
+            <div
+              className={`p-5 rounded-2xl border relative overflow-hidden transition-all ${subscription === 'pro' ? 'border-mango bg-mango/10 shadow-lg' : 'border-amber-400/50 bg-gradient-to-br from-amber-500/5 to-orange-500/10'}`}
+            >
               <div className="absolute top-0 right-0 bg-gradient-to-l from-mango to-amber-500 text-white text-[9px] font-extrabold px-3 py-1 rounded-bl-xl uppercase tracking-wider">
                 Most Popular
               </div>
@@ -116,19 +121,24 @@ export const SubscriptionModal: React.FC = () => {
             </div>
 
             {/* Family Plan Tier */}
-            <div className={`p-5 rounded-2xl border transition-all ${subscription === 'family' ? 'border-teal-500 bg-teal-500/10' : 'border-pestle-border bg-pestle-bg'}`}>
+            <div
+              className={`p-5 rounded-2xl border transition-all ${subscription === 'family' ? 'border-teal-500 bg-teal-500/10' : 'border-pestle-border bg-pestle-bg'}`}
+            >
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 bg-teal-500 text-white rounded-xl flex items-center justify-center shadow-md">
                   <Users size={20} />
                 </div>
                 <div>
                   <h3 className="font-bold text-base text-pestle-text">{t('subFamily')}</h3>
-                  <span className="text-sm font-extrabold text-teal-600 dark:text-teal-400">{t('subPriceFamily')}</span>
+                  <span className="text-sm font-extrabold text-teal-600 dark:text-teal-400">
+                    {t('subPriceFamily')}
+                  </span>
                 </div>
               </div>
 
               <p className="text-xs text-gray-500 mb-4">
-                Гэр бүлийн 5 хүртэл гишүүн хамтран хөргөгчөө удирдаж, худалдан авалтын жагсаалт синк хийнэ.
+                Гэр бүлийн 5 хүртэл гишүүн хамтран хөргөгчөө удирдаж, худалдан авалтын жагсаалт синк
+                хийнэ.
               </p>
 
               {subscription === 'family' ? (

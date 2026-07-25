@@ -42,7 +42,12 @@ app.use(
 
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003'];
+  : [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:3002',
+      'http://localhost:3003',
+    ];
 
 app.use(
   cors({
@@ -185,10 +190,7 @@ app.post('/api/ai/ocr', async (req, res) => {
 
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: [
-        { inlineData: { mimeType, data: base64Image } },
-        { text: prompt },
-      ],
+      contents: [{ inlineData: { mimeType, data: base64Image } }, { text: prompt }],
     });
 
     const raw = (response.text || '[]').replace(/```json|```/g, '').trim();
@@ -197,8 +199,22 @@ app.post('/api/ai/ocr', async (req, res) => {
     return res.json({ items, fromCache: false });
   } catch (err) {
     const fallback = [
-      { name: 'Шинэ Сүү', category: '🥛 Сүү, өндөг', quantity: 1, unit: 'л', expiryDays: 4, pricePerUnit: 3900 },
-      { name: 'Сонгино', category: '🥦 Ногоо', quantity: 3, unit: 'ш', expiryDays: 14, pricePerUnit: 1800 },
+      {
+        name: 'Шинэ Сүү',
+        category: '🥛 Сүү, өндөг',
+        quantity: 1,
+        unit: 'л',
+        expiryDays: 4,
+        pricePerUnit: 3900,
+      },
+      {
+        name: 'Сонгино',
+        category: '🥦 Ногоо',
+        quantity: 3,
+        unit: 'ш',
+        expiryDays: 14,
+        pricePerUnit: 1800,
+      },
     ];
     return res.json({ items: fallback, fromCache: false, fallback: true });
   }
@@ -218,7 +234,7 @@ app.get('/api/health', (_req, res) => {
   const aiStats = aiResponseCache.stats();
   const ocrStats = ocrResultCache.stats();
   const totalSavedCalls = aiStats.totalCacheHits + ocrStats.totalCacheHits;
-  const estimatedSavedUSD = (totalSavedCalls * 300 * 0.5 / 1_000_000).toFixed(4);
+  const estimatedSavedUSD = ((totalSavedCalls * 300 * 0.5) / 1_000_000).toFixed(4);
 
   res.json({
     status: 'ok',
@@ -236,7 +252,9 @@ app.get('/api/health', (_req, res) => {
 
 // ── Start Server ─────────────────────────────────────────────────────────────
 const server = app.listen(PORT, () => {
-  console.log(`🚀 Zity Chef Production Server active on port ${PORT} [ENV: ${IS_PROD ? 'Production' : 'Development'}]`);
+  console.log(
+    `🚀 Zity Chef Production Server active on port ${PORT} [ENV: ${IS_PROD ? 'Production' : 'Development'}]`
+  );
 });
 
 // ── Graceful Shutdown Handlers ───────────────────────────────────────────────

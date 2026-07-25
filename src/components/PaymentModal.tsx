@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, CheckCircle2, QrCode, CreditCard, ExternalLink, ShieldCheck, RefreshCw } from 'lucide-react';
+import {
+  X,
+  CheckCircle2,
+  QrCode,
+  CreditCard,
+  ExternalLink,
+  ShieldCheck,
+  RefreshCw,
+} from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { MOCK_BANK_APPS } from '../constants';
 import { PaymentMethod } from '../types';
@@ -105,8 +113,12 @@ export const PaymentModal: React.FC = () => {
                     <div className="text-2xl font-black text-mango">₮{amount.toLocaleString()}</div>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] text-gray-400 font-medium">{t('timeRemaining')}</span>
-                    <div className="text-xs font-mono font-bold text-red-500">{formatTimer(timeLeft)}</div>
+                    <span className="text-[10px] text-gray-400 font-medium">
+                      {t('timeRemaining')}
+                    </span>
+                    <div className="text-xs font-mono font-bold text-red-500">
+                      {formatTimer(timeLeft)}
+                    </div>
                   </div>
                 </div>
 
@@ -115,7 +127,9 @@ export const PaymentModal: React.FC = () => {
                   <button
                     onClick={() => setMethod('qpay')}
                     className={`flex-1 py-2 rounded-lg transition-all ${
-                      method === 'qpay' ? 'bg-mango text-white shadow-sm' : 'text-gray-400 hover:text-pestle-text'
+                      method === 'qpay'
+                        ? 'bg-mango text-white shadow-sm'
+                        : 'text-gray-400 hover:text-pestle-text'
                     }`}
                   >
                     QPay QR
@@ -123,7 +137,9 @@ export const PaymentModal: React.FC = () => {
                   <button
                     onClick={() => setMethod('socialpay')}
                     className={`flex-1 py-2 rounded-lg transition-all ${
-                      method === 'socialpay' ? 'bg-mango text-white shadow-sm' : 'text-gray-400 hover:text-pestle-text'
+                      method === 'socialpay'
+                        ? 'bg-mango text-white shadow-sm'
+                        : 'text-gray-400 hover:text-pestle-text'
                     }`}
                   >
                     SocialPay
@@ -131,7 +147,9 @@ export const PaymentModal: React.FC = () => {
                   <button
                     onClick={() => setMethod('card')}
                     className={`flex-1 py-2 rounded-lg transition-all ${
-                      method === 'card' ? 'bg-mango text-white shadow-sm' : 'text-gray-400 hover:text-pestle-text'
+                      method === 'card'
+                        ? 'bg-mango text-white shadow-sm'
+                        : 'text-gray-400 hover:text-pestle-text'
                     }`}
                   >
                     Card
@@ -148,7 +166,11 @@ export const PaymentModal: React.FC = () => {
                           <div
                             key={i}
                             className={`rounded-[2px] ${
-                              (i % 2 === 0 && i % 3 === 0) || i === 0 || i === 5 || i === 30 || i === 35
+                              (i % 2 === 0 && i % 3 === 0) ||
+                              i === 0 ||
+                              i === 5 ||
+                              i === 30 ||
+                              i === 35
                                 ? 'bg-slate-900'
                                 : 'bg-transparent'
                             }`}
@@ -185,7 +207,9 @@ export const PaymentModal: React.FC = () => {
                           }`}
                         >
                           <span className="text-lg">{bank.icon}</span>
-                          <span className="text-[10px] font-semibold leading-tight line-clamp-1">{bank.name}</span>
+                          <span className="text-[10px] font-semibold leading-tight line-clamp-1">
+                            {bank.name}
+                          </span>
                         </button>
                       ))}
                     </div>
@@ -197,7 +221,9 @@ export const PaymentModal: React.FC = () => {
                     <div className="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold shadow-md">
                       SP
                     </div>
-                    <h4 className="font-bold text-sm text-pestle-text mb-1">SocialPay-ээр шилжүүлэх</h4>
+                    <h4 className="font-bold text-sm text-pestle-text mb-1">
+                      SocialPay-ээр шилжүүлэх
+                    </h4>
                     <p className="text-xs text-gray-500">
                       Утасны дугаараар шууд холбогдон төлбөр тооцоог хийнэ.
                     </p>
@@ -240,7 +266,9 @@ export const PaymentModal: React.FC = () => {
                   ) : (
                     <>
                       <ShieldCheck size={18} />
-                      <span>{t('confirmPay')} (₮{amount.toLocaleString()})</span>
+                      <span>
+                        {t('confirmPay')} (₮{amount.toLocaleString()})
+                      </span>
                     </>
                   )}
                 </button>

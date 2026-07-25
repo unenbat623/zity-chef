@@ -1,6 +1,17 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Plus, Minus, Scan, Search, Camera, Upload, Image as ImageIcon, Sparkles, CheckCircle2 } from 'lucide-react';
+import {
+  X,
+  Plus,
+  Minus,
+  Scan,
+  Search,
+  Camera,
+  Upload,
+  Image as ImageIcon,
+  Sparkles,
+  CheckCircle2,
+} from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { CATEGORIES, MOCK_INGREDIENTS } from '../constants';
 import { Category, Ingredient } from '../types';
@@ -93,15 +104,15 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
               {isCustomMode
                 ? 'Шинэ материал нэмэх'
                 : selectedIngredient
-                ? 'Хэмжээ тохируулах'
-                : 'Хөргөгчинд материал нэмэх'}
+                  ? 'Хэмжээ тохируулах'
+                  : 'Хөргөгчинд материал нэмэх'}
             </h2>
             <p className="text-xs text-gray-400 font-medium mt-0.5">
               {isCustomMode
                 ? 'Зураг, нэр болон төрлийг оруулна уу'
                 : selectedIngredient
-                ? selectedIngredient.name
-                : 'Жагсаалтаас сонгох эсвэл хайх'}
+                  ? selectedIngredient.name
+                  : 'Жагсаалтаас сонгох эсвэл хайх'}
             </p>
           </div>
           <button
@@ -119,7 +130,10 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
               {/* Search input & Custom button */}
               <div className="flex gap-2">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                  <Search
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                    size={16}
+                  />
                   <input
                     type="text"
                     value={searchQuery}
@@ -184,8 +198,12 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                       className="w-full h-24"
                     />
                     <div className="p-2.5 w-full text-center">
-                      <h4 className="font-bold text-xs text-pestle-text line-clamp-1">{item.name}</h4>
-                      <span className="text-[10px] text-mango font-semibold block mt-0.5">{item.category}</span>
+                      <h4 className="font-bold text-xs text-pestle-text line-clamp-1">
+                        {item.name}
+                      </h4>
+                      <span className="text-[10px] text-mango font-semibold block mt-0.5">
+                        {item.category}
+                      </span>
                     </div>
                   </motion.button>
                 ))}
@@ -214,7 +232,9 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-pestle-text flex items-center justify-between">
                   <span>Материиалын Зураг (Заавал биш)</span>
-                  <span className="text-[10px] text-mango font-medium">Камераар дарах / Файл сонгох</span>
+                  <span className="text-[10px] text-mango font-medium">
+                    Камераар дарах / Файл сонгох
+                  </span>
                 </label>
 
                 <input
@@ -231,7 +251,11 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                 >
                   {customImageBase64 ? (
                     <>
-                      <img src={customImageBase64} alt="Custom Preview" className="w-full h-full object-cover" />
+                      <img
+                        src={customImageBase64}
+                        alt="Custom Preview"
+                        className="w-full h-full object-cover"
+                      />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
                         <Camera size={16} /> Солих
                       </div>
@@ -241,7 +265,9 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                       <div className="w-10 h-10 bg-mango/15 text-mango rounded-full flex items-center justify-center mx-auto mb-1">
                         <Upload size={20} />
                       </div>
-                      <span className="text-xs font-bold text-pestle-text block">Зураг оруулах бол товшино уу</span>
+                      <span className="text-xs font-bold text-pestle-text block">
+                        Зураг оруулах бол товшино уу
+                      </span>
                       <span className="text-[10px] text-gray-400 font-medium block">
                         (Оруулахгүй бол нэрэнд тохирох зураг автоматаар очно)
                       </span>
@@ -279,7 +305,9 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-pestle-text">Хадгалах хугацаа (хоног)</label>
+                  <label className="text-xs font-bold text-pestle-text">
+                    Хадгалах хугацаа (хоног)
+                  </label>
                   <input
                     type="number"
                     min={1}
@@ -343,7 +371,10 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                 >
                   Буцах
                 </button>
-                <button type="submit" className="btn-primary flex-1 py-3 text-xs shadow-md shadow-mango/20">
+                <button
+                  type="submit"
+                  className="btn-primary flex-1 py-3 text-xs shadow-md shadow-mango/20"
+                >
                   Хөргөгчинд нэмэх
                 </button>
               </div>
@@ -355,7 +386,10 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
             <div className="flex flex-col items-center py-4 space-y-5">
               <div className="w-28 h-28 rounded-2xl overflow-hidden shadow-lg border border-pestle-border">
                 <SmartImage
-                  src={selectedIngredient.imageUrl || getIngredientImageUrl(selectedIngredient.name, selectedIngredient.nameEn)}
+                  src={
+                    selectedIngredient.imageUrl ||
+                    getIngredientImageUrl(selectedIngredient.name, selectedIngredient.nameEn)
+                  }
                   alt={selectedIngredient.name}
                   emoji={selectedIngredient.emoji}
                   className="w-full h-full"
@@ -369,7 +403,9 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
               <div className="w-full space-y-3 bg-pestle-bg p-4 rounded-2xl border border-pestle-border">
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-bold text-gray-400">Нэмэх хэмжээ</span>
-                  <span className="text-lg font-black text-mango">{formatQuantity(quantity, unit)}</span>
+                  <span className="text-lg font-black text-mango">
+                    {formatQuantity(quantity, unit)}
+                  </span>
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -398,7 +434,10 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
               </div>
 
               <div className="flex gap-3 w-full pt-2">
-                <button onClick={() => setSelectedIngredient(null)} className="btn-secondary flex-1 py-3 text-xs">
+                <button
+                  onClick={() => setSelectedIngredient(null)}
+                  className="btn-secondary flex-1 py-3 text-xs"
+                >
                   Буцах
                 </button>
                 <button

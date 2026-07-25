@@ -63,5 +63,5 @@ export class LRUCache {
 }
 
 // Singleton instances (shared across all requests)
-export const aiResponseCache = new LRUCache(2000);  // AI chat responses, TTL 10min
-export const ocrResultCache = new LRUCache(500);    // Receipt OCR, TTL 1hr
+export const aiResponseCache = new LRUCache(2000); // AI chat responses, TTL 10min
+export const ocrResultCache = new LRUCache(500); // Receipt OCR, TTL 1hr

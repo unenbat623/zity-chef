@@ -6,7 +6,10 @@ import { MOCK_RECIPES } from '../constants';
 import { Recipe } from '../types';
 import { SmartImage } from './SmartImage';
 
-export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }> = ({ recipe, onClose }) => {
+export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }> = ({
+  recipe,
+  onClose,
+}) => {
   const { lang, subscription, setShowSubModal, setActiveCookingRecipe, setActiveTab, t } = useApp();
 
   const handleStartCooking = () => {
@@ -29,12 +32,7 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
     >
       {/* Cover Image with shimmer loader */}
       <div className="relative h-72">
-        <SmartImage
-          src={recipe.image}
-          alt={recipe.title}
-          emoji="🍽️"
-          className="w-full h-72"
-        />
+        <SmartImage src={recipe.image} alt={recipe.title} emoji="🍽️" className="w-full h-72" />
         <button
           onClick={onClose}
           className="absolute top-6 left-6 w-10 h-10 bg-black/50 backdrop-blur-md text-white rounded-full flex items-center justify-center shadow-lg"
@@ -76,7 +74,9 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
           <div className="flex flex-col items-center gap-1">
             <Utensils size={18} className="text-amber-500" />
             <span className="text-[10px] text-gray-400 font-bold uppercase">Илчлэг</span>
-            <span className="text-xs font-black text-pestle-text">{recipe.nutrition.calories} kcal</span>
+            <span className="text-xs font-black text-pestle-text">
+              {recipe.nutrition.calories} kcal
+            </span>
           </div>
         </div>
 
@@ -103,13 +103,20 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
 
         {/* Ingredients list */}
         <div className="space-y-2">
-          <h3 className="text-xs font-bold text-pestle-text uppercase tracking-wider">Шаардлагатай орцууд</h3>
+          <h3 className="text-xs font-bold text-pestle-text uppercase tracking-wider">
+            Шаардлагатай орцууд
+          </h3>
           <div className="flex flex-wrap gap-2">
-            {(lang === 'mn' ? recipe.ingredients : recipe.ingredientsEn || recipe.ingredients).map((ing, i) => (
-              <span key={i} className="bg-pestle-card border border-pestle-border px-3 py-1.5 rounded-xl text-xs font-bold text-pestle-text">
-                ✓ {ing}
-              </span>
-            ))}
+            {(lang === 'mn' ? recipe.ingredients : recipe.ingredientsEn || recipe.ingredients).map(
+              (ing, i) => (
+                <span
+                  key={i}
+                  className="bg-pestle-card border border-pestle-border px-3 py-1.5 rounded-xl text-xs font-bold text-pestle-text"
+                >
+                  ✓ {ing}
+                </span>
+              )
+            )}
           </div>
         </div>
 
@@ -140,9 +147,10 @@ export const RecipeView: React.FC = () => {
   const [search, setSearch] = useState<string>('');
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
 
-  const filtered = MOCK_RECIPES.filter((r) =>
-    r.title.toLowerCase().includes(search.toLowerCase()) ||
-    r.titleEn?.toLowerCase().includes(search.toLowerCase())
+  const filtered = MOCK_RECIPES.filter(
+    (r) =>
+      r.title.toLowerCase().includes(search.toLowerCase()) ||
+      r.titleEn?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (

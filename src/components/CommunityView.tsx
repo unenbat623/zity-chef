@@ -1,16 +1,63 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, MessageCircle, Send, Plus, X, ChefHat, Image, Sparkles, BookOpen, MessageSquare, Camera, Smile } from 'lucide-react';
+import {
+  Heart,
+  MessageCircle,
+  Send,
+  Plus,
+  X,
+  ChefHat,
+  Image,
+  Sparkles,
+  BookOpen,
+  MessageSquare,
+  Camera,
+  Smile,
+} from 'lucide-react';
 import { SmartImage } from './SmartImage';
 import { MOCK_RECIPES } from '../constants';
 
 // ── Mock Data ─────────────────────────────────────────────────────────────────
 const INITIAL_STORIES = [
-  { id: 'me', name: 'Миний Story', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=me', isOwn: true, seen: false },
-  { id: 's1', name: 'Болд-Эрдэнэ', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bold', seen: false, img: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400&q=75', caption: 'Өнөөдрийн Карбонара 🍝' },
-  { id: 's2', name: 'Сарнай', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarnai', seen: true, img: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&q=75', caption: 'Авокадо тост 🥑' },
-  { id: 's3', name: 'Зоригоо', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Zorigo', seen: false, img: 'https://images.unsplash.com/photo-1551218808-94e220e084d2?w=400&q=75', caption: 'Хонины шөл чанаж байна 🍲' },
-  { id: 's4', name: 'Энхтуяа', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Enkh', seen: true, img: 'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=400&q=75', caption: 'Өглөөний цай ☕' },
+  {
+    id: 'me',
+    name: 'Миний Story',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=me',
+    isOwn: true,
+    seen: false,
+  },
+  {
+    id: 's1',
+    name: 'Болд-Эрдэнэ',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bold',
+    seen: false,
+    img: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400&q=75',
+    caption: 'Өнөөдрийн Карбонара 🍝',
+  },
+  {
+    id: 's2',
+    name: 'Сарнай',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarnai',
+    seen: true,
+    img: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&q=75',
+    caption: 'Авокадо тост 🥑',
+  },
+  {
+    id: 's3',
+    name: 'Зоригоо',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Zorigo',
+    seen: false,
+    img: 'https://images.unsplash.com/photo-1551218808-94e220e084d2?w=400&q=75',
+    caption: 'Хонины шөл чанаж байна 🍲',
+  },
+  {
+    id: 's4',
+    name: 'Энхтуяа',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Enkh',
+    seen: true,
+    img: 'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=400&q=75',
+    caption: 'Өглөөний цай ☕',
+  },
 ];
 
 const INITIAL_POSTS = [
@@ -53,7 +100,10 @@ const INITIAL_POSTS = [
 ];
 
 // ── Story Creator Modal ────────────────────────────────────────────────────────
-const CreateStoryModal: React.FC<{ onClose: () => void; onAddStory: (s: any) => void }> = ({ onClose, onAddStory }) => {
+const CreateStoryModal: React.FC<{ onClose: () => void; onAddStory: (s: any) => void }> = ({
+  onClose,
+  onAddStory,
+}) => {
   const [caption, setCaption] = useState('');
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -82,23 +132,36 @@ const CreateStoryModal: React.FC<{ onClose: () => void; onAddStory: (s: any) => 
 
   return (
     <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black/75 backdrop-blur-md z-[300] flex items-center justify-center p-4"
     >
       <motion.div
-        initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.9, y: 20 }}
         className="w-full max-w-sm bg-pestle-card border border-pestle-border rounded-[28px] p-5 space-y-4 shadow-2xl overflow-hidden"
       >
         <div className="flex justify-between items-center">
           <h3 className="text-sm font-extrabold text-pestle-text flex items-center gap-1.5">
             <Camera size={16} className="text-mango" /> IG Story Оруулах
           </h3>
-          <button onClick={onClose} className="w-8 h-8 rounded-full border border-pestle-border flex items-center justify-center text-gray-400">
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full border border-pestle-border flex items-center justify-center text-gray-400"
+          >
             <X size={16} />
           </button>
         </div>
 
-        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFile}
+        />
         <div
           onClick={() => fileInputRef.current?.click()}
           className="w-full h-52 bg-pestle-bg border-2 border-dashed border-pestle-border rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden relative group"
@@ -123,7 +186,10 @@ const CreateStoryModal: React.FC<{ onClose: () => void; onAddStory: (s: any) => 
           className="w-full bg-pestle-bg border border-pestle-border rounded-xl px-4 py-2.5 text-xs font-medium text-pestle-text focus:outline-none focus:border-mango"
         />
 
-        <button onClick={handlePublish} className="w-full btn-primary py-3 text-xs font-bold shadow-lg shadow-mango/20">
+        <button
+          onClick={handlePublish}
+          className="w-full btn-primary py-3 text-xs font-bold shadow-lg shadow-mango/20"
+        >
           Story Нийтлэх ✨
         </button>
       </motion.div>
@@ -132,7 +198,10 @@ const CreateStoryModal: React.FC<{ onClose: () => void; onAddStory: (s: any) => 
 };
 
 // ── Direct Chat Drawer ─────────────────────────────────────────────────────────
-const DirectChatDrawer: React.FC<{ recipient: { name: string; avatar: string }; onClose: () => void }> = ({ recipient, onClose }) => {
+const DirectChatDrawer: React.FC<{
+  recipient: { name: string; avatar: string };
+  onClose: () => void;
+}> = ({ recipient, onClose }) => {
   const [messages, setMessages] = useState([
     { sender: recipient.name, text: 'Сайн уу! Өнөөдөр ямар хоол хийж байна?', time: '14:20' },
     { sender: 'Би', text: 'Сайн сайн! Zity Chef-ээр амттай паста хийлээ 🍝', time: '14:22' },
@@ -156,24 +225,37 @@ const DirectChatDrawer: React.FC<{ recipient: { name: string; avatar: string }; 
 
   return (
     <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[300] flex justify-end"
     >
       <motion.div
-        initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
+        initial={{ x: '100%' }}
+        animate={{ x: 0 }}
+        exit={{ x: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 220 }}
         className="w-full max-w-md h-full bg-pestle-card border-l border-pestle-border flex flex-col shadow-2xl"
       >
         {/* Chat Header */}
         <div className="p-4 border-b border-pestle-border/60 flex items-center justify-between bg-pestle-bg">
           <div className="flex items-center gap-3">
-            <img src={recipient.avatar} alt={recipient.name} className="w-10 h-10 rounded-xl border border-pestle-border" />
+            <img
+              src={recipient.avatar}
+              alt={recipient.name}
+              className="w-10 h-10 rounded-xl border border-pestle-border"
+            />
             <div>
               <h3 className="font-extrabold text-sm text-pestle-text">{recipient.name}</h3>
-              <span className="text-[10px] text-mint font-bold flex items-center gap-1">● Онлайн байна</span>
+              <span className="text-[10px] text-mint font-bold flex items-center gap-1">
+                ● Онлайн байна
+              </span>
             </div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-full border border-pestle-border flex items-center justify-center text-gray-400 hover:text-pestle-text">
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full border border-pestle-border flex items-center justify-center text-gray-400 hover:text-pestle-text"
+          >
             <X size={16} />
           </button>
         </div>
@@ -186,7 +268,9 @@ const DirectChatDrawer: React.FC<{ recipient: { name: string; avatar: string }; 
               <div key={idx} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                 <div
                   className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-xs font-medium shadow-sm ${
-                    isMe ? 'bg-mango text-white rounded-br-none' : 'bg-pestle-bg border border-pestle-border text-pestle-text rounded-bl-none'
+                    isMe
+                      ? 'bg-mango text-white rounded-br-none'
+                      : 'bg-pestle-bg border border-pestle-border text-pestle-text rounded-bl-none'
                   }`}
                 >
                   {m.text}
@@ -207,7 +291,10 @@ const DirectChatDrawer: React.FC<{ recipient: { name: string; avatar: string }; 
             placeholder="Зурвас бичих..."
             className="flex-1 bg-pestle-card border border-pestle-border rounded-xl px-4 py-2.5 text-xs text-pestle-text focus:outline-none focus:border-mango"
           />
-          <button onClick={handleSend} className="w-10 h-10 bg-mango text-white rounded-xl flex items-center justify-center shadow-md shadow-mango/20">
+          <button
+            onClick={handleSend}
+            className="w-10 h-10 bg-mango text-white rounded-xl flex items-center justify-center shadow-md shadow-mango/20"
+          >
             <Send size={15} />
           </button>
         </div>
@@ -217,17 +304,28 @@ const DirectChatDrawer: React.FC<{ recipient: { name: string; avatar: string }; 
 };
 
 // ── Story Viewer Modal ─────────────────────────────────────────────────────────
-const StoryViewer: React.FC<{ story: typeof INITIAL_STORIES[0]; onClose: () => void; onChat: () => void }> = ({ story, onClose, onChat }) => (
+const StoryViewer: React.FC<{
+  story: (typeof INITIAL_STORIES)[0];
+  onClose: () => void;
+  onChat: () => void;
+}> = ({ story, onClose, onChat }) => (
   <motion.div
-    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
     className="fixed inset-0 bg-black z-[300] flex items-center justify-center"
     onClick={onClose}
   >
-    <div className="w-full max-w-sm h-full max-h-[95vh] relative rounded-2xl overflow-hidden flex flex-col justify-between" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="w-full max-w-sm h-full max-h-[95vh] relative rounded-2xl overflow-hidden flex flex-col justify-between"
+      onClick={(e) => e.stopPropagation()}
+    >
       {story.img ? (
         <img src={story.img} alt="" className="w-full h-full object-cover absolute inset-0" />
       ) : (
-        <div className="w-full h-full bg-gradient-to-br from-mango to-amber-600 flex items-center justify-center text-8xl absolute inset-0">🍳</div>
+        <div className="w-full h-full bg-gradient-to-br from-mango to-amber-600 flex items-center justify-center text-8xl absolute inset-0">
+          🍳
+        </div>
       )}
       <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/70" />
 
@@ -237,7 +335,9 @@ const StoryViewer: React.FC<{ story: typeof INITIAL_STORIES[0]; onClose: () => v
           <img src={story.avatar} className="w-9 h-9 rounded-full border-2 border-white" alt="" />
           <span className="text-white text-xs font-bold drop-shadow">{story.name}</span>
         </div>
-        <button onClick={onClose} className="text-white bg-black/40 rounded-full p-1.5"><X size={18} /></button>
+        <button onClick={onClose} className="text-white bg-black/40 rounded-full p-1.5">
+          <X size={18} />
+        </button>
       </div>
 
       {/* Bottom Bar */}
@@ -264,7 +364,10 @@ const StoryViewer: React.FC<{ story: typeof INITIAL_STORIES[0]; onClose: () => v
 );
 
 // ── Create Post Modal ──────────────────────────────────────────────────────────
-const CreatePostModal: React.FC<{ onClose: () => void; onPost: (p: any) => void }> = ({ onClose, onPost }) => {
+const CreatePostModal: React.FC<{ onClose: () => void; onPost: (p: any) => void }> = ({
+  onClose,
+  onPost,
+}) => {
   const [caption, setCaption] = useState('');
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<any | null>(null);
@@ -287,24 +390,36 @@ const CreatePostModal: React.FC<{ onClose: () => void; onPost: (p: any) => void 
       image: imageBase64 || selectedRecipe?.image || null,
       caption: caption.trim(),
       recipe: selectedRecipe,
-      likes: 0, liked: false, time: 'Яг одоо', comments: [],
+      likes: 0,
+      liked: false,
+      time: 'Яг одоо',
+      comments: [],
     });
     onClose();
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black/65 backdrop-blur-md z-[250] flex items-end sm:items-center justify-center p-0 sm:p-4"
     >
       <motion.div
-        initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 26, stiffness: 220 }}
         className="bg-pestle-card border border-pestle-border w-full max-w-lg rounded-t-[28px] sm:rounded-[28px] p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto"
       >
         <div className="flex justify-between items-center">
           <h2 className="text-base font-extrabold text-pestle-text">Нийтлэл үүсгэх</h2>
-          <button onClick={onClose} className="w-8 h-8 rounded-full border border-pestle-border flex items-center justify-center text-gray-400"><X size={16} /></button>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full border border-pestle-border flex items-center justify-center text-gray-400"
+          >
+            <X size={16} />
+          </button>
         </div>
 
         {/* Tab switcher */}
@@ -315,14 +430,28 @@ const CreatePostModal: React.FC<{ onClose: () => void; onPost: (p: any) => void 
               onClick={() => setTab(t)}
               className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${tab === t ? 'bg-mango text-white shadow-sm' : 'text-gray-400'}`}
             >
-              {t === 'photo' ? <><Image size={13} /> Зураг & Текст</> : <><BookOpen size={13} /> Жор хуваалцах</>}
+              {t === 'photo' ? (
+                <>
+                  <Image size={13} /> Зураг & Текст
+                </>
+              ) : (
+                <>
+                  <BookOpen size={13} /> Жор хуваалцах
+                </>
+              )}
             </button>
           ))}
         </div>
 
         {tab === 'photo' && (
           <>
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageChange}
+            />
             <div
               onClick={() => fileInputRef.current?.click()}
               className="w-full h-40 bg-pestle-bg border-2 border-dashed border-pestle-border rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden hover:border-mango transition-colors group"
@@ -331,7 +460,9 @@ const CreatePostModal: React.FC<{ onClose: () => void; onPost: (p: any) => void 
                 <img src={imageBase64} alt="" className="w-full h-full object-cover" />
               ) : (
                 <div className="text-center space-y-1">
-                  <div className="w-10 h-10 bg-mango/10 text-mango rounded-full flex items-center justify-center mx-auto"><Plus size={20} /></div>
+                  <div className="w-10 h-10 bg-mango/10 text-mango rounded-full flex items-center justify-center mx-auto">
+                    <Plus size={20} />
+                  </div>
                   <span className="text-xs font-bold text-gray-400 block">Зураг нэмэх</span>
                 </div>
               )}
@@ -365,8 +496,13 @@ const CreatePostModal: React.FC<{ onClose: () => void; onPost: (p: any) => void 
         />
 
         <div className="flex gap-3">
-          <button onClick={onClose} className="btn-secondary flex-1 py-2.5 text-xs">Болих</button>
-          <button onClick={handlePost} className="btn-primary flex-1 py-2.5 text-xs shadow-md shadow-mango/20 flex items-center justify-center gap-1.5">
+          <button onClick={onClose} className="btn-secondary flex-1 py-2.5 text-xs">
+            Болих
+          </button>
+          <button
+            onClick={handlePost}
+            className="btn-primary flex-1 py-2.5 text-xs shadow-md shadow-mango/20 flex items-center justify-center gap-1.5"
+          >
             <Send size={13} /> Нийтлэх
           </button>
         </div>
@@ -376,7 +512,12 @@ const CreatePostModal: React.FC<{ onClose: () => void; onPost: (p: any) => void 
 };
 
 // ── Post Card ─────────────────────────────────────────────────────────────────
-const PostCard: React.FC<{ post: any; onLike: () => void; onComment: (text: string) => void; onChat: () => void }> = ({ post, onLike, onComment, onChat }) => {
+const PostCard: React.FC<{
+  post: any;
+  onLike: () => void;
+  onComment: (text: string) => void;
+  onChat: () => void;
+}> = ({ post, onLike, onComment, onChat }) => {
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState('');
 
@@ -388,20 +529,28 @@ const PostCard: React.FC<{ post: any; onLike: () => void; onComment: (text: stri
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
       className="pestle-card overflow-hidden"
     >
       {/* Post Header */}
       <div className="flex items-center gap-3 p-3.5 pb-2">
         <button onClick={onChat} className="flex items-center gap-3 text-left flex-1 min-w-0">
-          <img src={post.user.avatar} className="w-9 h-9 rounded-xl border border-pestle-border" alt="" />
+          <img
+            src={post.user.avatar}
+            className="w-9 h-9 rounded-xl border border-pestle-border"
+            alt=""
+          />
           <div className="flex-1 min-w-0">
             <p className="text-xs font-extrabold text-pestle-text">{post.user.name}</p>
             <p className="text-[10px] text-gray-400 font-medium">{post.time}</p>
           </div>
         </button>
 
-        <button onClick={onChat} className="px-2.5 py-1 rounded-xl bg-pestle-bg border border-pestle-border text-[11px] font-bold text-pestle-text hover:border-mango flex items-center gap-1">
+        <button
+          onClick={onChat}
+          className="px-2.5 py-1 rounded-xl bg-pestle-bg border border-pestle-border text-[11px] font-bold text-pestle-text hover:border-mango flex items-center gap-1"
+        >
           <MessageSquare size={12} className="text-mango" /> Чатлах
         </button>
 
@@ -461,7 +610,9 @@ const PostCard: React.FC<{ post: any; onLike: () => void; onComment: (text: stri
       <AnimatePresence>
         {showComments && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
             className="px-3.5 pb-3 space-y-2 border-t border-pestle-border/40 pt-2"
           >
             {post.comments.map((c: any, i: number) => (
@@ -479,7 +630,10 @@ const PostCard: React.FC<{ post: any; onLike: () => void; onComment: (text: stri
                 placeholder="Сэтгэгдэл бичих..."
                 className="flex-1 bg-pestle-bg border border-pestle-border rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-mango"
               />
-              <button onClick={handleComment} className="bg-mango text-white w-8 h-8 rounded-xl flex items-center justify-center shrink-0">
+              <button
+                onClick={handleComment}
+                className="bg-mango text-white w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+              >
                 <Send size={13} />
               </button>
             </div>
@@ -496,27 +650,31 @@ export const CommunityView: React.FC = () => {
   const [posts, setPosts] = useState(INITIAL_POSTS);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [showCreateStory, setShowCreateStory] = useState(false);
-  const [activeStory, setActiveStory] = useState<typeof INITIAL_STORIES[0] | null>(null);
+  const [activeStory, setActiveStory] = useState<(typeof INITIAL_STORIES)[0] | null>(null);
   const [chatUser, setChatUser] = useState<{ name: string; avatar: string } | null>(null);
 
   const handleLike = (postId: string) => {
-    setPosts(prev => prev.map(p =>
-      p.id === postId ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 } : p
-    ));
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 } : p
+      )
+    );
   };
 
   const handleComment = (postId: string, text: string) => {
-    setPosts(prev => prev.map(p =>
-      p.id === postId ? { ...p, comments: [...p.comments, { user: 'Би', text }] } : p
-    ));
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId ? { ...p, comments: [...p.comments, { user: 'Би', text }] } : p
+      )
+    );
   };
 
   const handleNewPost = (post: any) => {
-    setPosts(prev => [post, ...prev]);
+    setPosts((prev) => [post, ...prev]);
   };
 
   const handleAddStory = (story: any) => {
-    setStories(prev => [story, ...prev]);
+    setStories((prev) => [story, ...prev]);
   };
 
   return (
@@ -524,8 +682,12 @@ export const CommunityView: React.FC = () => {
       {/* Header */}
       <div className="flex items-end justify-between">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-pestle-text tracking-tight">Хамтын орчин</h2>
-          <p className="text-xs text-gray-400 font-semibold mt-0.5">Жор хуваалцаж, бусадтай чатлаарай</p>
+          <h2 className="text-xl sm:text-2xl font-black text-pestle-text tracking-tight">
+            Хамтын орчин
+          </h2>
+          <p className="text-xs text-gray-400 font-semibold mt-0.5">
+            Жор хуваалцаж, бусадтай чатлаарай
+          </p>
         </div>
         <div className="flex gap-2">
           <button
@@ -551,10 +713,12 @@ export const CommunityView: React.FC = () => {
         {stories.map((story) => (
           <button
             key={story.id}
-            onClick={() => story.isOwn ? setShowCreateStory(true) : setActiveStory(story)}
+            onClick={() => (story.isOwn ? setShowCreateStory(true) : setActiveStory(story))}
             className="flex flex-col items-center gap-1.5 shrink-0"
           >
-            <div className={`w-16 h-16 rounded-2xl overflow-hidden border-2 relative ${story.seen ? 'border-pestle-border' : 'border-mango'}`}>
+            <div
+              className={`w-16 h-16 rounded-2xl overflow-hidden border-2 relative ${story.seen ? 'border-pestle-border' : 'border-mango'}`}
+            >
               {story.isOwn ? (
                 <div className="w-full h-full bg-gradient-to-br from-mango/20 to-amber-400/20 flex items-center justify-center">
                   <div className="w-7 h-7 bg-mango rounded-full flex items-center justify-center">
@@ -594,8 +758,12 @@ export const CommunityView: React.FC = () => {
             onChat={() => setChatUser({ name: activeStory.name, avatar: activeStory.avatar })}
           />
         )}
-        {showCreateStory && <CreateStoryModal onClose={() => setShowCreateStory(false)} onAddStory={handleAddStory} />}
-        {showCreatePost && <CreatePostModal onClose={() => setShowCreatePost(false)} onPost={handleNewPost} />}
+        {showCreateStory && (
+          <CreateStoryModal onClose={() => setShowCreateStory(false)} onAddStory={handleAddStory} />
+        )}
+        {showCreatePost && (
+          <CreatePostModal onClose={() => setShowCreatePost(false)} onPost={handleNewPost} />
+        )}
         {chatUser && <DirectChatDrawer recipient={chatUser} onClose={() => setChatUser(null)} />}
       </AnimatePresence>
     </div>

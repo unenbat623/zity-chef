@@ -1,12 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, ShoppingBag, Flame, Send, CheckCircle2, Mic, Droplets, PlusCircle } from 'lucide-react';
+import {
+  Sparkles,
+  ShoppingBag,
+  Flame,
+  Send,
+  CheckCircle2,
+  Mic,
+  Droplets,
+  PlusCircle,
+} from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getSisterAdvice, getServerHealth } from '../services/geminiService';
 import { MOCK_RECIPES } from '../constants';
 
 export const DesktopWidgetPanel: React.FC = () => {
-  const { lang, inventory, cart, totalCartAmount, triggerPayment, createOrder, setActiveCookingRecipe, setActiveTab, t } = useApp();
+  const {
+    lang,
+    inventory,
+    cart,
+    totalCartAmount,
+    triggerPayment,
+    createOrder,
+    setActiveCookingRecipe,
+    setActiveTab,
+    t,
+  } = useApp();
   const [healthData, setHealthData] = useState<any>(null);
   const [inputVal, setInputVal] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
@@ -17,17 +36,17 @@ export const DesktopWidgetPanel: React.FC = () => {
   const [waterGlasses, setWaterGlasses] = useState<number>(4);
 
   const [chatLog, setChatLog] = useState<{ role: 'user' | 'assistant'; text: string }[]>([
-    { role: 'assistant', text: t('aiInitialGreeting') }
+    { role: 'assistant', text: t('aiInitialGreeting') },
   ]);
 
   useEffect(() => {
-    getServerHealth().then(data => setHealthData(data));
+    getServerHealth().then((data) => setHealthData(data));
   }, []);
 
   const handleSendText = async (textToSend: string) => {
     if (!textToSend.trim() || loading) return;
     const msg = textToSend.trim();
-    setChatLog(prev => [...prev, { role: 'user', text: msg }]);
+    setChatLog((prev) => [...prev, { role: 'user', text: msg }]);
     setInputVal('');
     setLoading(true);
 
@@ -37,12 +56,12 @@ export const DesktopWidgetPanel: React.FC = () => {
     if (actionMatch) {
       const recipeId = actionMatch[1];
       const clean = reply.replace(/\[ACTION: .*?\]/, '').trim();
-      setChatLog(prev => [...prev, { role: 'assistant', text: clean }]);
-      const target = MOCK_RECIPES.find(r => r.id === recipeId) || MOCK_RECIPES[0];
+      setChatLog((prev) => [...prev, { role: 'assistant', text: clean }]);
+      const target = MOCK_RECIPES.find((r) => r.id === recipeId) || MOCK_RECIPES[0];
       setActiveCookingRecipe(target);
       setActiveTab('cooking');
     } else {
-      setChatLog(prev => [...prev, { role: 'assistant', text: reply }]);
+      setChatLog((prev) => [...prev, { role: 'assistant', text: reply }]);
     }
     setLoading(false);
   };
@@ -128,8 +147,8 @@ export const DesktopWidgetPanel: React.FC = () => {
           <input
             type="text"
             value={inputVal}
-            onChange={e => setInputVal(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSendText(inputVal)}
+            onChange={(e) => setInputVal(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSendText(inputVal)}
             placeholder={t('placeholderMsg')}
             className="flex-1 bg-pestle-bg border border-pestle-border rounded-xl px-3 py-2 text-xs font-medium focus:outline-none focus:border-mango text-pestle-text"
           />
@@ -162,10 +181,11 @@ export const DesktopWidgetPanel: React.FC = () => {
         {/* Water Tracker */}
         <div className="pt-2 border-t border-pestle-border/60 flex items-center justify-between text-xs">
           <span className="font-bold text-pestle-text flex items-center gap-1">
-            <Droplets size={14} className="text-sky-500" /> Ус уух: <strong className="text-sky-500">{waterGlasses * 250}ml</strong>
+            <Droplets size={14} className="text-sky-500" /> Ус уух:{' '}
+            <strong className="text-sky-500">{waterGlasses * 250}ml</strong>
           </span>
           <button
-            onClick={() => setWaterGlasses(prev => prev + 1)}
+            onClick={() => setWaterGlasses((prev) => prev + 1)}
             className="text-[10px] font-bold bg-sky-500/10 text-sky-500 border border-sky-500/20 px-2 py-0.5 rounded-lg hover:bg-sky-500 hover:text-white transition-colors"
           >
             +250ml
@@ -173,9 +193,15 @@ export const DesktopWidgetPanel: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-3 text-center text-[10px] text-gray-400 font-bold pt-1 border-t border-pestle-border/40">
-          <div>Уураг: <span className="text-pestle-text">42g</span></div>
-          <div>Нүүрс ус: <span className="text-pestle-text">68g</span></div>
-          <div>Өөх тос: <span className="text-pestle-text">18g</span></div>
+          <div>
+            Уураг: <span className="text-pestle-text">42g</span>
+          </div>
+          <div>
+            Нүүрс ус: <span className="text-pestle-text">68g</span>
+          </div>
+          <div>
+            Өөх тос: <span className="text-pestle-text">18g</span>
+          </div>
         </div>
       </div>
 
@@ -186,7 +212,9 @@ export const DesktopWidgetPanel: React.FC = () => {
             <span className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
               <ShoppingBag size={14} className="text-teal-600" /> Сагс ({cart.length})
             </span>
-            <span className="text-xs font-black text-mango">₮{totalCartAmount.toLocaleString()}</span>
+            <span className="text-xs font-black text-mango">
+              ₮{totalCartAmount.toLocaleString()}
+            </span>
           </div>
           <button
             onClick={() => {

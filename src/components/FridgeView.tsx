@@ -41,7 +41,9 @@ export const FridgeView: React.FC = () => {
       {/* Header Banner */}
       <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-pestle-text tracking-tight">{t('fridgeTitle')}</h2>
+          <h2 className="text-xl sm:text-2xl font-black text-pestle-text tracking-tight">
+            {t('fridgeTitle')}
+          </h2>
           <p className="text-xs font-semibold text-gray-400 mt-0.5">
             {t('fridgeSub', { count: inventory.length })}
           </p>
@@ -85,7 +87,9 @@ export const FridgeView: React.FC = () => {
               <AlertTriangle size={20} />
             </div>
             <div>
-              <h4 className="text-xs font-bold">{t('expiringAlert')} ({expiringCount})</h4>
+              <h4 className="text-xs font-bold">
+                {t('expiringAlert')} ({expiringCount})
+              </h4>
               <p className="text-[10px] opacity-80">
                 {filterExpiringOnly ? 'Шүүлт цэвэрлэх' : '3 ба туүнээс бага хоногийн хугацаатай'}
               </p>
@@ -182,7 +186,11 @@ export const FridgeView: React.FC = () => {
               <div className="w-full bg-pestle-bg rounded-full h-1.5 overflow-hidden border border-pestle-border/40">
                 <div
                   className={`h-full rounded-full transition-all duration-500 ${
-                    item.expiryDays <= 2 ? 'bg-red-500' : item.expiryDays <= 5 ? 'bg-amber-400' : 'bg-mint'
+                    item.expiryDays <= 2
+                      ? 'bg-red-500'
+                      : item.expiryDays <= 5
+                        ? 'bg-amber-400'
+                        : 'bg-mint'
                   }`}
                   style={{ width: `${Math.min(100, (item.expiryDays / 14) * 100)}%` }}
                 />

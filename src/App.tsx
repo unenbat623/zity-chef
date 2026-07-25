@@ -39,12 +39,12 @@ const AppContent: React.FC = () => {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
             >
-              {activeTab === 'fridge'     && <FridgeView />}
-              {activeTab === 'calendar'   && <CalendarView />}
-              {activeTab === 'cooking'    && <CookingModeView recipe={activeCookingRecipe} />}
-              {activeTab === 'store'      && <StoreView />}
-              {activeTab === 'recipe'     && <RecipeView />}
-              {activeTab === 'community'  && <CommunityView />}
+              {activeTab === 'fridge' && <FridgeView />}
+              {activeTab === 'calendar' && <CalendarView />}
+              {activeTab === 'cooking' && <CookingModeView recipe={activeCookingRecipe} />}
+              {activeTab === 'store' && <StoreView />}
+              {activeTab === 'recipe' && <RecipeView />}
+              {activeTab === 'community' && <CommunityView />}
             </motion.div>
           </AnimatePresence>
         </main>

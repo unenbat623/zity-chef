@@ -1,6 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Mail, Lock, User, KeyRound, Sparkles, ArrowRight, CheckCircle2, ShieldCheck, LogOut, RefreshCw, Eye, EyeOff } from 'lucide-react';
+import {
+  X,
+  Mail,
+  Lock,
+  User,
+  KeyRound,
+  Sparkles,
+  ArrowRight,
+  CheckCircle2,
+  ShieldCheck,
+  LogOut,
+  RefreshCw,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export interface UserProfile {
@@ -393,9 +407,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <KeyRound size={24} />
                 </div>
                 <div>
-                  <h4 className="text-sm font-extrabold text-pestle-text">6 Оронтой Код Оруулна уу</h4>
+                  <h4 className="text-sm font-extrabold text-pestle-text">
+                    6 Оронтой Код Оруулна уу
+                  </h4>
                   <p className="text-xs text-gray-400 mt-1">
-                    <span className="font-bold text-mango">{email}</span> хаяг руу баталгаажуулах код очив.
+                    <span className="font-bold text-mango">{email}</span> хаяг руу баталгаажуулах
+                    код очив.
                   </p>
                 </div>
 
@@ -419,12 +436,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   disabled={loading}
                   className="w-full btn-primary py-3.5 text-xs font-bold shadow-lg shadow-mango/20"
                 >
-                  {loading ? <RefreshCw size={16} className="animate-spin mx-auto" /> : 'Баталгаажуулах'}
+                  {loading ? (
+                    <RefreshCw size={16} className="animate-spin mx-auto" />
+                  ) : (
+                    'Баталгаажуулах'
+                  )}
                 </button>
 
                 <div className="text-xs text-gray-400 font-medium">
                   {otpTimer > 0 ? (
-                    <span>Дахин илгээх: <strong className="text-mango">{otpTimer}s</strong></span>
+                    <span>
+                      Дахин илгээх: <strong className="text-mango">{otpTimer}s</strong>
+                    </span>
                   ) : (
                     <button
                       onClick={() => setOtpTimer(60)}
@@ -463,7 +486,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   disabled={loading}
                   className="w-full btn-primary py-3.5 text-xs font-bold shadow-lg shadow-mango/20"
                 >
-                  {loading ? <RefreshCw size={16} className="animate-spin mx-auto" /> : 'Код Илгээх'}
+                  {loading ? (
+                    <RefreshCw size={16} className="animate-spin mx-auto" />
+                  ) : (
+                    'Код Илгээх'
+                  )}
                 </button>
 
                 <button

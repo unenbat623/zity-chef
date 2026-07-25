@@ -43,7 +43,7 @@ router.post('/', async (req: AuthenticatedRequest, res) => {
     address: deliveryAddress || 'Улаанбаатар, Сүхбаатар дүүрэг',
     status: 'paid',
     paymentMethod,
-    createdAt: new Date().toLocaleDateString('mn-MN')
+    createdAt: new Date().toLocaleDateString('mn-MN'),
   };
 
   if (isSupabaseConfigured && supabaseAdmin) {
@@ -55,7 +55,7 @@ router.post('/', async (req: AuthenticatedRequest, res) => {
         total_amount: orderRecord.totalAmount,
         delivery_address: orderRecord.address,
         payment_method: orderRecord.paymentMethod,
-        status: 'paid'
+        status: 'paid',
       });
     } catch (err) {
       console.error('[Supabase Order Create Error]', err);

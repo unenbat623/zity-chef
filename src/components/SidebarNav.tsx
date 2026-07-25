@@ -1,6 +1,18 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Refrigerator, Calendar, Flame, Store, BookOpen, Crown, Moon, Sun, Globe, Sparkles, Users } from 'lucide-react';
+import {
+  Refrigerator,
+  Calendar,
+  Flame,
+  Store,
+  BookOpen,
+  Crown,
+  Moon,
+  Sun,
+  Globe,
+  Sparkles,
+  Users,
+} from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export const SidebarNav: React.FC = () => {
@@ -15,19 +27,19 @@ export const SidebarNav: React.FC = () => {
     setShowSubModal,
     cart,
     inventory,
-    t
+    t,
   } = useApp();
 
   const navItems = [
-    { id: 'fridge',    label: t('tabFridge'),   icon: Refrigerator, count: inventory.length },
-    { id: 'calendar',  label: t('tabCalendar'),  icon: Calendar, badge: 'AI' },
-    { id: 'cooking',   label: t('tabCooking'),   icon: Flame },
-    { id: 'store',     label: t('tabStore'),     icon: Store, count: cart.length },
-    { id: 'recipe',    label: t('tabRecipe'),    icon: BookOpen },
-    { id: 'community', label: 'Хамтын орчин',   icon: Users, badge: 'NEW' },
+    { id: 'fridge', label: t('tabFridge'), icon: Refrigerator, count: inventory.length },
+    { id: 'calendar', label: t('tabCalendar'), icon: Calendar, badge: 'AI' },
+    { id: 'cooking', label: t('tabCooking'), icon: Flame },
+    { id: 'store', label: t('tabStore'), icon: Store, count: cart.length },
+    { id: 'recipe', label: t('tabRecipe'), icon: BookOpen },
+    { id: 'community', label: 'Хамтын орчин', icon: Users, badge: 'NEW' },
   ];
 
-  const expiringCount = inventory.filter(i => i.expiryDays <= 3).length;
+  const expiringCount = inventory.filter((i) => i.expiryDays <= 3).length;
 
   return (
     <aside className="hidden md:flex flex-col w-64 lg:w-72 bg-pestle-card border-r border-pestle-border p-6 justify-between shrink-0 h-screen sticky top-0 shadow-sm z-30">
@@ -93,7 +105,9 @@ export const SidebarNav: React.FC = () => {
                 {item.count !== undefined && item.count > 0 && (
                   <span
                     className={`text-[10px] px-2 py-0.5 rounded-full font-extrabold ${
-                      isActive ? 'bg-white/20 text-white' : 'bg-pestle-bg text-mango border border-pestle-border'
+                      isActive
+                        ? 'bg-white/20 text-white'
+                        : 'bg-pestle-bg text-mango border border-pestle-border'
                     }`}
                   >
                     {item.count}
@@ -115,7 +129,9 @@ export const SidebarNav: React.FC = () => {
         {expiringCount > 0 && (
           <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-xl flex items-center justify-between text-red-500 text-xs font-bold">
             <span>⚠️ Муудах дөхсөн</span>
-            <span className="bg-red-500 text-white px-2 py-0.5 rounded-full text-[10px]">{expiringCount}</span>
+            <span className="bg-red-500 text-white px-2 py-0.5 rounded-full text-[10px]">
+              {expiringCount}
+            </span>
           </div>
         )}
 
@@ -134,7 +150,11 @@ export const SidebarNav: React.FC = () => {
             onClick={toggleDarkMode}
             className="w-10 h-10 bg-pestle-bg border border-pestle-border rounded-xl flex items-center justify-center text-pestle-text hover:border-mango transition-colors"
           >
-            {isDark ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} className="text-slate-600" />}
+            {isDark ? (
+              <Sun size={16} className="text-amber-400" />
+            ) : (
+              <Moon size={16} className="text-slate-600" />
+            )}
           </button>
         </div>
       </div>

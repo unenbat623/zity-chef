@@ -10,7 +10,7 @@ export const FloatingAssistant: React.FC = () => {
   const [showBubble, setShowBubble] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; text: string }[]>([
-    { role: 'assistant', text: t('aiInitialGreeting') }
+    { role: 'assistant', text: t('aiInitialGreeting') },
   ]);
   const [inputValue, setInputValue] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -68,7 +68,9 @@ export const FloatingAssistant: React.FC = () => {
                 <X size={10} />
               </button>
               <p className="text-[11px] font-semibold leading-tight text-pestle-text">
-                {lang === 'mn' ? 'Сайн уу дүү минь! Эгч нь туслах уу? ✨' : 'Hello dear! Need help cooking today? ✨'}
+                {lang === 'mn'
+                  ? 'Сайн уу дүү минь! Эгч нь туслах уу? ✨'
+                  : 'Hello dear! Need help cooking today? ✨'}
               </p>
               <div className="absolute -bottom-1 right-4 w-2.5 h-2.5 bg-pestle-card border-r border-b border-pestle-border rotate-45" />
             </motion.div>
@@ -84,7 +86,6 @@ export const FloatingAssistant: React.FC = () => {
           {isOpen ? <X size={22} /> : <MessageCircle size={22} />}
         </motion.button>
       </div>
-
 
       <AnimatePresence>
         {isOpen && (
@@ -103,7 +104,9 @@ export const FloatingAssistant: React.FC = () => {
                 <p className="font-extrabold text-sm flex items-center gap-1.5">
                   {t('assistantName')} <Sparkles size={14} className="text-amber-200" />
                 </p>
-                <p className="text-[10px] text-white/80 font-medium">Gemini 3 Flash • {t('online')}</p>
+                <p className="text-[10px] text-white/80 font-medium">
+                  Gemini 3 Flash • {t('online')}
+                </p>
               </div>
             </div>
 

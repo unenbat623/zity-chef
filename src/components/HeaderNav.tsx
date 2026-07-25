@@ -43,7 +43,9 @@ export const HeaderNav: React.FC = () => {
                 </span>
               )}
             </h1>
-            <p className="text-[10px] sm:text-[11px] text-gray-400 font-medium truncate">Smart AI Culinary Assistant</p>
+            <p className="text-[10px] sm:text-[11px] text-gray-400 font-medium truncate">
+              Smart AI Culinary Assistant
+            </p>
           </div>
         </div>
 
@@ -55,7 +57,11 @@ export const HeaderNav: React.FC = () => {
             title="User Profile"
           >
             {user ? (
-              <img src={user.avatarUrl} alt={user.name} className="w-5 h-5 rounded-full bg-mango/20" />
+              <img
+                src={user.avatarUrl}
+                alt={user.name}
+                className="w-5 h-5 rounded-full bg-mango/20"
+              />
             ) : (
               <User size={15} className="text-mango" />
             )}
@@ -91,7 +97,11 @@ export const HeaderNav: React.FC = () => {
             className="w-8 h-8 sm:w-9 sm:h-9 bg-pestle-card border border-pestle-border rounded-xl flex items-center justify-center text-pestle-text hover:border-mango transition-colors active:scale-95 shrink-0"
             title="Toggle Theme"
           >
-            {isDark ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} className="text-slate-600" />}
+            {isDark ? (
+              <Sun size={16} className="text-amber-400" />
+            ) : (
+              <Moon size={16} className="text-slate-600" />
+            )}
           </button>
         </div>
       </header>

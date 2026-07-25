@@ -8,12 +8,51 @@ router.use(authenticateToken);
 
 // In-memory fallback inventory store for offline / local demo
 const memoryStore = new Map<string, Ingredient[]>([
-  ['guest-user-00000000-0000-0000-0000-000000000000', [
-    { id: '1', name: 'Шинэ Сүү', emoji: '🥛', category: '🥛 Сүү, өндөг', quantity: 1, unit: 'л', expiryDays: 3, pricePerUnit: 3900 },
-    { id: '2', name: 'Үхрийн Мах', emoji: '🥩', category: '🥩 Мах', quantity: 800, unit: 'гр', expiryDays: 5, pricePerUnit: 24000 },
-    { id: '3', name: 'Сонгино', emoji: '🥦', category: '🥦 Ногоо', quantity: 4, unit: 'ш', expiryDays: 12, pricePerUnit: 1800 },
-    { id: '4', name: 'Гурил', emoji: '🌾', category: '🧂 Амтлагч', quantity: 1000, unit: 'гр', expiryDays: 30, pricePerUnit: 2500 }
-  ]]
+  [
+    'guest-user-00000000-0000-0000-0000-000000000000',
+    [
+      {
+        id: '1',
+        name: 'Шинэ Сүү',
+        emoji: '🥛',
+        category: '🥛 Сүү, өндөг',
+        quantity: 1,
+        unit: 'л',
+        expiryDays: 3,
+        pricePerUnit: 3900,
+      },
+      {
+        id: '2',
+        name: 'Үхрийн Мах',
+        emoji: '🥩',
+        category: '🥩 Мах',
+        quantity: 800,
+        unit: 'гр',
+        expiryDays: 5,
+        pricePerUnit: 24000,
+      },
+      {
+        id: '3',
+        name: 'Сонгино',
+        emoji: '🥦',
+        category: '🥦 Ногоо',
+        quantity: 4,
+        unit: 'ш',
+        expiryDays: 12,
+        pricePerUnit: 1800,
+      },
+      {
+        id: '4',
+        name: 'Гурил',
+        emoji: '🌾',
+        category: '🧂 Амтлагч',
+        quantity: 1000,
+        unit: 'гр',
+        expiryDays: 30,
+        pricePerUnit: 2500,
+      },
+    ],
+  ],
 ]);
 
 // ── GET /api/inventory ────────────────────────────────────────────────────────
@@ -72,7 +111,7 @@ router.post('/', async (req: AuthenticatedRequest, res) => {
           category: itemToInsert.category,
           quantity: itemToInsert.quantity,
           unit: itemToInsert.unit,
-          price_per_unit: itemToInsert.pricePerUnit
+          price_per_unit: itemToInsert.pricePerUnit,
         })
         .select()
         .single();
@@ -99,11 +138,7 @@ router.delete('/:id', async (req: AuthenticatedRequest, res) => {
 
   if (isSupabaseConfigured && supabaseAdmin) {
     try {
-      await supabaseAdmin
-        .from('inventory_items')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', userId);
+      await supabaseAdmin.from('inventory_items').delete().eq('id', id).eq('user_id', userId);
     } catch (err) {
       console.error('[Supabase Inventory Delete Error]', err);
     }
@@ -111,7 +146,10 @@ router.delete('/:id', async (req: AuthenticatedRequest, res) => {
 
   // Memory fallback
   const userItems = memoryStore.get(userId) || [];
-  memoryStore.set(userId, userItems.filter(i => i.id !== id));
+  memoryStore.set(
+    userId,
+    userItems.filter((i) => i.id !== id)
+  );
   return res.json({ success: true });
 });
 

@@ -7,11 +7,11 @@ export const BottomNav: React.FC = () => {
   const { activeTab, setActiveTab, cart, t } = useApp();
 
   const tabs = [
-    { id: 'fridge',    icon: Refrigerator, label: t('tabFridge') },
-    { id: 'cooking',   icon: Flame,        label: t('tabCooking') },
-    { id: 'community', icon: Users,        label: 'Нийгэм' },
-    { id: 'store',     icon: Store,        label: t('tabStore'), badge: cart.length > 0 ? cart.length : null },
-    { id: 'recipe',    icon: BookOpen,     label: t('tabRecipe') },
+    { id: 'fridge', icon: Refrigerator, label: t('tabFridge') },
+    { id: 'cooking', icon: Flame, label: t('tabCooking') },
+    { id: 'community', icon: Users, label: 'Нийгэм' },
+    { id: 'store', icon: Store, label: t('tabStore'), badge: cart.length > 0 ? cart.length : null },
+    { id: 'recipe', icon: BookOpen, label: t('tabRecipe') },
   ];
 
   return (
@@ -31,7 +31,9 @@ export const BottomNav: React.FC = () => {
               <Icon
                 size={20}
                 className={`transition-colors ${
-                  isActive ? 'text-mango' : 'text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300'
+                  isActive
+                    ? 'text-mango'
+                    : 'text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300'
                 }`}
               />
               {tab.badge && (
