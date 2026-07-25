@@ -1,16 +1,23 @@
 {
-  "short_name": "Zity Chef",
-  "name": "Zity Chef — Smart AI Cooking & Grocery Ecosystem",
+  "short_name": "Зити Шеф",
+  "name": "Зити Шеф — Ухаалаг AI Тогооч Туслагч",
+  "description": "AI тогооч туслагч, хөргөгчний материал бүртгэл, долоо хоногийн хоолны хуваарь, дэлгүүрийн захиалга хүргэлт.",
+  "lang": "mn",
+  "dir": "ltr",
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF9F1C'/><text y='70' x='50' text-anchor='middle' font-size='60'>🍳</text></svg>",
+      "src": "/favicon.svg",
       "type": "image/svg+xml",
-      "sizes": "any"
+      "sizes": "any",
+      "purpose": "any maskable"
     }
   ],
+  "screenshots": [],
   "start_url": "/",
+  "scope": "/",
   "background_color": "#F8FAFC",
   "theme_color": "#FF9F1C",
   "display": "standalone",
-  "orientation": "portrait"
+  "orientation": "portrait",
+  "categories": ["food", "lifestyle", "productivity"]
 }
