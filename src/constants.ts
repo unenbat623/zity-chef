@@ -1,0 +1,118 @@
+import { Ingredient, Recipe, Category, BankApp } from './types';
+
+export const CATEGORIES: Category[] = ['🥦 Ногоо', '🥩 Мах', '🥛 Сүү, өндөг', '🧂 Амтлагч', '🍎 Жимс'];
+
+export const MOCK_BANK_APPS: BankApp[] = [
+  { id: 'khanbank', name: 'Хаан Банк', icon: '🏦', color: '#005A36', deepLink: 'khanbank://qpay' },
+  { id: 'golomt', name: 'Голомт Банк', icon: '💳', color: '#003366', deepLink: 'golomt://qpay' },
+  { id: 'socialpay', name: 'SocialPay', icon: '📲', color: '#1B80E4', deepLink: 'socialpay://qpay' },
+  { id: 'statebank', name: 'Төрийн Банк', icon: '🏛️', color: '#8B0000', deepLink: 'statebank://qpay' },
+  { id: 'xacbank', name: 'Хас Банк', icon: '⚡', color: '#F37021', deepLink: 'xacbank://qpay' },
+  { id: 'tdbm', name: 'Худалдаа Хөгжлийн Банк', icon: '🌐', color: '#002B49', deepLink: 'tdb://qpay' },
+];
+
+export const MOCK_INGREDIENTS: Ingredient[] = [
+  { id: '1', name: 'Лууван', nameEn: 'Carrot', emoji: '🥕', category: '🥦 Ногоо', quantity: 500, unit: 'гр', expiryDays: 2, pricePerUnit: 2500 },
+  { id: '2', name: 'Үхрийн мах', nameEn: 'Beef Ribeye', emoji: '🥩', category: '🥩 Мах', quantity: 500, unit: 'гр', expiryDays: 3, pricePerUnit: 22000 },
+  { id: '3', name: 'Сүү', nameEn: 'Fresh Milk', emoji: '🥛', category: '🥛 Сүү, өндөг', quantity: 1, unit: 'л', expiryDays: 1, pricePerUnit: 3800 },
+  { id: '4', name: 'Сонгино', nameEn: 'Onion', emoji: '🧅', category: '🥦 Ногоо', quantity: 3, unit: 'ш', expiryDays: 14, pricePerUnit: 1800 },
+  { id: '5', name: 'Өндөг', nameEn: 'Eggs (10 pack)', emoji: '🥚', category: '🥛 Сүү, өндөг', quantity: 10, unit: 'ш', expiryDays: 10, pricePerUnit: 6500 },
+  { id: '6', name: 'Алим', nameEn: 'Fuji Apple', emoji: '🍎', category: '🍎 Жимс', quantity: 6, unit: 'ш', expiryDays: 8, pricePerUnit: 8900 },
+  { id: '7', name: 'Гурил', nameEn: 'Wheat Flour', emoji: '🌾', category: '🧂 Амтлагч', quantity: 1000, unit: 'гр', expiryDays: 60, pricePerUnit: 3200 },
+  { id: '8', name: 'Бяслаг', nameEn: 'Mozzarella Cheese', emoji: '🧀', category: '🥛 Сүү, өндөг', quantity: 300, unit: 'гр', expiryDays: 5, pricePerUnit: 12500 },
+];
+
+export const MOCK_RECIPES: Recipe[] = [
+  {
+    id: 'lasagna',
+    title: 'Лазанья',
+    titleEn: 'Classic Beef Lasagna',
+    image: 'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?auto=format&fit=crop&w=800&q=80',
+    time: '60 мин',
+    difficulty: 'Hard',
+    cuisine: 'Italian',
+    ingredients: ['Үхрийн мах', 'Гурил', 'Сүү', 'Бяслаг'],
+    ingredientsEn: ['Beef', 'Flour', 'Milk', 'Cheese'],
+    nutrition: { calories: 680, protein: 38, carbs: 54, fat: 32 },
+    isPremium: false,
+    steps: [
+      { title: 'Махаа бэлтгэх', titleEn: 'Prepare Beef Sauce', description: 'Махаа сонгино, томаттай хамт зөөлөн гал дээр хуурч соус бэлтгэнэ.', descriptionEn: 'Sauté minced beef with onions and tomato sauce.', image: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=800&q=80', sisterTip: 'Махаа сайн хуурвал амт нь илүү гүн нэвтэрдэг шүү.', sisterTipEn: 'Brown the beef thoroughly for deep flavor.' },
+      { title: 'Давхарлах ба жигнэх', titleEn: 'Layer & Bake', description: 'Гурил, мах, бешамель соус болон бяслагаа дарааллуулан давхарлана.', descriptionEn: 'Layer pasta sheets, meat sauce, béchamel, and cheese.', image: 'https://images.unsplash.com/photo-1546549032-9571cd6b27df?auto=format&fit=crop&w=800&q=80', sisterTip: 'Бяслагаа харамгүй хийж алтан бор болтол нь шараарай.', sisterTipEn: 'Be generous with mozzarella for a golden crust.' }
+    ]
+  },
+  {
+    id: 'carbonara',
+    title: 'Карбонара Паста',
+    titleEn: 'Spaghetti Carbonara',
+    image: 'https://images.unsplash.com/photo-1612874742237-6526221588e3?auto=format&fit=crop&w=800&q=80',
+    time: '20 мин',
+    difficulty: 'Medium',
+    cuisine: 'Italian',
+    ingredients: ['Гурил', 'Өндөг', 'Бяслаг'],
+    ingredientsEn: ['Pasta', 'Eggs', 'Parmesan Cheese'],
+    nutrition: { calories: 520, protein: 24, carbs: 62, fat: 20 },
+    isPremium: false,
+    steps: [
+      { title: 'Гоймон чанах', titleEn: 'Boil Pasta', description: 'Спагетти гоймонгоо давстай буцалсан усанд 9-10 минут чанана.', descriptionEn: 'Cook spaghetti in salted boiling water until al dente.', image: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=800&q=80', sisterTip: 'Гоймон чанасан уснаас аягыг нөөцөлж үлдээгээрэй.', sisterTipEn: 'Save a cup of pasta water to cream up the sauce.' },
+      { title: 'Соус холих', titleEn: 'Create Creamy Sauce', description: 'Өндөгний шар, пармезан бяслагаа холиод халуун гоймон дээрээ сугалан хутгана.', descriptionEn: 'Mix egg yolks and cheese, then toss immediately into warm pasta.', image: 'https://images.unsplash.com/photo-1621996346565-e3d5d6288307?auto=format&fit=crop&w=800&q=80', sisterTip: 'Халуун гоймон дээрээ өндгөө хийхдээ галаас гаргаж хурдан хутгаарай.', sisterTipEn: 'Remove from heat before adding egg mixture so it stays silky.' }
+    ]
+  },
+  {
+    id: 'beef-stroganoff',
+    title: 'Строганоф',
+    titleEn: 'Classic Beef Stroganoff',
+    image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',
+    time: '35 мин',
+    difficulty: 'Medium',
+    cuisine: 'Russian',
+    ingredients: ['Үхрийн мах', 'Сонгино', 'Мөөг'],
+    ingredientsEn: ['Beef Strips', 'Onion', 'Mushrooms'],
+    nutrition: { calories: 590, protein: 42, carbs: 18, fat: 38 },
+    isPremium: false,
+    steps: [
+      { title: 'Махаа хэрчиж хуурах', titleEn: 'Sear Beef Strips', description: 'Үхрийн махаа нарийн урт хэрчин өндөр гал дээр хурдан хуурна.', descriptionEn: 'Slice beef thinly and sear over high heat.', image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80', sisterTip: 'Махаа ширхэгийнх нь дагуу эсрэг хэрчвэл зөөлөн болдог шүү.', sisterTipEn: 'Slice across the grain for extra tenderness.' }
+    ]
+  },
+  {
+    id: 'pad-thai',
+    title: 'Пад Тай',
+    titleEn: 'Authentic Pad Thai',
+    image: 'https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=800&q=80',
+    time: '25 мин',
+    difficulty: 'Medium',
+    cuisine: 'Thai',
+    ingredients: ['Гоймон', 'Сам хорхой', 'Өндөг'],
+    ingredientsEn: ['Rice Noodles', 'Shrimp', 'Eggs'],
+    nutrition: { calories: 450, protein: 26, carbs: 58, fat: 14 },
+    isPremium: true,
+    steps: [
+      { title: 'Будааны гоймон бэлтгэх', titleEn: 'Soak Noodles', description: 'Будааны гоймонгоо бүлээн усанд 15 минут дэвтээнэ.', descriptionEn: 'Soak rice noodles in warm water until pliable.', image: 'https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=800&q=80', sisterTip: 'Лимоны шүүс ба газрын самар нэмж өгвөл Тайланд амт бэлэн болно.', sisterTipEn: 'Finish with fresh lime juice and crushed peanuts.' }
+    ]
+  },
+  {
+    id: 'shakshuka',
+    title: 'Шакшука',
+    titleEn: 'Mediterranean Shakshuka',
+    image: 'https://images.unsplash.com/photo-1590412200988-a436970781fa?auto=format&fit=crop&w=800&q=80',
+    time: '20 мин',
+    difficulty: 'Easy',
+    cuisine: 'Middle Eastern',
+    ingredients: ['Өндөг', 'Улаан лооль', 'Чинжүү'],
+    ingredientsEn: ['Eggs', 'Tomatoes', 'Bell Pepper'],
+    nutrition: { calories: 310, protein: 18, carbs: 16, fat: 19 },
+    isPremium: false,
+    steps: [
+      { title: 'Томат соус бэлтгэх', titleEn: 'Simmer Tomato Sauce', description: 'Сонгино, чинжүү, улаан лоолийг амтлагчийн хамт зөөлөн жигнэнэ.', descriptionEn: 'Simmer chopped tomatoes and peppers with spices.', image: 'https://images.unsplash.com/photo-1590412200988-a436970781fa?auto=format&fit=crop&w=800&q=80', sisterTip: 'Өндгөө дээр нь хагалж тагийг нь таглаж 3-5 минут жигнээрэй.', sisterTipEn: 'Crack eggs on top and cover to poach softly.' }
+    ]
+  }
+];
+
+export const WEEK_DAYS = [
+  { day: 'Дав', dayEn: 'Mon', date: '04.02' },
+  { day: 'Мяг', dayEn: 'Tue', date: '04.03' },
+  { day: 'Лха', dayEn: 'Wed', date: '04.04' },
+  { day: 'Пүр', dayEn: 'Thu', date: '04.05' },
+  { day: 'Баа', dayEn: 'Fri', date: '04.06' },
+  { day: 'Бям', dayEn: 'Sat', date: '04.07' },
+  { day: 'Ням', dayEn: 'Sun', date: '04.08' },
+];

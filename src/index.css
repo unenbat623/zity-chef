@@ -1,0 +1,120 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  --color-mango: #FF9F1C;
+  --color-mint: #2EC4B6;
+  --color-pestle-bg: #F8FAFC;
+  --color-pestle-card: #FFFFFF;
+  --color-pestle-text: #0F172A;
+  --color-pestle-border: #E2E8F0;
+
+  --radius-xl: 18px;
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply font-sans bg-pestle-bg text-pestle-text antialiased overflow-x-hidden text-sm leading-relaxed;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-sans tracking-tight font-extrabold text-pestle-text;
+  }
+}
+
+/* Shimmer loading animation for SmartImage skeleton */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.animate-shimmer {
+  background: linear-gradient(90deg, rgba(226, 232, 240, 0.4) 0%, rgba(255, 255, 255, 0.8) 50%, rgba(226, 232, 240, 0.4) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+.dark .animate-shimmer {
+  background: linear-gradient(90deg, rgba(37, 50, 75, 0.4) 0%, rgba(51, 65, 85, 0.8) 50%, rgba(37, 50, 75, 0.4) 100%);
+  background-size: 200% 100%;
+}
+
+.dark {
+  --color-pestle-bg: #090D16;
+  --color-pestle-card: #131B2E;
+  --color-pestle-text: #F1F5F9;
+  --color-pestle-border: #1E293B;
+}
+
+/* Custom scrollbar for minimalist feel */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+.pestle-card {
+  @apply bg-pestle-card border border-pestle-border/80 rounded-2xl shadow-sm transition-all duration-200;
+  will-change: transform, opacity;
+}
+
+.btn-primary {
+  @apply bg-mango text-white font-bold py-3.5 px-6 rounded-xl active:scale-[0.97] hover:brightness-105 transition-all shadow-md shadow-mango/20 cursor-pointer select-none;
+}
+
+.btn-secondary {
+  @apply bg-pestle-card border border-pestle-border text-pestle-text font-bold py-3.5 px-6 rounded-xl active:scale-[0.97] hover:bg-pestle-bg transition-all cursor-pointer select-none;
+}
+
+/* Hide scrollbar but keep scroll functionality */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* iOS safe area bottom padding for bottom nav */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 14px);
+}
+
+/* Hardware accelerated smooth elements */
+.hardware-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Prevent layout breaking */
+* {
+  max-width: 100%;
+  word-break: break-word;
+}
+
+img, video, canvas, svg {
+  max-width: 100%;
+  height: auto;
+  user-select: none;
+}
