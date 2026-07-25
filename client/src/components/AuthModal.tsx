@@ -14,6 +14,7 @@ import {
   RefreshCw,
   Eye,
   EyeOff,
+  ChefHat,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -194,8 +195,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           {/* Top Decorative Banner */}
           <div className="px-5 pt-4 pb-3 bg-gradient-to-br from-mango/12 via-amber-500/5 to-transparent border-b border-pestle-border/60 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-mango text-white font-black text-lg flex items-center justify-center shadow-md shadow-mango/20">
-                🍳
+              <div className="w-9 h-9 rounded-xl bg-mango text-white flex items-center justify-center shadow-md shadow-mango/20">
+                <ChefHat size={20} strokeWidth={2.5} />
               </div>
               <div>
                 <h3 className="font-extrabold text-sm text-pestle-text">

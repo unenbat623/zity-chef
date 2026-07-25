@@ -12,6 +12,7 @@ import {
   Globe,
   Sparkles,
   Users,
+  ChefHat,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -46,8 +47,8 @@ export const SidebarNav: React.FC = () => {
       {/* Brand Header */}
       <div className="space-y-8">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-mango to-amber-400 flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-mango/30">
-            🍳
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-mango to-amber-400 flex items-center justify-center text-white shadow-lg shadow-mango/30">
+            <ChefHat size={24} strokeWidth={2.5} />
           </div>
           <div>
             <div className="flex items-center gap-1.5">

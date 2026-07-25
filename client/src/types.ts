@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 export type Category = '🥦 Ногоо' | '🥩 Мах' | '🥛 Сүү, өндөг' | '🧂 Амтлагч' | '🍎 Жимс';
 
 export type Language = 'mn' | 'en';
@@ -85,7 +87,8 @@ export type OrderRecord = Order;
 export interface BankApp {
   id: string;
   name: string;
-  icon: string;
+  icon: string; // emoji fallback
+  svgLogo: ReactNode;
   color: string;
   deepLink: string;
 }

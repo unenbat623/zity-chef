@@ -1,4 +1,13 @@
+import React from 'react';
 import { Ingredient, Recipe, Category, BankApp } from './types';
+import {
+  KhanBankLogo,
+  GolomtBankLogo,
+  SocialPayLogo,
+  StateBankLogo,
+  XacBankLogo,
+  TDBLogo,
+} from './components/BankLogos';
 
 export const CATEGORIES: Category[] = [
   '🥦 Ногоо',
@@ -9,12 +18,27 @@ export const CATEGORIES: Category[] = [
 ];
 
 export const MOCK_BANK_APPS: BankApp[] = [
-  { id: 'khanbank', name: 'Хаан Банк', icon: '🏦', color: '#005A36', deepLink: 'khanbank://qpay' },
-  { id: 'golomt', name: 'Голомт Банк', icon: '💳', color: '#003366', deepLink: 'golomt://qpay' },
+  {
+    id: 'khanbank',
+    name: 'Хаан Банк',
+    icon: '🏦',
+    svgLogo: React.createElement(KhanBankLogo),
+    color: '#005A36',
+    deepLink: 'khanbank://qpay',
+  },
+  {
+    id: 'golomt',
+    name: 'Голомт Банк',
+    icon: '💳',
+    svgLogo: React.createElement(GolomtBankLogo),
+    color: '#003366',
+    deepLink: 'golomt://qpay',
+  },
   {
     id: 'socialpay',
     name: 'SocialPay',
     icon: '📲',
+    svgLogo: React.createElement(SocialPayLogo),
     color: '#1B80E4',
     deepLink: 'socialpay://qpay',
   },
@@ -22,14 +46,23 @@ export const MOCK_BANK_APPS: BankApp[] = [
     id: 'statebank',
     name: 'Төрийн Банк',
     icon: '🏛️',
+    svgLogo: React.createElement(StateBankLogo),
     color: '#8B0000',
     deepLink: 'statebank://qpay',
   },
-  { id: 'xacbank', name: 'Хас Банк', icon: '⚡', color: '#F37021', deepLink: 'xacbank://qpay' },
+  {
+    id: 'xacbank',
+    name: 'Хас Банк',
+    icon: '⚡',
+    svgLogo: React.createElement(XacBankLogo),
+    color: '#F37021',
+    deepLink: 'xacbank://qpay',
+  },
   {
     id: 'tdbm',
-    name: 'Худалдаа Хөгжлийн Банк',
+    name: 'ХХБ',
     icon: '🌐',
+    svgLogo: React.createElement(TDBLogo),
     color: '#002B49',
     deepLink: 'tdb://qpay',
   },
@@ -190,7 +223,7 @@ export const MOCK_RECIPES: Recipe[] = [
       {
         title: 'Соус холих',
         titleEn: 'Create Creamy Sauce',
-        description: 'Өндөгний шар, пармезан бяслагаа холиод халуун гоймон дээрээ сугалан хутгана.',
+        description: 'Өндгийн шар, пармезан бяслагаа холиод халуун гоймон дээрээ сугалан хутгана.',
         descriptionEn: 'Mix egg yolks and cheese, then toss immediately into warm pasta.',
         image:
           'https://images.unsplash.com/photo-1621996346565-e3d5d6288307?auto=format&fit=crop&w=800&q=80',

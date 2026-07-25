@@ -203,13 +203,13 @@ export const PaymentModal: React.FC = () => {
                         <button
                           key={bank.id}
                           onClick={() => setSelectedBank(bank.id)}
-                          className={`p-2 rounded-xl border flex flex-col items-center gap-1 text-center transition-all ${
+                          className={`p-2.5 rounded-xl border flex flex-col items-center gap-1.5 text-center transition-all ${
                             selectedBank === bank.id
-                              ? 'border-mango bg-mango/10 font-bold text-mango shadow-sm'
-                              : 'border-pestle-border bg-pestle-bg text-pestle-text hover:border-gray-300'
+                              ? 'border-mango bg-mango/10 font-bold text-mango shadow-sm ring-1 ring-mango/20'
+                              : 'border-pestle-border bg-pestle-bg text-pestle-text hover:border-gray-300 hover:shadow-sm'
                           }`}
                         >
-                          <span className="text-lg">{bank.icon}</span>
+                          <span className="flex-shrink-0">{bank.svgLogo}</span>
                           <span className="text-[10px] font-semibold leading-tight line-clamp-1">
                             {bank.name}
                           </span>
