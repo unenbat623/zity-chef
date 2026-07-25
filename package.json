@@ -1,13 +1,15 @@
 {
-  "name": "react-example",
+  "name": "zity-chef",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "concurrently -k -p '[{name}]' -n 'UI,API' -c 'cyan,yellow' \"vite --port=3000 --host=0.0.0.0\" \"tsx watch server/index.ts\"",
     "dev:ui": "vite --port=3000 --host=0.0.0.0",
     "dev:server": "tsx watch server/index.ts",
     "build": "vite build",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "start": "NODE_ENV=production tsx server/index.ts",
     "preview": "vite preview",
     "clean": "rm -rf dist",
@@ -41,6 +43,7 @@
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
-    "vite": "^6.2.0"
+    "vite": "^6.2.0",
+    "vitest": "^4.1.10"
   }
 }

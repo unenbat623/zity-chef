@@ -80,6 +80,8 @@ export interface Order {
   address: string;
 }
 
+export type OrderRecord = Order;
+
 export interface BankApp {
   id: string;
   name: string;

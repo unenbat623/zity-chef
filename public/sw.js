@@ -6,27 +6,27 @@ const STATIC_ASSETS = [
 ];
 
 // Install: pre-cache static assets
-self.addEventListener('install', (event: any) => {
+self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(STATIC_ASSETS);
-    }).then(() => (self as any).skipWaiting())
+    }).then(() => self.skipWaiting())
   );
 });
 
 // Activate: clean old caches
-self.addEventListener('activate', (event: any) => {
+self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
         keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
       );
-    }).then(() => (self as any).clients.claim())
+    }).then(() => self.clients.claim())
   );
 });
 
 // Fetch: Stale-While-Revalidate strategy for static images & shell
-self.addEventListener('fetch', (event: any) => {
+self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
   // Skip API requests from offline cache (handled by TanStack Query)

@@ -4,8 +4,7 @@ import { Ingredient } from '../types';
  * Web Notification API & Push Reminder Manager
  */
 export async function requestNotificationPermission(): Promise<boolean> {
-  if (!('Notification' in window)) {
-    alert('Таны веб хөтөч мэдэгдэл илгээхийг дэмжихгүй байна.');
+  if (typeof window === 'undefined' || !('Notification' in window)) {
     return false;
   }
 
@@ -18,7 +17,7 @@ export async function requestNotificationPermission(): Promise<boolean> {
 }
 
 export function sendExpiryNotification(expiringItems: Ingredient[]) {
-  if (!('Notification' in window) || Notification.permission !== 'granted') {
+  if (typeof window === 'undefined' || !('Notification' in window) || Notification.permission !== 'granted') {
     return;
   }
 

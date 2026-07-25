@@ -37,5 +37,11 @@ export default defineConfig(() => {
         '@': path.resolve(__dirname, '.'),
       },
     },
+
+    test: {
+      globals: true,
+      environment: 'node',
+      include: ['src/**/*.test.{ts,tsx}', 'server/**/*.test.ts'],
+    },
   };
 });

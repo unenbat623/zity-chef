@@ -12,7 +12,7 @@ const memoryStore = new Map<string, Ingredient[]>([
     { id: '1', name: 'Шинэ Сүү', emoji: '🥛', category: '🥛 Сүү, өндөг', quantity: 1, unit: 'л', expiryDays: 3, pricePerUnit: 3900 },
     { id: '2', name: 'Үхрийн Мах', emoji: '🥩', category: '🥩 Мах', quantity: 800, unit: 'гр', expiryDays: 5, pricePerUnit: 24000 },
     { id: '3', name: 'Сонгино', emoji: '🥦', category: '🥦 Ногоо', quantity: 4, unit: 'ш', expiryDays: 12, pricePerUnit: 1800 },
-    { id: '4', name: 'Гурил', emoji: '🌾', category: '🌾 Амтлагч', quantity: 1000, unit: 'гр', expiryDays: 30, pricePerUnit: 2500 }
+    { id: '4', name: 'Гурил', emoji: '🌾', category: '🧂 Амтлагч', quantity: 1000, unit: 'гр', expiryDays: 30, pricePerUnit: 2500 }
   ]]
 ]);
 
