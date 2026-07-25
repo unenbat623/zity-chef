@@ -67,11 +67,14 @@ export const PaymentModal: React.FC = () => {
         className="fixed inset-0 bg-black/70 backdrop-blur-md z-[200] flex items-center justify-center p-4"
       >
         <motion.div
-          initial={{ scale: 0.9, y: 20 }}
-          animate={{ scale: 1, y: 0 }}
-          exit={{ scale: 0.9, y: 20 }}
-          className="bg-pestle-card border border-pestle-border w-full max-w-sm rounded-[28px] shadow-2xl overflow-hidden flex flex-col"
+          initial={{ scale: 0.9, y: 30, opacity: 0 }}
+          animate={{ scale: 1, y: 0, opacity: 1 }}
+          exit={{ scale: 0.9, y: 30, opacity: 0 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 240 }}
+          className="bg-pestle-card border border-pestle-border/80 w-full max-w-sm rounded-t-[32px] sm:rounded-[32px] shadow-2xl overflow-hidden flex flex-col"
         >
+          {/* Mobile Bottom-Sheet Pull Bar */}
+          <div className="w-12 h-1.5 bg-gray-300 dark:bg-slate-700 rounded-full mx-auto mt-2.5 sm:hidden" />
           {/* Header */}
           <div className="bg-gradient-to-r from-mango to-amber-500 p-5 text-white flex justify-between items-center relative overflow-hidden">
             <div className="absolute right-[-20px] top-[-20px] opacity-10 pointer-events-none">

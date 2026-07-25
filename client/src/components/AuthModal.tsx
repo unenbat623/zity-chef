@@ -187,8 +187,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 20 }}
           transition={{ type: 'spring', damping: 25, stiffness: 240 }}
-          className="w-full max-w-[380px] bg-pestle-card border border-pestle-border rounded-t-[28px] sm:rounded-[28px] shadow-2xl overflow-hidden relative"
+          className="w-full max-w-[390px] bg-pestle-card border border-pestle-border/80 rounded-t-[32px] sm:rounded-[32px] shadow-2xl overflow-hidden relative"
         >
+          {/* Mobile Bottom-Sheet Pull Bar */}
+          <div className="w-12 h-1.5 bg-gray-300 dark:bg-slate-700 rounded-full mx-auto my-2.5 sm:hidden" />
           {/* Top Decorative Banner */}
           <div className="px-5 pt-4 pb-3 bg-gradient-to-br from-mango/12 via-amber-500/5 to-transparent border-b border-pestle-border/60 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
@@ -207,10 +209,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </div>
             </div>
 
-            <button
-              onClick={onClose}
-              className="w-9 h-9 rounded-full bg-pestle-bg border border-pestle-border flex items-center justify-center text-gray-400 hover:text-pestle-text transition-colors"
-            >
+            <button onClick={onClose} className="modal-close-btn">
               <X size={18} />
             </button>
           </div>

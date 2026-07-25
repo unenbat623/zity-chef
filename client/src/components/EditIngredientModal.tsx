@@ -71,18 +71,17 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: '100%', opacity: 0 }}
         transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-        className="bg-pestle-card border border-pestle-border w-full max-w-lg rounded-t-[32px] sm:rounded-[32px] p-6 max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
+        className="bg-pestle-card border border-pestle-border/80 w-full max-w-lg rounded-t-[32px] sm:rounded-[32px] p-6 max-h-[90vh] flex flex-col shadow-2xl overflow-hidden relative"
       >
+        {/* Mobile Bottom-Sheet Pull Bar */}
+        <div className="w-12 h-1.5 bg-gray-300 dark:bg-slate-700 rounded-full mx-auto mb-3 sm:hidden" />
         {/* Modal Header */}
         <div className="flex justify-between items-center pb-4 border-b border-pestle-border/60">
           <div>
             <h2 className="text-lg font-extrabold text-pestle-text">Материал Засах / Шинэчлэх</h2>
             <p className="text-xs text-gray-400 font-medium">{ingredient.name}</p>
           </div>
-          <button
-            onClick={onClose}
-            className="w-9 h-9 bg-pestle-bg border border-pestle-border rounded-full flex items-center justify-center text-gray-400 hover:text-pestle-text transition-colors"
-          >
+          <button onClick={onClose} className="modal-close-btn">
             <X size={18} />
           </button>
         </div>

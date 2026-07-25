@@ -25,11 +25,14 @@ export const SubscriptionModal: React.FC = () => {
         className="fixed inset-0 bg-black/70 backdrop-blur-md z-[190] flex items-end sm:items-center justify-center p-0 sm:p-4"
       >
         <motion.div
-          initial={{ y: '100%' }}
-          animate={{ y: 0 }}
-          exit={{ y: '100%' }}
-          className="bg-pestle-card border border-pestle-border w-full max-w-md rounded-t-[32px] sm:rounded-[32px] shadow-2xl p-6 overflow-y-auto max-h-[90vh]"
+          initial={{ y: '100%', opacity: 0, scale: 0.96 }}
+          animate={{ y: 0, opacity: 1, scale: 1 }}
+          exit={{ y: '100%', opacity: 0, scale: 0.96 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 240 }}
+          className="bg-pestle-card border border-pestle-border/80 w-full max-w-md rounded-t-[32px] sm:rounded-[32px] shadow-2xl p-6 overflow-y-auto max-h-[90vh] relative"
         >
+          {/* Mobile Bottom-Sheet Pull Bar */}
+          <div className="w-12 h-1.5 bg-gray-300 dark:bg-slate-700 rounded-full mx-auto mb-3 sm:hidden" />
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <div>
@@ -38,10 +41,7 @@ export const SubscriptionModal: React.FC = () => {
               </span>
               <h2 className="text-2xl font-bold text-pestle-text">Гишүүнчлэлийн багцууд</h2>
             </div>
-            <button
-              onClick={() => setShowSubModal(false)}
-              className="w-9 h-9 bg-pestle-bg border border-pestle-border rounded-full flex items-center justify-center text-pestle-text"
-            >
+            <button onClick={() => setShowSubModal(false)} className="modal-close-btn">
               <X size={18} />
             </button>
           </div>

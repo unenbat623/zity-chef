@@ -119,3 +119,67 @@ img, video, canvas, svg {
   height: auto;
   user-select: none;
 }
+
+/* ── Modal & Overlay Utilities ───────────────────────────────── */
+
+/* Smooth theme transition on all themed elements */
+.bg-pestle-card,
+.bg-pestle-bg,
+.border-pestle-border,
+.text-pestle-text,
+aside,
+header,
+input,
+select,
+button {
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-duration: 0.25s;
+  transition-timing-function: ease-in-out;
+}
+
+/* Focus ring for form inputs — premium look */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 2.5px rgba(255, 159, 28, 0.35);
+  border-color: #FF9F1C !important;
+}
+
+/* Interactive button lift + glow on hover */
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(255, 159, 28, 0.35);
+}
+
+.btn-primary:active {
+  transform: translateY(0px) scale(0.97);
+}
+
+/* Close button circular hover pulse */
+.modal-close-btn {
+  @apply w-9 h-9 bg-pestle-bg border border-pestle-border rounded-full flex items-center justify-center text-gray-400;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s, transform 0.15s;
+}
+
+.modal-close-btn:hover {
+  @apply text-pestle-text border-red-400/50;
+  transform: rotate(90deg) scale(1.08);
+}
+
+/* Glassmorphism overlay backdrop */
+.modal-overlay {
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+}
+
+/* Bottom-sheet drag handle */
+.drag-handle {
+  @apply w-12 h-1.5 rounded-full mx-auto;
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.4) 0%, rgba(148, 163, 184, 0.6) 50%, rgba(148, 163, 184, 0.4) 100%);
+}
+
+.dark .drag-handle {
+  background: linear-gradient(90deg, rgba(51, 65, 85, 0.6) 0%, rgba(71, 85, 105, 0.8) 50%, rgba(51, 65, 85, 0.6) 100%);
+}
+
