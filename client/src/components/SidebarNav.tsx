@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Refrigerator,
   Calendar,
@@ -136,26 +136,73 @@ export const SidebarNav: React.FC = () => {
         )}
 
         <div className="flex items-center justify-between gap-2">
-          {/* Language Toggle Button */}
-          <button
+          {/* Animated Language Toggle Button */}
+          <motion.button
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setLang(lang === 'mn' ? 'en' : 'mn')}
-            className="flex-1 bg-pestle-bg border border-pestle-border py-2.5 px-3 rounded-xl text-xs font-bold text-pestle-text flex items-center justify-center gap-2 hover:border-mango transition-colors"
+            className="flex-1 bg-pestle-bg border border-pestle-border py-2.5 px-3 rounded-xl text-xs font-bold text-pestle-text flex items-center justify-center gap-2 hover:border-mango transition-all cursor-pointer shadow-sm group overflow-hidden"
           >
-            <Globe size={14} className="text-mango" />
-            <span>{lang === 'mn' ? 'Монгол' : 'English'}</span>
-          </button>
+            <Globe
+              size={14}
+              className="text-mango group-hover:rotate-45 transition-transform duration-300"
+            />
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span
+                key={lang}
+                initial={{ y: -10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 10, opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className="flex items-center gap-1.5"
+              >
+                <span>{lang === 'mn' ? '🇲🇳 Монгол' : '🇺🇸 English'}</span>
+              </motion.span>
+            </AnimatePresence>
+          </motion.button>
 
-          {/* Dark Mode Toggle Button */}
-          <button
+          {/* Animated Dark Mode Toggle Button */}
+          <motion.button
+            whileHover={{ scale: 1.08, rotate: isDark ? -15 : 15 }}
+            whileTap={{ scale: 0.9, rotate: isDark ? 45 : -45 }}
             onClick={toggleDarkMode}
-            className="w-10 h-10 bg-pestle-bg border border-pestle-border rounded-xl flex items-center justify-center text-pestle-text hover:border-mango transition-colors"
+            className={`w-10 h-10 border rounded-xl flex items-center justify-center transition-all cursor-pointer shadow-sm ${
+              isDark
+                ? 'bg-slate-900 border-slate-700 hover:border-amber-400/60'
+                : 'bg-amber-500/10 border-amber-500/30 hover:border-mango'
+            }`}
+            title="Toggle Dark / Light Theme"
           >
-            {isDark ? (
-              <Sun size={16} className="text-amber-400" />
-            ) : (
-              <Moon size={16} className="text-slate-600" />
-            )}
-          </button>
+            <AnimatePresence mode="wait" initial={false}>
+              {isDark ? (
+                <motion.div
+                  key="dark"
+                  initial={{ scale: 0, rotate: -90, opacity: 0 }}
+                  animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                  exit={{ scale: 0, rotate: 90, opacity: 0 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                >
+                  <Sun
+                    size={17}
+                    className="text-amber-400 filter drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]"
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="light"
+                  initial={{ scale: 0, rotate: 90, opacity: 0 }}
+                  animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                  exit={{ scale: 0, rotate: -90, opacity: 0 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                >
+                  <Moon
+                    size={17}
+                    className="text-slate-700 filter drop-shadow-[0_0_4px_rgba(15,23,42,0.3)]"
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.button>
         </div>
       </div>
     </aside>
