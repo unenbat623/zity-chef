@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Heart,
@@ -12,51 +12,102 @@ import {
   BookOpen,
   MessageSquare,
   Camera,
+  Bookmark,
+  Share2,
+  ChevronLeft,
+  ChevronRight,
   Smile,
+  Check,
+  Tag,
 } from 'lucide-react';
 import { SmartImage } from './SmartImage';
 import { MOCK_RECIPES } from '../constants';
+import { useApp } from '../context/AppContext';
 
-// ── Mock Data ─────────────────────────────────────────────────────────────────
-const INITIAL_STORIES = [
+// ── Types & Mock Data ──────────────────────────────────────────────────────────
+interface StoryItem {
+  id: string;
+  img?: string;
+  gradient?: string;
+  caption?: string;
+  sticker?: string;
+  createdAt: string;
+}
+
+interface UserStoryGroup {
+  id: string;
+  userName: string;
+  userAvatar: string;
+  isOwn?: boolean;
+  seen?: boolean;
+  stories: StoryItem[];
+}
+
+const OTHER_STORIES: UserStoryGroup[] = [
   {
-    id: 'me',
-    name: 'Миний Story',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=me',
-    isOwn: true,
+    id: 'user-bold',
+    userName: 'Болд-Эрдэнэ',
+    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bold',
     seen: false,
+    stories: [
+      {
+        id: 's-bold-1',
+        img: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=600&q=80',
+        caption: 'Өнөөдрийн Карбонара 🍝 Маш амттай!',
+        sticker: '👨‍🍳 Pro Chef',
+        createdAt: '30 мин',
+      },
+      {
+        id: 's-bold-2',
+        img: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80',
+        caption: 'Эрүүл салатны цуглуулга 🥗',
+        sticker: '🥑 Healthy Life',
+        createdAt: '10 мин',
+      },
+    ],
   },
   {
-    id: 's1',
-    name: 'Болд-Эрдэнэ',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bold',
+    id: 'user-sarnai',
+    userName: 'Сарнай',
+    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarnai',
     seen: false,
-    img: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400&q=75',
-    caption: 'Өнөөдрийн Карбонара 🍝',
+    stories: [
+      {
+        id: 's-sarnai-1',
+        img: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&q=80',
+        caption: 'Авокадо тост + шэглэсэн өндөг 🥑',
+        createdAt: '2 цаг',
+      },
+    ],
   },
   {
-    id: 's2',
-    name: 'Сарнай',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarnai',
+    id: 'user-zorigo',
+    userName: 'Зоригоо',
+    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Zorigo',
+    seen: false,
+    stories: [
+      {
+        id: 's-zorigo-1',
+        img: 'https://images.unsplash.com/photo-1551218808-94e220e084d2?w=600&q=80',
+        caption: 'Хонины шөл 3 цаг зөөлөн чаналаа 🍲',
+        sticker: '🔥 Уламжлалт Жор',
+        createdAt: '4 цаг',
+      },
+    ],
+  },
+  {
+    id: 'user-enkhtuya',
+    userName: 'Энхтуяа',
+    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Enkh',
     seen: true,
-    img: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&q=75',
-    caption: 'Авокадо тост 🥑',
-  },
-  {
-    id: 's3',
-    name: 'Зоригоо',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Zorigo',
-    seen: false,
-    img: 'https://images.unsplash.com/photo-1551218808-94e220e084d2?w=400&q=75',
-    caption: 'Хонины шөл чанаж байна 🍲',
-  },
-  {
-    id: 's4',
-    name: 'Энхтуяа',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Enkh',
-    seen: true,
-    img: 'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=400&q=75',
-    caption: 'Өглөөний цай ☕',
+    stories: [
+      {
+        id: 's-enkh-1',
+        img: 'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=600&q=80',
+        caption: 'Өглөөний цай ба кофены цаг ☕',
+        createdAt: '5 цаг',
+      },
+    ],
   },
 ];
 
@@ -64,11 +115,12 @@ const INITIAL_POSTS = [
   {
     id: 'p1',
     user: { name: 'Болд-Эрдэнэ', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bold' },
-    image: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=600&q=80',
-    caption: 'Маш амттай Карбонара Паста хийлээ! 🍝 Бүх гэр бүл минь дуртай болчихлоо.',
-    recipe: null,
+    image: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800&q=80',
+    caption: 'Маш амттай Карбонара Паста хийлээ! 🍝 Бүх гэр бүл минь дуртай болчихлоо. Zity Chef-ийн заавраар хийсэн чинь үнэхээр амархан байна!',
+    recipe: MOCK_RECIPES[4] || null,
     likes: 42,
     liked: false,
+    saved: false,
     time: '2 цаг',
     comments: [
       { user: 'Сарнай', text: 'Яаж хийсэн бэ? Жорыг хуваалцаарай 👏' },
@@ -78,33 +130,288 @@ const INITIAL_POSTS = [
   {
     id: 'p2',
     user: { name: 'Сарнай', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarnai' },
-    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80',
     caption: 'Өглөөний хоол: Авокадо тост + гахайн өндөг 🥑 Эрүүл, хурдан, амттай!',
-    recipe: MOCK_RECIPES[0],
+    recipe: MOCK_RECIPES[0] || null,
     likes: 89,
-    liked: false,
+    liked: true,
+    saved: true,
     time: '4 цаг',
     comments: [{ user: 'Болд-Эрдэнэ', text: 'Минийхтэй адилхан хоол 😍' }],
   },
   {
     id: 'p3',
     user: { name: 'Зоригоо', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Zorigo' },
-    image: 'https://images.unsplash.com/photo-1551218808-94e220e084d2?w=600&q=80',
-    caption: 'Хонины шөл хийхдээ нууц нь: жижиг гал дээр 3 цаг чанана 🍲',
-    recipe: null,
+    image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=800&q=80',
+    caption: 'Уламжлалт Нүүдэлчний Цүйван хийлээ! 🍜 Гурилаа өөрөө хайрч хэрчсэн чинь хөвсгөр зөөлөн болов.',
+    recipe: MOCK_RECIPES[1] || null,
     likes: 156,
     liked: true,
+    saved: false,
     time: '6 цаг',
     comments: [],
   },
 ];
 
-// ── Story Creator Modal ────────────────────────────────────────────────────────
-const CreateStoryModal: React.FC<{ onClose: () => void; onAddStory: (s: any) => void }> = ({
-  onClose,
-  onAddStory,
-}) => {
+const GRADIENT_PRESETS = [
+  'from-amber-500 via-rose-500 to-purple-600',
+  'from-emerald-400 via-teal-500 to-cyan-600',
+  'from-fuchsia-600 via-pink-500 to-rose-500',
+  'from-blue-600 via-indigo-500 to-purple-600',
+  'from-orange-500 via-amber-500 to-yellow-400',
+];
+
+const QUICK_EMOJIS = ['❤️', '🔥', '👏', '😮', '😍', '🥑', '👨‍🍳', '🎉'];
+
+// ── FULLSCREEN INSTAGRAM STORY PLAYER ──────────────────────────────────────────
+const StoryViewerModal: React.FC<{
+  storyGroup: UserStoryGroup;
+  allGroups: UserStoryGroup[];
+  onClose: () => void;
+  onSelectGroup: (group: UserStoryGroup) => void;
+  onChat: (userName: string, avatar: string) => void;
+}> = ({ storyGroup, allGroups, onClose, onSelectGroup, onChat }) => {
+  const [slideIndex, setSlideIndex] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [floatingHeart, setFloatingHeart] = useState<boolean>(false);
+  const [replyText, setReplyText] = useState('');
+
+  const stories = storyGroup.stories;
+  const currentStory = stories[slideIndex] || stories[0];
+
+  // Story Timer (5s duration)
+  useEffect(() => {
+    if (isPaused) return;
+
+    const DURATION = 4500; // 4.5 seconds per story
+    const INTERVAL = 50;
+    const step = (INTERVAL / DURATION) * 100;
+
+    const timer = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(timer);
+          handleNextSlide();
+          return 0;
+        }
+        return prev + step;
+      });
+    }, INTERVAL);
+
+    return () => clearInterval(timer);
+  }, [slideIndex, isPaused, storyGroup]);
+
+  const handleNextSlide = useCallback(() => {
+    if (slideIndex < stories.length - 1) {
+      setSlideIndex((prev) => prev + 1);
+      setProgress(0);
+    } else {
+      // Find next user story group
+      const groupIdx = allGroups.findIndex((g) => g.id === storyGroup.id);
+      if (groupIdx >= 0 && groupIdx < allGroups.length - 1) {
+        onSelectGroup(allGroups[groupIdx + 1]);
+        setSlideIndex(0);
+        setProgress(0);
+      } else {
+        onClose();
+      }
+    }
+  }, [slideIndex, stories.length, allGroups, storyGroup, onSelectGroup, onClose]);
+
+  const handlePrevSlide = useCallback(() => {
+    if (slideIndex > 0) {
+      setSlideIndex((prev) => prev - 1);
+      setProgress(0);
+    } else {
+      const groupIdx = allGroups.findIndex((g) => g.id === storyGroup.id);
+      if (groupIdx > 0) {
+        const prevGroup = allGroups[groupIdx - 1];
+        onSelectGroup(prevGroup);
+        setSlideIndex(prevGroup.stories.length - 1);
+        setProgress(0);
+      } else {
+        setProgress(0);
+      }
+    }
+  }, [slideIndex, allGroups, storyGroup, onSelectGroup]);
+
+  const handleSendReaction = (emoji: string) => {
+    setFloatingHeart(true);
+    setTimeout(() => setFloatingHeart(false), 1000);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.96 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.96 }}
+      transition={{ duration: 0.2 }}
+      className="fixed inset-0 bg-black z-[350] flex items-center justify-center select-none"
+    >
+      <div
+        className="w-full max-w-sm sm:max-w-md h-full sm:h-[92vh] sm:rounded-3xl overflow-hidden relative flex flex-col justify-between shadow-2xl bg-slate-950"
+        onMouseDown={() => setIsPaused(true)}
+        onMouseUp={() => setIsPaused(false)}
+        onTouchStart={() => setIsPaused(true)}
+        onTouchEnd={() => setIsPaused(false)}
+      >
+        {/* Background Image / Gradient */}
+        {currentStory.img ? (
+          <img
+            src={currentStory.img}
+            alt=""
+            className="w-full h-full object-cover absolute inset-0 transition-all duration-300"
+          />
+        ) : (
+          <div
+            className={`w-full h-full bg-gradient-to-br ${
+              currentStory.gradient || 'from-mango via-orange-500 to-amber-600'
+            } absolute inset-0 flex items-center justify-center p-6 text-center text-white`}
+          >
+            <p className="text-xl sm:text-2xl font-black drop-shadow-md">{currentStory.caption}</p>
+          </div>
+        )}
+
+        {/* Gradient Overlay for text contrast */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/80 pointer-events-none" />
+
+        {/* Floating Heart Animation on reaction */}
+        <AnimatePresence>
+          {floatingHeart && (
+            <motion.div
+              initial={{ opacity: 1, y: 0, scale: 0.5 }}
+              animate={{ opacity: 0, y: -180, scale: 2 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.8, ease: 'easeOut' }}
+              className="absolute inset-x-0 bottom-24 flex justify-center pointer-events-none z-50 text-6xl"
+            >
+              ❤️
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* TOP CONTROLS: IG Progress Segment Bars */}
+        <div className="relative z-20 p-3 sm:p-4 space-y-3">
+          <div className="flex gap-1.5 w-full">
+            {stories.map((s, i) => {
+              let widthVal = 0;
+              if (i < slideIndex) widthVal = 100;
+              else if (i === slideIndex) widthVal = progress;
+              return (
+                <div
+                  key={s.id}
+                  className="flex-1 bg-white/30 h-1 rounded-full overflow-hidden backdrop-blur-md"
+                >
+                  <div
+                    className="bg-white h-full transition-all duration-75 ease-linear"
+                    style={{ width: `${widthVal}%` }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+
+          {/* User Info Bar */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="p-0.5 rounded-full bg-gradient-to-tr from-amber-400 via-rose-500 to-fuchsia-600">
+                <img
+                  src={storyGroup.userAvatar}
+                  alt={storyGroup.userName}
+                  className="w-8 h-8 rounded-full border border-black object-cover"
+                />
+              </div>
+              <div>
+                <h4 className="text-white text-xs font-black drop-shadow-md flex items-center gap-1.5">
+                  <span>{storyGroup.userName}</span>
+                  <span className="text-[10px] text-white/70 font-normal">
+                    {currentStory.createdAt}
+                  </span>
+                </h4>
+                {currentStory.sticker && (
+                  <span className="text-[9px] bg-white/20 text-white font-bold px-2 py-0.5 rounded-full backdrop-blur-md inline-block mt-0.5">
+                    {currentStory.sticker}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="w-8 h-8 bg-black/40 hover:bg-black/70 backdrop-blur-md text-white rounded-full flex items-center justify-center transition-colors"
+            >
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+
+        {/* TAP TARGETS: Left (Prev) & Right (Next) */}
+        <div className="absolute inset-0 z-10 flex">
+          <div className="w-1/3 h-full cursor-pointer" onClick={handlePrevSlide} />
+          <div className="w-2/3 h-full cursor-pointer" onClick={handleNextSlide} />
+        </div>
+
+        {/* BOTTOM CAPTION & REACTION BAR */}
+        <div className="relative z-20 p-4 space-y-3">
+          {currentStory.img && currentStory.caption && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-black/50 backdrop-blur-md border border-white/10 p-3 rounded-2xl text-white text-xs font-semibold leading-relaxed drop-shadow"
+            >
+              {currentStory.caption}
+            </motion.div>
+          )}
+
+          {/* Quick Emojis Row */}
+          <div className="flex justify-between items-center px-1">
+            {QUICK_EMOJIS.slice(0, 6).map((emoji) => (
+              <button
+                key={emoji}
+                onClick={() => handleSendReaction(emoji)}
+                className="text-2xl hover:scale-125 transition-transform active:scale-95 p-1"
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+
+          {/* Reply Input Bar */}
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              placeholder={`${storyGroup.userName}-д хариу бичих...`}
+              className="flex-1 bg-white/15 backdrop-blur-md border border-white/25 rounded-full px-4 py-2.5 text-xs text-white placeholder-white/70 focus:outline-none focus:border-white"
+            />
+            {replyText.trim() && (
+              <button
+                onClick={() => {
+                  onChat(storyGroup.userName, storyGroup.userAvatar);
+                  onClose();
+                }}
+                className="bg-mango text-white px-4 rounded-full text-xs font-bold shadow-lg flex items-center gap-1"
+              >
+                <Send size={13} />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// ── STORY CREATOR MODAL ──────────────────────────────────────────────
+const CreateStoryModal: React.FC<{
+  onClose: () => void;
+  onAddStory: (story: StoryItem) => void;
+}> = ({ onClose, onAddStory }) => {
   const [caption, setCaption] = useState('');
+  const [sticker, setSticker] = useState('📍 Zity Chef Kitchen');
+  const [selectedGradient, setSelectedGradient] = useState(GRADIENT_PRESETS[0]);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -120,12 +427,11 @@ const CreateStoryModal: React.FC<{ onClose: () => void; onAddStory: (s: any) => 
     if (!imageBase64 && !caption.trim()) return;
     onAddStory({
       id: `s-${Date.now()}`,
-      name: 'Миний Story',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=me',
-      isOwn: false,
-      seen: false,
-      img: imageBase64 || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&q=75',
-      caption: caption.trim() || 'Zity Chef-ээр хийсэн хоол 🍳',
+      img: imageBase64 || undefined,
+      gradient: !imageBase64 ? selectedGradient : undefined,
+      caption: caption.trim() || 'Шинэхэн Story ✨',
+      sticker,
+      createdAt: 'Яг одоо',
     });
     onClose();
   };
@@ -135,76 +441,147 @@ const CreateStoryModal: React.FC<{ onClose: () => void; onAddStory: (s: any) => 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/75 backdrop-blur-md z-[300] flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/80 backdrop-blur-md z-[350] flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
     >
       <motion.div
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.9, y: 20 }}
-        className="w-full max-w-sm bg-pestle-card border border-pestle-border rounded-[28px] p-5 space-y-4 shadow-2xl overflow-hidden"
+        className="w-full max-w-md bg-pestle-card border border-pestle-border rounded-[32px] p-5 space-y-4 shadow-2xl overflow-hidden my-auto"
       >
         <div className="flex justify-between items-center">
-          <h3 className="text-sm font-extrabold text-pestle-text flex items-center gap-1.5">
-            <Camera size={16} className="text-mango" /> IG Story Оруулах
+          <h3 className="text-sm font-black text-pestle-text flex items-center gap-2">
+            <Camera size={18} className="text-mango" /> Story Үүсгэх
           </h3>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full border border-pestle-border flex items-center justify-center text-gray-400"
+            className="w-8 h-8 rounded-full border border-pestle-border flex items-center justify-center text-gray-400 hover:text-pestle-text"
           >
             <X size={16} />
           </button>
         </div>
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleFile}
-        />
-        <div
-          onClick={() => fileInputRef.current?.click()}
-          className="w-full h-52 bg-pestle-bg border-2 border-dashed border-pestle-border rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden relative group"
-        >
+        {/* PREVIEW CONTAINER (Strict 9:16 ratio vertical phone style on desktop) */}
+        <div className="w-56 h-[340px] mx-auto rounded-2xl overflow-hidden relative border border-pestle-border flex flex-col justify-between p-3.5 shadow-md">
           {imageBase64 ? (
-            <img src={imageBase64} alt="" className="w-full h-full object-cover" />
+            <img src={imageBase64} alt="" className="w-full h-full object-cover absolute inset-0" />
           ) : (
-            <div className="text-center space-y-2">
-              <div className="w-12 h-12 bg-mango/15 text-mango rounded-full flex items-center justify-center mx-auto">
-                <Camera size={22} />
-              </div>
-              <p className="text-xs font-bold text-pestle-text">Зураг сонгох эсвэл дарах</p>
+            <div
+              className={`w-full h-full bg-gradient-to-br ${selectedGradient} absolute inset-0 flex items-center justify-center p-4 text-center text-white`}
+            >
+              <p className="text-sm font-black drop-shadow-md">
+                {caption || 'Story текстээ доор бичнэ үү...'}
+              </p>
+            </div>
+          )}
+
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none" />
+
+          {/* Sticker Overlay */}
+          <div className="relative z-10 flex justify-between items-start">
+            <span className="text-[9px] font-extrabold bg-white/20 text-white backdrop-blur-md px-2 py-0.5 rounded-full">
+              {sticker}
+            </span>
+            {imageBase64 && (
+              <button
+                onClick={() => setImageBase64(null)}
+                className="text-xs bg-black/40 text-white p-1 rounded-full"
+              >
+                <X size={12} />
+              </button>
+            )}
+          </div>
+
+          {/* Caption Overlay on preview */}
+          {imageBase64 && caption && (
+            <div className="relative z-10 bg-black/50 backdrop-blur-md p-2 rounded-xl text-white text-[11px] font-bold">
+              {caption}
             </div>
           )}
         </div>
 
-        <input
-          type="text"
-          value={caption}
-          onChange={(e) => setCaption(e.target.value)}
-          placeholder="Story дээр гарах текст..."
-          className="w-full bg-pestle-bg border border-pestle-border rounded-xl px-4 py-2.5 text-xs font-medium text-pestle-text focus:outline-none focus:border-mango"
-        />
+        {/* IMAGE UPLOAD & GRADIENT PICKER */}
+        <div className="space-y-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFile}
+          />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex-1 bg-pestle-bg border border-pestle-border py-2 px-3 rounded-xl text-xs font-bold text-pestle-text hover:border-mango flex items-center justify-center gap-2"
+            >
+              <Camera size={15} className="text-mango" />
+              <span>Зураг оруулах</span>
+            </button>
 
+            {/* Gradient Swatches if no image */}
+            {!imageBase64 && (
+              <div className="flex items-center gap-1.5">
+                {GRADIENT_PRESETS.map((g) => (
+                  <button
+                    key={g}
+                    onClick={() => setSelectedGradient(g)}
+                    className={`w-6 h-6 rounded-full bg-gradient-to-br ${g} border-2 ${
+                      selectedGradient === g ? 'border-mango scale-110' : 'border-transparent'
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* CAPTION & STICKERS */}
+        <div className="space-y-2">
+          <input
+            type="text"
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            placeholder="Story дээр гарах гарчиг, сэтгэгдэл..."
+            className="w-full bg-pestle-bg border border-pestle-border rounded-xl px-3.5 py-2.5 text-xs font-medium text-pestle-text focus:outline-none focus:border-mango"
+          />
+
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+            {['📍 Улаанбаатар', '🍳 Zity Chef', '🥑 Healthy Food', '🔥 Шинэ Жор'].map((st) => (
+              <button
+                key={st}
+                onClick={() => setSticker(st)}
+                className={`text-[10px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap border ${
+                  sticker === st
+                    ? 'bg-mango text-white border-mango'
+                    : 'bg-pestle-bg text-gray-400 border-pestle-border'
+                }`}
+              >
+                {st}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* SHARE STORY CTA */}
         <button
           onClick={handlePublish}
-          className="w-full btn-primary py-3 text-xs font-bold shadow-lg shadow-mango/20"
+          className="w-full btn-primary py-3 text-xs font-bold shadow-xl shadow-mango/25 flex items-center justify-center gap-2"
         >
-          Story Нийтлэх ✨
+          <Sparkles size={16} /> Story Нийтлэх ✨
         </button>
       </motion.div>
     </motion.div>
   );
 };
 
-// ── Direct Chat Drawer ─────────────────────────────────────────────────────────
+// ── DIRECT CHAT DRAWER ─────────────────────────────────────────────────────────
 const DirectChatDrawer: React.FC<{
   recipient: { name: string; avatar: string };
   onClose: () => void;
 }> = ({ recipient, onClose }) => {
   const [messages, setMessages] = useState([
-    { sender: recipient.name, text: 'Сайн уу! Өнөөдөр ямар хоол хийж байна?', time: '14:20' },
-    { sender: 'Би', text: 'Сайн сайн! Zity Chef-ээр амттай паста хийлээ 🍝', time: '14:22' },
+    { sender: recipient.name, text: 'Сайн уу! Өнөөдөр ямар амттай хоол хийж байна?', time: '14:20' },
+    { sender: 'Би', text: 'Сайн сайн! Zity Chef-ийн заавраар хоол хийлээ 🍝', time: '14:22' },
   ]);
   const [inputText, setInputText] = useState('');
 
@@ -214,13 +591,12 @@ const DirectChatDrawer: React.FC<{
     setMessages((prev) => [...prev, { sender: 'Би', text: inputText.trim(), time: now }]);
     setInputText('');
 
-    // Auto reply simulation
     setTimeout(() => {
       setMessages((prev) => [
         ...prev,
-        { sender: recipient.name, text: 'Гоё харагдаж байна! Жороо хуваалцаарай 👨‍🍳', time: now },
+        { sender: recipient.name, text: 'Үнэхээр гоё харагдаж байна! Жороо нааш нь явуулаарай 👨‍🍳', time: now },
       ]);
-    }, 1200);
+    }, 1000);
   };
 
   return (
@@ -228,7 +604,7 @@ const DirectChatDrawer: React.FC<{
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[300] flex justify-end"
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[350] flex justify-end"
     >
       <motion.div
         initial={{ x: '100%' }}
@@ -237,13 +613,12 @@ const DirectChatDrawer: React.FC<{
         transition={{ type: 'spring', damping: 25, stiffness: 220 }}
         className="w-full max-w-md h-full bg-pestle-card border-l border-pestle-border flex flex-col shadow-2xl"
       >
-        {/* Chat Header */}
         <div className="p-4 border-b border-pestle-border/60 flex items-center justify-between bg-pestle-bg">
           <div className="flex items-center gap-3">
             <img
               src={recipient.avatar}
               alt={recipient.name}
-              className="w-10 h-10 rounded-xl border border-pestle-border"
+              className="w-10 h-10 rounded-xl border border-pestle-border object-cover"
             />
             <div>
               <h3 className="font-extrabold text-sm text-pestle-text">{recipient.name}</h3>
@@ -260,7 +635,6 @@ const DirectChatDrawer: React.FC<{
           </button>
         </div>
 
-        {/* Messages */}
         <div className="flex-1 p-4 overflow-y-auto space-y-3">
           {messages.map((m, idx) => {
             const isMe = m.sender === 'Би';
@@ -281,7 +655,6 @@ const DirectChatDrawer: React.FC<{
           })}
         </div>
 
-        {/* Input Bar */}
         <div className="p-3 border-t border-pestle-border/60 bg-pestle-bg flex gap-2 items-center">
           <input
             type="text"
@@ -303,67 +676,7 @@ const DirectChatDrawer: React.FC<{
   );
 };
 
-// ── Story Viewer Modal ─────────────────────────────────────────────────────────
-const StoryViewer: React.FC<{
-  story: (typeof INITIAL_STORIES)[0];
-  onClose: () => void;
-  onChat: () => void;
-}> = ({ story, onClose, onChat }) => (
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    className="fixed inset-0 bg-black z-[300] flex items-center justify-center"
-    onClick={onClose}
-  >
-    <div
-      className="w-full max-w-sm h-full max-h-[95vh] relative rounded-2xl overflow-hidden flex flex-col justify-between"
-      onClick={(e) => e.stopPropagation()}
-    >
-      {story.img ? (
-        <img src={story.img} alt="" className="w-full h-full object-cover absolute inset-0" />
-      ) : (
-        <div className="w-full h-full bg-gradient-to-br from-mango to-amber-600 flex items-center justify-center text-8xl absolute inset-0">
-          🍳
-        </div>
-      )}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/70" />
-
-      {/* Top Bar */}
-      <div className="relative z-10 p-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <img src={story.avatar} className="w-9 h-9 rounded-full border-2 border-white" alt="" />
-          <span className="text-white text-xs font-bold drop-shadow">{story.name}</span>
-        </div>
-        <button onClick={onClose} className="text-white bg-black/40 rounded-full p-1.5">
-          <X size={18} />
-        </button>
-      </div>
-
-      {/* Bottom Bar */}
-      <div className="relative z-10 p-4 space-y-3">
-        {story.caption && (
-          <p className="text-white text-xs font-bold bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-xl inline-block">
-            {story.caption}
-          </p>
-        )}
-        <div className="flex gap-2">
-          <button
-            onClick={() => {
-              onClose();
-              onChat();
-            }}
-            className="flex-1 bg-white/20 backdrop-blur-md border border-white/30 text-white py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-white/30"
-          >
-            <MessageCircle size={15} /> Хариу бичих...
-          </button>
-        </div>
-      </div>
-    </div>
-  </motion.div>
-);
-
-// ── Create Post Modal ──────────────────────────────────────────────────────────
+// ── INSTAGRAM POST CREATOR MODAL ───────────────────────────────────────────────
 const CreatePostModal: React.FC<{ onClose: () => void; onPost: (p: any) => void }> = ({
   onClose,
   onPost,
@@ -385,13 +698,14 @@ const CreatePostModal: React.FC<{ onClose: () => void; onPost: (p: any) => void 
   const handlePost = () => {
     if (!caption.trim() && !imageBase64 && !selectedRecipe) return;
     onPost({
-      id: `p${Date.now()}`,
+      id: `p-${Date.now()}`,
       user: { name: 'Миний бичлэг', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=me' },
-      image: imageBase64 || selectedRecipe?.image || null,
+      image: imageBase64 || selectedRecipe?.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80',
       caption: caption.trim(),
       recipe: selectedRecipe,
       likes: 0,
       liked: false,
+      saved: false,
       time: 'Яг одоо',
       comments: [],
     });
@@ -403,40 +717,41 @@ const CreatePostModal: React.FC<{ onClose: () => void; onPost: (p: any) => void 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/65 backdrop-blur-md z-[250] flex items-end sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-0 bg-black/75 backdrop-blur-md z-[350] flex items-center justify-center p-4"
     >
       <motion.div
-        initial={{ y: '100%' }}
-        animate={{ y: 0 }}
-        exit={{ y: '100%' }}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
         transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-        className="bg-pestle-card border border-pestle-border w-full max-w-lg rounded-t-[28px] sm:rounded-[28px] p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto"
+        className="bg-pestle-card border border-pestle-border w-full max-w-lg rounded-[32px] p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto"
       >
         <div className="flex justify-between items-center">
-          <h2 className="text-base font-extrabold text-pestle-text">Нийтлэл үүсгэх</h2>
+          <h2 className="text-base font-black text-pestle-text">Instagram Пост Нийтлэх</h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full border border-pestle-border flex items-center justify-center text-gray-400"
+            className="w-8 h-8 rounded-full border border-pestle-border flex items-center justify-center text-gray-400 hover:text-pestle-text"
           >
             <X size={16} />
           </button>
         </div>
 
-        {/* Tab switcher */}
         <div className="flex bg-pestle-bg rounded-xl p-1 border border-pestle-border gap-1">
           {(['photo', 'recipe'] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${tab === t ? 'bg-mango text-white shadow-sm' : 'text-gray-400'}`}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                tab === t ? 'bg-mango text-white shadow-sm' : 'text-gray-400'
+              }`}
             >
               {t === 'photo' ? (
                 <>
-                  <Image size={13} /> Зураг & Текст
+                  <Image size={14} /> Зураг ба Текст
                 </>
               ) : (
                 <>
-                  <BookOpen size={13} /> Жор хуваалцах
+                  <ChefHat size={14} /> Жор Холбох
                 </>
               )}
             </button>
@@ -454,16 +769,18 @@ const CreatePostModal: React.FC<{ onClose: () => void; onPost: (p: any) => void 
             />
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="w-full h-40 bg-pestle-bg border-2 border-dashed border-pestle-border rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden hover:border-mango transition-colors group"
+              className="w-full h-48 bg-pestle-bg border-2 border-dashed border-pestle-border rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden hover:border-mango transition-colors group"
             >
               {imageBase64 ? (
                 <img src={imageBase64} alt="" className="w-full h-full object-cover" />
               ) : (
-                <div className="text-center space-y-1">
-                  <div className="w-10 h-10 bg-mango/10 text-mango rounded-full flex items-center justify-center mx-auto">
-                    <Plus size={20} />
+                <div className="text-center space-y-2">
+                  <div className="w-12 h-12 bg-mango/15 text-mango rounded-full flex items-center justify-center mx-auto">
+                    <Image size={24} />
                   </div>
-                  <span className="text-xs font-bold text-gray-400 block">Зураг нэмэх</span>
+                  <span className="text-xs font-bold text-pestle-text block">
+                    Зураг сонгох эсвэл чирж оруулна уу
+                  </span>
                 </div>
               )}
             </div>
@@ -476,11 +793,16 @@ const CreatePostModal: React.FC<{ onClose: () => void; onPost: (p: any) => void 
               <button
                 key={r.id}
                 onClick={() => setSelectedRecipe(r)}
-                className={`text-left rounded-xl overflow-hidden border-2 transition-all ${selectedRecipe?.id === r.id ? 'border-mango' : 'border-pestle-border'}`}
+                className={`text-left rounded-xl overflow-hidden border-2 transition-all p-1.5 flex items-center gap-2 ${
+                  selectedRecipe?.id === r.id
+                    ? 'border-mango bg-mango/10'
+                    : 'border-pestle-border bg-pestle-bg'
+                }`}
               >
-                <SmartImage src={r.image} alt={r.title} emoji="🍽️" className="w-full h-20" />
-                <div className="p-2">
-                  <p className="text-[10px] font-bold text-pestle-text line-clamp-1">{r.title}</p>
+                <img src={r.image} alt={r.title} className="w-12 h-12 rounded-lg object-cover" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-extrabold text-pestle-text truncate">{r.title}</p>
+                  <p className="text-[9px] text-gray-400">{r.category}</p>
                 </div>
               </button>
             ))}
@@ -491,19 +813,19 @@ const CreatePostModal: React.FC<{ onClose: () => void; onPost: (p: any) => void 
           rows={3}
           value={caption}
           onChange={(e) => setCaption(e.target.value)}
-          placeholder="Хоолынхоо тухай бичнэ үү... орц, нууц, зөвлөмж"
+          placeholder="Хоолынхоо тухай бичнэ үү... #ZityChef #Healthy"
           className="w-full bg-pestle-bg border border-pestle-border rounded-xl px-4 py-3 text-xs font-medium text-pestle-text focus:outline-none focus:border-mango resize-none"
         />
 
         <div className="flex gap-3">
-          <button onClick={onClose} className="btn-secondary flex-1 py-2.5 text-xs">
+          <button onClick={onClose} className="btn-secondary flex-1 py-3 text-xs font-bold">
             Болих
           </button>
           <button
             onClick={handlePost}
-            className="btn-primary flex-1 py-2.5 text-xs shadow-md shadow-mango/20 flex items-center justify-center gap-1.5"
+            className="btn-primary flex-1 py-3 text-xs font-bold shadow-xl shadow-mango/20 flex items-center justify-center gap-1.5"
           >
-            <Send size={13} /> Нийтлэх
+            <Send size={14} /> Нийтлэх
           </button>
         </div>
       </motion.div>
@@ -511,15 +833,27 @@ const CreatePostModal: React.FC<{ onClose: () => void; onPost: (p: any) => void 
   );
 };
 
-// ── Post Card ─────────────────────────────────────────────────────────────────
+// ── INSTAGRAM POST CARD (With Double-Tap Like & Heart Pop) ────────────────────
 const PostCard: React.FC<{
   post: any;
   onLike: () => void;
+  onSave: () => void;
   onComment: (text: string) => void;
   onChat: () => void;
-}> = ({ post, onLike, onComment, onChat }) => {
+  onOpenStory?: () => void;
+}> = ({ post, onLike, onSave, onComment, onChat, onOpenStory }) => {
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState('');
+  const [showHeartOverlay, setShowHeartOverlay] = useState(false);
+
+  // Double-tap to like simulation
+  const handleDoubleTap = () => {
+    if (!post.liked) {
+      onLike();
+    }
+    setShowHeartOverlay(true);
+    setTimeout(() => setShowHeartOverlay(false), 900);
+  };
 
   const handleComment = () => {
     if (!commentText.trim()) return;
@@ -529,112 +863,154 @@ const PostCard: React.FC<{
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="pestle-card overflow-hidden"
+      className="pestle-card overflow-hidden rounded-3xl border border-pestle-border shadow-sm hover:shadow-md transition-shadow"
     >
       {/* Post Header */}
-      <div className="flex items-center gap-3 p-3.5 pb-2">
-        <button onClick={onChat} className="flex items-center gap-3 text-left flex-1 min-w-0">
-          <img
-            src={post.user.avatar}
-            className="w-9 h-9 rounded-xl border border-pestle-border"
-            alt=""
-          />
+      <div className="flex items-center justify-between p-3.5">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div
+            onClick={onOpenStory || onChat}
+            className="p-[2px] rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-fuchsia-600 cursor-pointer shrink-0"
+          >
+            <img
+              src={post.user.avatar}
+              className="w-9 h-9 rounded-full border-2 border-pestle-card object-cover"
+              alt=""
+            />
+          </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-extrabold text-pestle-text">{post.user.name}</p>
+            <h4
+              onClick={onChat}
+              className="text-xs font-black text-pestle-text truncate cursor-pointer hover:underline"
+            >
+              {post.user.name}
+            </h4>
             <p className="text-[10px] text-gray-400 font-medium">{post.time}</p>
           </div>
-        </button>
+        </div>
 
         <button
           onClick={onChat}
-          className="px-2.5 py-1 rounded-xl bg-pestle-bg border border-pestle-border text-[11px] font-bold text-pestle-text hover:border-mango flex items-center gap-1"
+          className="px-3 py-1.5 rounded-xl bg-pestle-bg border border-pestle-border text-[11px] font-bold text-pestle-text hover:border-mango flex items-center gap-1.5 shadow-2xs"
         >
-          <MessageSquare size={12} className="text-mango" /> Чатлах
+          <MessageSquare size={13} className="text-mango" /> Чатлах
         </button>
-
-        {post.recipe && (
-          <span className="text-[9px] font-extrabold bg-mint/15 text-mint px-2 py-0.5 rounded-full flex items-center gap-1 border border-mint/20">
-            <ChefHat size={9} /> Жор
-          </span>
-        )}
       </div>
 
-      {/* Image */}
+      {/* Image Container with Double Tap Heart Overlay */}
       {(post.image || post.recipe?.image) && (
-        <SmartImage
-          src={post.image || post.recipe?.image}
-          alt={post.caption}
-          emoji="🍽️"
-          className="w-full h-56"
-        />
+        <div className="relative overflow-hidden cursor-pointer select-none" onDoubleClick={handleDoubleTap}>
+          <SmartImage
+            src={post.image || post.recipe?.image}
+            alt={post.caption}
+            emoji="🍽️"
+            className="w-full h-72 sm:h-96 object-cover"
+          />
+
+          <AnimatePresence>
+            {showHeartOverlay && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.3 }}
+                animate={{ opacity: 1, scale: 1.2 }}
+                exit={{ opacity: 0, scale: 1.5 }}
+                transition={{ duration: 0.3 }}
+                className="absolute inset-0 flex items-center justify-center pointer-events-none z-30"
+              >
+                <Heart size={90} className="text-red-500 fill-red-500 drop-shadow-2xl animate-pulse" />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       )}
 
-      {/* Recipe badge overlay */}
+      {/* Recipe Banner if attached */}
       {post.recipe && (
-        <div className="px-3.5 py-2 bg-gradient-to-r from-mint/10 to-transparent border-b border-pestle-border/60 flex items-center gap-2">
-          <BookOpen size={12} className="text-mint" />
-          <span className="text-[10px] font-bold text-mint">{post.recipe.title}</span>
-          <span className="text-[10px] text-gray-400 ml-auto">{post.recipe.time}</span>
+        <div className="px-4 py-2.5 bg-gradient-to-r from-mango/15 via-amber-500/10 to-transparent border-b border-pestle-border/60 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ChefHat size={15} className="text-mango" />
+            <span className="text-xs font-black text-pestle-text">{post.recipe.title}</span>
+          </div>
+          <span className="text-[10px] font-bold text-mango bg-mango/10 px-2 py-0.5 rounded-full">
+            {post.recipe.time}
+          </span>
         </div>
       )}
 
-      {/* Caption */}
-      {post.caption && (
-        <div className="px-3.5 py-2.5">
-          <p className="text-xs text-pestle-text leading-relaxed">{post.caption}</p>
+      {/* Post Actions Bar */}
+      <div className="px-4 pt-3 pb-2 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <motion.button
+            whileTap={{ scale: 1.3 }}
+            onClick={onLike}
+            className={`flex items-center gap-1.5 text-xs font-bold transition-all ${
+              post.liked ? 'text-red-500' : 'text-pestle-text hover:text-red-500'
+            }`}
+          >
+            <Heart size={20} fill={post.liked ? 'currentColor' : 'none'} />
+            <span className="text-xs font-extrabold">{post.likes}</span>
+          </motion.button>
+
+          <button
+            onClick={() => setShowComments(!showComments)}
+            className="flex items-center gap-1.5 text-xs font-bold text-pestle-text hover:text-mango transition-colors"
+          >
+            <MessageCircle size={20} />
+            <span className="text-xs font-extrabold">{post.comments.length}</span>
+          </button>
+
+          <button className="text-pestle-text hover:text-mango transition-colors">
+            <Share2 size={19} />
+          </button>
         </div>
-      )}
-
-      {/* Actions */}
-      <div className="px-3.5 pb-3 flex items-center gap-4 border-t border-pestle-border/40 pt-2.5">
-        <button
-          onClick={onLike}
-          className={`flex items-center gap-1.5 text-xs font-bold transition-all ${post.liked ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
-        >
-          <Heart size={16} fill={post.liked ? 'currentColor' : 'none'} />
-          <span>{post.likes}</span>
-        </button>
 
         <button
-          onClick={() => setShowComments(!showComments)}
-          className="flex items-center gap-1.5 text-xs font-bold text-gray-400 hover:text-pestle-text transition-colors"
+          onClick={onSave}
+          className={`transition-colors ${post.saved ? 'text-mango' : 'text-pestle-text hover:text-mango'}`}
         >
-          <MessageCircle size={16} />
-          <span>{post.comments.length}</span>
+          <Bookmark size={20} fill={post.saved ? 'currentColor' : 'none'} />
         </button>
       </div>
 
-      {/* Comments */}
+      {/* Caption & Comments Preview */}
+      {post.caption && (
+        <div className="px-4 pb-2 text-xs text-pestle-text leading-relaxed">
+          <span className="font-black mr-2">{post.user.name}</span>
+          <span>{post.caption}</span>
+        </div>
+      )}
+
+      {/* Comments Drawer */}
       <AnimatePresence>
         {showComments && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="px-3.5 pb-3 space-y-2 border-t border-pestle-border/40 pt-2"
+            className="px-4 pb-4 space-y-2.5 border-t border-pestle-border/40 pt-3"
           >
             {post.comments.map((c: any, i: number) => (
-              <div key={i} className="flex gap-2 text-xs">
-                <span className="font-extrabold text-pestle-text shrink-0">{c.user}</span>
-                <span className="text-gray-500">{c.text}</span>
+              <div key={i} className="flex items-start gap-2 text-xs">
+                <span className="font-black text-pestle-text shrink-0">{c.user}</span>
+                <span className="text-gray-600 dark:text-gray-300 font-medium flex-1">{c.text}</span>
               </div>
             ))}
-            <div className="flex gap-2 pt-1">
+
+            <div className="flex gap-2 pt-2">
               <input
                 type="text"
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleComment()}
                 placeholder="Сэтгэгдэл бичих..."
-                className="flex-1 bg-pestle-bg border border-pestle-border rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-mango"
+                className="flex-1 bg-pestle-bg border border-pestle-border rounded-xl px-3.5 py-2 text-xs font-medium focus:outline-none focus:border-mango"
               />
               <button
                 onClick={handleComment}
-                className="bg-mango text-white w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+                className="bg-mango text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-center shrink-0 shadow-xs"
               >
-                <Send size={13} />
+                <Send size={14} />
               </button>
             </div>
           </motion.div>
@@ -644,13 +1020,33 @@ const PostCard: React.FC<{
   );
 };
 
-// ── Main Community View ────────────────────────────────────────────────────────
+// ── MAIN COMMUNITY VIEW ────────────────────────────────────────────────────────
 export const CommunityView: React.FC = () => {
-  const [stories, setStories] = useState(INITIAL_STORIES);
+  const { profile } = useApp();
+
+  // Build own story group from profile
+  const ownStoryGroup: UserStoryGroup = {
+    id: 'user-me',
+    userName: profile.name || 'Таны Story',
+    userAvatar: profile.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=me`,
+    isOwn: true,
+    seen: true,
+    stories: [
+      {
+        id: 's-me-1',
+        img: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&q=80',
+        caption: 'Өнөөдөр Zity Chef-тэй хоол бэлдлээ 🍳',
+        sticker: '📍 Улаанбаатар',
+        createdAt: '1 цаг',
+      },
+    ],
+  };
+
+  const [stories, setStories] = useState<UserStoryGroup[]>([ownStoryGroup, ...OTHER_STORIES]);
   const [posts, setPosts] = useState(INITIAL_POSTS);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [showCreateStory, setShowCreateStory] = useState(false);
-  const [activeStory, setActiveStory] = useState<(typeof INITIAL_STORIES)[0] | null>(null);
+  const [activeStoryGroup, setActiveStoryGroup] = useState<UserStoryGroup | null>(null);
   const [chatUser, setChatUser] = useState<{ name: string; avatar: string } | null>(null);
 
   const handleLike = (postId: string) => {
@@ -658,6 +1054,12 @@ export const CommunityView: React.FC = () => {
       prev.map((p) =>
         p.id === postId ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 } : p
       )
+    );
+  };
+
+  const handleSave = (postId: string) => {
+    setPosts((prev) =>
+      prev.map((p) => (p.id === postId ? { ...p, saved: !p.saved } : p))
     );
   };
 
@@ -673,97 +1075,155 @@ export const CommunityView: React.FC = () => {
     setPosts((prev) => [post, ...prev]);
   };
 
-  const handleAddStory = (story: any) => {
-    setStories((prev) => [story, ...prev]);
+  const handleAddStory = (newStory: StoryItem) => {
+    setStories((prev) => {
+      const ownIndex = prev.findIndex((s) => s.isOwn);
+      if (ownIndex >= 0) {
+        const updated = [...prev];
+        updated[ownIndex] = {
+          ...updated[ownIndex],
+          seen: false,
+          stories: [newStory, ...updated[ownIndex].stories],
+        };
+        return updated;
+      }
+      return [
+        {
+          id: `user-me-${Date.now()}`,
+          userName: 'Миний Story',
+          userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=me',
+          isOwn: true,
+          seen: false,
+          stories: [newStory],
+        },
+        ...prev,
+      ];
+    });
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-5">
-      {/* Header */}
-      <div className="flex items-end justify-between">
+    <div className="p-4 sm:p-6 space-y-6 max-w-4xl mx-auto">
+      {/* HEADER BAR */}
+      <header className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-pestle-text tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-black text-pestle-text tracking-tight">
             Хамтын орчин
           </h2>
-          <p className="text-xs text-gray-400 font-semibold mt-0.5">
-            Жор хуваалцаж, бусадтай чатлаарай
+          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5">
+            Хоолны хийсэн зургуудаа хуваалцаж, бусад тогооч нартай харилцаарай.
           </p>
         </div>
-        <div className="flex gap-2">
+
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setShowCreateStory(true)}
-            className="bg-pestle-card border border-pestle-border py-2.5 px-3 rounded-xl text-xs font-bold text-pestle-text hover:border-mango flex items-center gap-1.5"
+            className="bg-pestle-card border border-pestle-border py-2.5 px-3.5 rounded-2xl text-xs font-bold text-pestle-text hover:border-mango flex items-center gap-1.5 shadow-xs transition-all"
           >
-            <Camera size={15} className="text-mango" />
-            <span className="hidden xs:inline">Story Нэмэх</span>
+            <Camera size={16} className="text-mango" />
+            <span className="hidden sm:inline">Story Нэмэх</span>
           </button>
 
           <button
             onClick={() => setShowCreatePost(true)}
-            className="btn-primary py-2.5 px-4 text-xs flex items-center gap-1.5 shadow-md shadow-mango/20"
+            className="btn-primary py-2.5 px-4 rounded-2xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-mango/20"
           >
-            <Plus size={15} />
+            <Plus size={16} />
             <span>Нийтлэх</span>
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* Stories Strip */}
-      <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar -mx-4 sm:-mx-6 px-4 sm:px-6">
-        {stories.map((story) => (
-          <button
-            key={story.id}
-            onClick={() => (story.isOwn ? setShowCreateStory(true) : setActiveStory(story))}
-            className="flex flex-col items-center gap-1.5 shrink-0"
-          >
-            <div
-              className={`w-16 h-16 rounded-2xl overflow-hidden border-2 relative ${story.seen ? 'border-pestle-border' : 'border-mango'}`}
+      {/* INSTAGRAM STORIES STRIP */}
+      <div className="bg-pestle-card border border-pestle-border rounded-3xl p-3.5 shadow-xs">
+        <div className="flex gap-4 overflow-x-auto pb-1 no-scrollbar scroll-smooth">
+          {stories.map((group) => (
+            <button
+              key={group.id}
+              onClick={() => {
+                if (group.isOwn && group.stories.length === 0) {
+                  setShowCreateStory(true);
+                } else {
+                  setActiveStoryGroup(group);
+                }
+              }}
+              className="flex flex-col items-center gap-1.5 shrink-0 group cursor-pointer"
             >
-              {story.isOwn ? (
-                <div className="w-full h-full bg-gradient-to-br from-mango/20 to-amber-400/20 flex items-center justify-center">
-                  <div className="w-7 h-7 bg-mango rounded-full flex items-center justify-center">
-                    <Plus size={16} className="text-white" />
-                  </div>
+              <div
+                className={`p-[2.5px] rounded-full transition-transform duration-300 group-hover:scale-105 ${
+                  group.isOwn
+                    ? 'bg-gradient-to-tr from-mango to-amber-400'
+                    : group.seen
+                    ? 'bg-pestle-border'
+                    : 'bg-gradient-to-tr from-amber-500 via-rose-500 to-fuchsia-600'
+                }`}
+              >
+                <div className="w-15 h-15 sm:w-16 sm:h-16 rounded-full border-2 border-pestle-card overflow-hidden relative">
+                  <img
+                    src={group.userAvatar}
+                    alt={group.userName}
+                    className="w-full h-full object-cover"
+                  />
+
+                  {group.isOwn && (
+                    <div className="absolute bottom-0 right-0 bg-mango text-white w-5 h-5 rounded-full flex items-center justify-center border border-white">
+                      <Plus size={12} />
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <SmartImage src={story.img} alt={story.name} emoji="👤" className="w-full h-full" />
-              )}
-            </div>
-            <span className="text-[10px] font-bold text-pestle-text text-center w-16 truncate">
-              {story.isOwn ? 'Нэмэх' : story.name.split('-')[0]}
-            </span>
-          </button>
-        ))}
+              </div>
+
+              <span className="text-[10px] font-bold text-pestle-text text-center w-16 truncate">
+                {group.isOwn ? 'Таны Story' : group.userName.split('-')[0]}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Post Feed */}
-      <div className="space-y-4">
+      {/* INSTAGRAM FEED POSTS */}
+      <div className="space-y-6">
         {posts.map((post) => (
           <PostCard
             key={post.id}
             post={post}
             onLike={() => handleLike(post.id)}
+            onSave={() => handleSave(post.id)}
             onComment={(text) => handleComment(post.id, text)}
             onChat={() => setChatUser(post.user)}
+            onOpenStory={() => {
+              const matchedGroup = stories.find((s) => s.userName.includes(post.user.name.split('-')[0]));
+              if (matchedGroup) setActiveStoryGroup(matchedGroup);
+            }}
           />
         ))}
       </div>
 
-      {/* Modals & Drawers */}
+      {/* MODALS & DRAWERS */}
       <AnimatePresence>
-        {activeStory && (
-          <StoryViewer
-            story={activeStory}
-            onClose={() => setActiveStory(null)}
-            onChat={() => setChatUser({ name: activeStory.name, avatar: activeStory.avatar })}
+        {activeStoryGroup && (
+          <StoryViewerModal
+            storyGroup={activeStoryGroup}
+            allGroups={stories}
+            onClose={() => setActiveStoryGroup(null)}
+            onSelectGroup={(g) => setActiveStoryGroup(g)}
+            onChat={(name, avatar) => setChatUser({ name, avatar })}
           />
         )}
+
         {showCreateStory && (
-          <CreateStoryModal onClose={() => setShowCreateStory(false)} onAddStory={handleAddStory} />
+          <CreateStoryModal
+            onClose={() => setShowCreateStory(false)}
+            onAddStory={handleAddStory}
+          />
         )}
+
         {showCreatePost && (
-          <CreatePostModal onClose={() => setShowCreatePost(false)} onPost={handleNewPost} />
+          <CreatePostModal
+            onClose={() => setShowCreatePost(false)}
+            onPost={handleNewPost}
+          />
         )}
+
         {chatUser && <DirectChatDrawer recipient={chatUser} onClose={() => setChatUser(null)} />}
       </AnimatePresence>
     </div>

@@ -42,7 +42,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onLoginSuccess,
   onLogout,
 }) => {
-  const { lang, subscription, setShowSubModal, t } = useApp();
+  const { lang, subscription, setShowSubModal, profile, setActiveTab, t } = useApp();
   const [view, setView] = useState<AuthView>(user ? 'profile' : 'login');
 
   const [email, setEmail] = useState<string>('');
@@ -504,43 +504,73 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             )}
 
             {/* 5️⃣ PROFILE VIEW */}
-            {view === 'profile' && user && (
+            {view === 'profile' && (
               <div className="space-y-4">
-                <div className="flex items-center gap-4 p-4 bg-pestle-bg border border-pestle-border rounded-2xl">
-                  <img
-                    src={user.avatarUrl}
-                    alt={user.name}
-                    className="w-14 h-14 rounded-2xl bg-mango/15 p-1 border border-mango/30"
-                  />
-                  <div>
-                    <h4 className="font-extrabold text-sm text-pestle-text flex items-center gap-1.5">
-                      {user.name}
-                      <ShieldCheck size={16} className="text-mint" />
+                {/* Profile Card Header */}
+                <div className="flex items-center gap-3.5 p-4 bg-pestle-bg border border-pestle-border/80 rounded-2xl">
+                  <div
+                    className={`w-14 h-14 rounded-2xl overflow-hidden flex items-center justify-center shrink-0 shadow-md bg-gradient-to-br ${profile.coverGradient}`}
+                  >
+                    {profile.avatarUrl || user?.avatarUrl ? (
+                      <img
+                        src={profile.avatarUrl || user?.avatarUrl || ''}
+                        alt={profile.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User size={26} className="text-white" />
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-extrabold text-sm text-pestle-text flex items-center gap-1.5 truncate">
+                      <span>{profile.name || user?.name || 'Таны Нэр'}</span>
+                      <ShieldCheck size={16} className="text-mint shrink-0" />
                     </h4>
-                    <p className="text-xs text-gray-400 font-medium">{user.email}</p>
-                    <span className="inline-block mt-1 text-[9px] font-black bg-gradient-to-r from-amber-400 to-orange-500 text-white px-2 py-0.5 rounded-full uppercase">
+                    <p className="text-xs text-gray-400 font-medium truncate">
+                      {profile.username || user?.email || '@chef_mongolia'}
+                    </p>
+                    <span className="inline-block mt-1 text-[9px] font-black bg-mango/15 text-mango px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-mango/20">
                       {subscription.toUpperCase()} CHEF TIER
                     </span>
                   </div>
                 </div>
 
+                {/* Quick Action List */}
                 <div className="space-y-2">
+                  <button
+                    onClick={() => {
+                      onClose();
+                      setActiveTab('profile');
+                    }}
+                    className="w-full bg-pestle-bg border border-pestle-border p-3.5 rounded-2xl text-xs font-bold text-pestle-text flex items-center justify-between hover:border-mango transition-all cursor-pointer shadow-xs active:scale-[0.98]"
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <User size={16} className="text-mango" />
+                      <span>Миний профайл хуудас рүү очих</span>
+                    </span>
+                    <ArrowRight size={14} className="text-gray-400" />
+                  </button>
+
                   <button
                     onClick={() => {
                       onClose();
                       setShowSubModal(true);
                     }}
-                    className="w-full bg-pestle-bg border border-pestle-border p-3.5 rounded-xl text-xs font-bold text-pestle-text flex items-center justify-between hover:border-mango transition-colors"
+                    className="w-full bg-pestle-bg border border-pestle-border p-3.5 rounded-2xl text-xs font-bold text-pestle-text flex items-center justify-between hover:border-mango transition-all cursor-pointer shadow-xs active:scale-[0.98]"
                   >
-                    <span className="flex items-center gap-2">
-                      <Sparkles size={16} className="text-amber-500" /> Миний Сунгалт ба Эрх
+                    <span className="flex items-center gap-2.5">
+                      <Sparkles size={16} className="text-amber-500" />
+                      <span>Миний сунгалт & Эрхийн төлөв</span>
                     </span>
-                    <span className="text-mango">{subscription.toUpperCase()}</span>
+                    <span className="text-[10px] font-black bg-amber-500/15 text-amber-500 px-2 py-0.5 rounded-lg uppercase">
+                      {subscription}
+                    </span>
                   </button>
 
                   <button
                     onClick={onLogout}
-                    className="w-full bg-red-500/10 border border-red-500/20 p-3.5 rounded-xl text-xs font-bold text-red-500 flex items-center justify-center gap-2 hover:bg-red-500 hover:text-white transition-colors"
+                    className="w-full bg-red-500/10 border border-red-500/20 p-3.5 rounded-2xl text-xs font-bold text-red-500 flex items-center justify-center gap-2 hover:bg-red-500 hover:text-white transition-all cursor-pointer active:scale-[0.98] shadow-xs"
                   >
                     <LogOut size={16} />
                     <span>Системээс Гарах</span>

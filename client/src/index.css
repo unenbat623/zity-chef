@@ -4,7 +4,7 @@
 @theme {
   --font-sans: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
-  --color-mango: #FF9F1C;
+  --color-mango: var(--color-accent, #8B5CF6);
   --color-mint: #2EC4B6;
   --color-pestle-bg: #F8FAFC;
   --color-pestle-card: #FFFFFF;
@@ -12,6 +12,12 @@
   --color-pestle-border: #E2E8F0;
 
   --radius-xl: 18px;
+}
+
+:root {
+  --color-accent: #8B5CF6;
+  --color-accent-shadow: rgba(139, 92, 246, 0.35);
+  --color-accent-light: rgba(139, 92, 246, 0.12);
 }
 
 @layer base {
@@ -81,7 +87,21 @@
 }
 
 .btn-primary {
-  @apply bg-mango text-white font-bold py-3.5 px-6 rounded-xl active:scale-[0.97] hover:brightness-105 transition-all shadow-md shadow-mango/20 cursor-pointer select-none;
+  background-color: var(--color-accent, #8B5CF6) !important;
+  color: #FFFFFF !important;
+  font-weight: 700;
+  padding: 0.875rem 1.5rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 14px var(--color-accent-shadow, rgba(139, 92, 246, 0.3));
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  user-select: none;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px var(--color-accent-shadow, rgba(139, 92, 246, 0.4));
 }
 
 .btn-secondary {

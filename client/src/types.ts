@@ -28,6 +28,13 @@ export interface Ingredient {
   imageUrl?: string;
 }
 
+export type RecipeCategory =
+  | 'Өглөөний цай'
+  | 'Салат ба Хөнгөн зууш'
+  | 'Үндсэн хоол'
+  | 'Шөл ба Бүлээн хоол'
+  | 'Эрүүл дессерт ба Ундаа';
+
 export interface RecipeStep {
   title: string;
   titleEn?: string;
@@ -37,6 +44,9 @@ export interface RecipeStep {
   sisterTip: string;
   sisterTipEn?: string;
   timerMinutes?: number;
+  heatLevel?: 'High' | 'Medium' | 'Low' | 'Simmer';
+  stepIngredients?: string[];
+  toolsNeeded?: string[];
 }
 
 export interface Recipe {
@@ -47,11 +57,14 @@ export interface Recipe {
   time: string;
   difficulty: 'Easy' | 'Medium' | 'Hard';
   cuisine?: string;
+  category?: RecipeCategory;
   ingredients: string[];
   ingredientsEn?: string[];
   nutrition: NutritionalInfo;
   steps: RecipeStep[];
   isPremium?: boolean;
+  rating?: number;
+  tags?: string[];
 }
 
 export interface MealPlanDay {
@@ -91,4 +104,17 @@ export interface BankApp {
   svgLogo: ReactNode;
   color: string;
   deepLink: string;
+}
+
+export interface UserProfile {
+  name: string;
+  username: string;
+  bio: string;
+  avatarUrl: string | null;       // base64 or URL
+  coverGradient: string;          // tailwind gradient class
+  accentColor: string;            // hex or tailwind color token
+  postsCount: number;
+  followersCount: number;
+  followingCount: number;
+  recipesCreated: number;
 }

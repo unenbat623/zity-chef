@@ -75,7 +75,7 @@ export const DesktopWidgetPanel: React.FC = () => {
   };
 
   return (
-    <aside className="hidden xl:flex flex-col w-80 bg-pestle-card border-l border-pestle-border p-6 justify-between shrink-0 h-screen sticky top-0 shadow-sm z-30 space-y-5 overflow-y-auto">
+    <aside className="hidden xl:flex flex-col w-80 bg-pestle-card border-l border-pestle-border p-6 justify-between shrink-0 h-full overflow-y-auto shadow-sm z-30 space-y-5">
       {/* Top AI Assistant Section */}
       <div className="space-y-3.5">
         <div className="flex items-center justify-between">

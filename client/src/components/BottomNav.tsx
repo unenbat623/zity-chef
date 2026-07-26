@@ -1,17 +1,17 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Refrigerator, Calendar, Store, BookOpen, Flame, Users } from 'lucide-react';
+import { Refrigerator, Calendar, Store, BookOpen, Flame, Users, User } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export const BottomNav: React.FC = () => {
-  const { activeTab, setActiveTab, cart, t } = useApp();
+  const { activeTab, setActiveTab, cart, profile, t } = useApp();
 
   const tabs = [
     { id: 'fridge', icon: Refrigerator, label: t('tabFridge') },
     { id: 'cooking', icon: Flame, label: t('tabCooking') },
     { id: 'community', icon: Users, label: 'Нийгэм' },
     { id: 'store', icon: Store, label: t('tabStore'), badge: cart.length > 0 ? cart.length : null },
-    { id: 'recipe', icon: BookOpen, label: t('tabRecipe') },
+    { id: 'profile', icon: User, label: 'Профайл', isProfile: true },
   ];
 
   return (
@@ -28,14 +28,31 @@ export const BottomNav: React.FC = () => {
             className="relative flex-1 flex flex-col items-center gap-0.5 py-1 group active:scale-95 transition-transform min-w-0"
           >
             <div className="relative">
-              <Icon
-                size={20}
-                className={`transition-colors ${
-                  isActive
-                    ? 'text-mango'
-                    : 'text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300'
-                }`}
-              />
+              {tab.isProfile ? (
+                <div
+                  className={`w-6 h-6 rounded-full overflow-hidden flex items-center justify-center border-2 transition-all ${
+                    isActive ? 'border-violet-500' : 'border-transparent'
+                  }`}
+                  style={isActive ? { background: profile.accentColor } : {}}
+                >
+                  {profile.avatarUrl ? (
+                    <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className={`w-full h-full bg-gradient-to-br ${profile.coverGradient} flex items-center justify-center`}>
+                      <User size={13} className="text-white" />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Icon
+                  size={20}
+                  className={`transition-colors ${
+                    isActive
+                      ? 'text-mango'
+                      : 'text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300'
+                  }`}
+                />
+              )}
               {tab.badge && (
                 <span className="absolute -top-1.5 -right-2 bg-mango text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900 animate-pulse">
                   {tab.badge}
@@ -43,16 +60,18 @@ export const BottomNav: React.FC = () => {
               )}
             </div>
             <span
-              className={`text-[9px] sm:text-[10px] font-semibold tracking-tight whitespace-nowrap truncate max-w-[52px] ${
-                isActive ? 'text-mango font-bold' : 'text-gray-400'
+              className={`text-[9px] sm:text-[10px] tracking-tight whitespace-nowrap truncate max-w-[52px] ${
+                isActive ? 'font-black' : 'text-gray-400'
               }`}
+              style={isActive ? { color: profile.accentColor } : {}}
             >
               {tab.label}
             </span>
             {isActive && (
               <motion.div
                 layoutId="activeDot"
-                className="absolute -bottom-1 w-1 h-1 bg-mango rounded-full"
+                className="absolute -bottom-1 w-1 h-1 rounded-full"
+                style={{ backgroundColor: profile.accentColor }}
                 transition={{ type: 'spring', stiffness: 500, damping: 30 }}
               />
             )}
@@ -62,3 +81,4 @@ export const BottomNav: React.FC = () => {
     </nav>
   );
 };
+

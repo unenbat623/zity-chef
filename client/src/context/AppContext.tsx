@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Ingredient, SubscriptionTier, CartItem, Order, Language, Recipe } from '../types';
+import { Ingredient, SubscriptionTier, CartItem, Order, Language, Recipe, UserProfile } from '../types';
 import { translations } from '../lib/i18n';
 import { useInventory } from '../hooks/useInventory';
 import { useOrders } from '../hooks/useOrders';
@@ -32,6 +32,10 @@ interface AppContextType {
   setActiveTab: (tab: string) => void;
   activeCookingRecipe: Recipe | null;
   setActiveCookingRecipe: (recipe: Recipe | null) => void;
+
+  // User profile
+  profile: UserProfile;
+  setProfile: (p: UserProfile) => void;
 
   // Modals state
   showSubModal: boolean;
@@ -73,6 +77,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [activeTab, setActiveTab] = useState<string>('fridge');
   const [activeCookingRecipe, setActiveCookingRecipe] = useState<Recipe | null>(null);
 
+  const DEFAULT_PROFILE: UserProfile = {
+    name: 'Таны Нэр',
+    username: '@chef_mongolia',
+    bio: 'Хоол хийх дуртай, Zity Chef-ийн хэрэглэгч 🍳',
+    avatarUrl: null,
+    coverGradient: 'from-violet-600 via-purple-600 to-fuchsia-600',
+    accentColor: '#8B5CF6',
+    postsCount: 3,
+    followersCount: 128,
+    followingCount: 47,
+    recipesCreated: 12,
+  };
+
+  const [profile, setProfileState] = useState<UserProfile>(() => {
+    const saved = localStorage.getItem('zity_profile');
+    return saved ? { ...DEFAULT_PROFILE, ...JSON.parse(saved) } : DEFAULT_PROFILE;
+  });
+
+  const setProfile = (p: UserProfile) => {
+    setProfileState(p);
+    localStorage.setItem('zity_profile', JSON.stringify(p));
+  };
+
   const [showSubModal, setShowSubModal] = useState<boolean>(false);
   const [showScanModal, setShowScanModal] = useState<boolean>(false);
   const [paymentModalState, setPaymentModalState] = useState<PendingPayment | null>(null);
@@ -89,6 +116,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       document.documentElement.classList.remove('dark');
     }
   }, [isDark]);
+
+  useEffect(() => {
+    if (profile?.accentColor) {
+      document.documentElement.style.setProperty('--color-accent', profile.accentColor);
+      document.documentElement.style.setProperty('--color-mango', profile.accentColor);
+      document.documentElement.style.setProperty(
+        '--color-accent-shadow',
+        profile.accentColor + '55'
+      );
+      document.documentElement.style.setProperty(
+        '--color-accent-light',
+        profile.accentColor + '18'
+      );
+    }
+  }, [profile?.accentColor]);
 
   useEffect(() => {
     localStorage.setItem('zity_subscription', subscription);
@@ -200,6 +242,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setActiveTab,
         activeCookingRecipe,
         setActiveCookingRecipe,
+        profile,
+        setProfile,
         showSubModal,
         setShowSubModal,
         showScanModal,

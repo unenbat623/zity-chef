@@ -5,16 +5,21 @@ import { Sparkles, Sun, Moon, User } from 'lucide-react';
 import { AuthModal, UserProfile } from './AuthModal';
 
 export const HeaderNav: React.FC = () => {
-  const { lang, setLang, isDark, toggleDarkMode, subscription, setShowSubModal, t } = useApp();
+  const { lang, setLang, isDark, toggleDarkMode, subscription, setShowSubModal, profile, setProfile, setActiveTab, t } = useApp();
   const [user, setUser] = useState<UserProfile | null>(() => {
     const saved = localStorage.getItem('zity_user');
-    return saved ? JSON.parse(saved) : null;
+    return saved ? JSON.parse(saved) : { name: profile.name, email: 'user@zity.mn', avatarUrl: profile.avatarUrl || '', isVerified: true };
   });
   const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
 
-  const handleLoginSuccess = (profile: UserProfile) => {
-    setUser(profile);
-    localStorage.setItem('zity_user', JSON.stringify(profile));
+  const handleLoginSuccess = (loggedInUser: UserProfile) => {
+    setUser(loggedInUser);
+    localStorage.setItem('zity_user', JSON.stringify(loggedInUser));
+    setProfile({
+      ...profile,
+      name: loggedInUser.name,
+      avatarUrl: loggedInUser.avatarUrl,
+    });
   };
 
   const handleLogout = () => {
@@ -25,9 +30,9 @@ export const HeaderNav: React.FC = () => {
 
   return (
     <>
-      <header className="px-3 sm:px-6 py-3 sm:py-4 flex justify-between items-center bg-pestle-bg/95 border-b border-pestle-border/50 sticky top-0 z-30 backdrop-blur-md w-full transition-colors duration-300">
+      <header className="px-3 sm:px-6 py-3 sm:py-4 flex justify-between items-center bg-pestle-bg/95 border-b border-pestle-border/50 sticky top-0 z-30 backdrop-blur-md w-full shrink-0 transition-colors duration-300">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 bg-mango text-white font-extrabold rounded-xl flex items-center justify-center shadow-md shadow-mango/20 shrink-0 text-sm sm:text-base">
+          <div className={`w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-tr ${profile.coverGradient} text-white font-extrabold rounded-xl flex items-center justify-center shadow-md shrink-0 text-sm sm:text-base`}>
             Z
           </div>
           <div className="min-w-0">
@@ -54,20 +59,22 @@ export const HeaderNav: React.FC = () => {
           {/* User Profile / Auth trigger button */}
           <button
             onClick={() => setShowAuthModal(true)}
-            className="flex items-center gap-1.5 bg-pestle-card border border-pestle-border px-2.5 py-1.5 rounded-xl text-xs font-bold text-pestle-text hover:border-mango transition-all active:scale-95 shadow-sm"
-            title="User Profile"
+            className="flex items-center gap-2 bg-pestle-card border border-pestle-border px-3 py-1.5 rounded-xl text-xs font-bold text-pestle-text hover:border-mango transition-all active:scale-95 shadow-sm cursor-pointer"
+            title="User Profile & Account"
           >
-            {user ? (
-              <img
-                src={user.avatarUrl}
-                alt={user.name}
-                className="w-5 h-5 rounded-full bg-mango/20"
-              />
-            ) : (
-              <User size={15} className="text-mango" />
-            )}
-            <span className="hidden sm:inline text-xs font-semibold">
-              {user ? user.name : 'Нэвтрэх'}
+            <div className={`w-6 h-6 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br ${profile.coverGradient} shrink-0`}>
+              {profile.avatarUrl || user?.avatarUrl ? (
+                <img
+                  src={profile.avatarUrl || user?.avatarUrl || ''}
+                  alt={profile.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <User size={13} className="text-white" />
+              )}
+            </div>
+            <span className="hidden sm:inline text-xs font-bold text-pestle-text">
+              {profile.name || user?.name || 'Таны Нэр'}
             </span>
           </button>
 

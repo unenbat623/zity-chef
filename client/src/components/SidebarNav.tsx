@@ -13,6 +13,9 @@ import {
   Sparkles,
   Users,
   ChefHat,
+  UserCircle,
+  User,
+  HelpCircle,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -28,6 +31,7 @@ export const SidebarNav: React.FC = () => {
     setShowSubModal,
     cart,
     inventory,
+    profile,
     t,
   } = useApp();
 
@@ -38,22 +42,28 @@ export const SidebarNav: React.FC = () => {
     { id: 'store', label: t('tabStore'), icon: Store, count: cart.length },
     { id: 'recipe', label: t('tabRecipe'), icon: BookOpen },
     { id: 'community', label: 'Хамтын орчин', icon: Users, badge: 'NEW' },
+    { id: 'help', label: 'Тусламж & FAQ', icon: HelpCircle },
   ];
 
   const expiringCount = inventory.filter((i) => i.expiryDays <= 3).length;
 
   return (
-    <aside className="hidden md:flex flex-col w-64 lg:w-72 bg-pestle-card border-r border-pestle-border p-6 justify-between shrink-0 h-screen sticky top-0 shadow-sm z-30">
+    <aside className="hidden md:flex flex-col w-64 lg:w-72 bg-pestle-card border-r border-pestle-border p-6 justify-between shrink-0 h-full overflow-y-auto shadow-sm z-30">
       {/* Brand Header */}
       <div className="space-y-8">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-mango to-amber-400 flex items-center justify-center text-white shadow-lg shadow-mango/30">
+          <div
+            className={`w-11 h-11 rounded-2xl bg-gradient-to-tr ${profile.coverGradient} flex items-center justify-center text-white shadow-lg`}
+          >
             <ChefHat size={24} strokeWidth={2.5} />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
               <h1 className="font-black text-lg text-pestle-text tracking-tight">Zity Chef</h1>
-              <span className="text-[9px] font-extrabold bg-mango/15 text-mango px-2 py-0.5 rounded-full uppercase tracking-wider">
+              <span
+                className="text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider text-white"
+                style={{ backgroundColor: profile.accentColor }}
+              >
                 PRO
               </span>
             </div>
@@ -77,7 +87,7 @@ export const SidebarNav: React.FC = () => {
               onClick={() => setShowSubModal(true)}
               className="w-full bg-mango text-white text-xs font-bold py-2 rounded-xl shadow-md shadow-mango/20 hover:bg-mango/90 transition-colors"
             >
-              Идэвхжүүлэх (₮14,900)
+              Идэвхжүүлэх (₮7,900)
             </button>
           )}
         </div>
@@ -125,7 +135,7 @@ export const SidebarNav: React.FC = () => {
         </nav>
       </div>
 
-      {/* Footer Controls: Language & Dark Mode */}
+      {/* Footer Controls: Profile Mini Card */}
       <div className="space-y-4 pt-4 border-t border-pestle-border/60">
         {expiringCount > 0 && (
           <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-xl flex items-center justify-between text-red-500 text-xs font-bold">
@@ -136,75 +146,30 @@ export const SidebarNav: React.FC = () => {
           </div>
         )}
 
-        <div className="flex items-center justify-between gap-2">
-          {/* Animated Language Toggle Button */}
-          <motion.button
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setLang(lang === 'mn' ? 'en' : 'mn')}
-            className="flex-1 bg-pestle-bg border border-pestle-border py-2.5 px-3 rounded-xl text-xs font-bold text-pestle-text flex items-center justify-center gap-2 hover:border-mango transition-all cursor-pointer shadow-sm group overflow-hidden"
+        {/* Profile Mini Card (clickable to Profile tab) */}
+        <button
+          onClick={() => setActiveTab('profile')}
+          className={`w-full flex items-center gap-3 p-2.5 rounded-2xl border transition-all hover:shadow-sm ${
+            activeTab === 'profile'
+              ? 'border-violet-500/40 bg-violet-500/10'
+              : 'border-pestle-border hover:border-violet-400/50 bg-pestle-bg'
+          }`}
+        >
+          <div
+            className={`w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center shrink-0 bg-gradient-to-br ${profile.coverGradient}`}
           >
-            <Globe
-              size={14}
-              className="text-mango group-hover:rotate-45 transition-transform duration-300"
-            />
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.span
-                key={lang}
-                initial={{ y: -10, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 10, opacity: 0 }}
-                transition={{ duration: 0.15 }}
-                className="flex items-center gap-1.5"
-              >
-                <span>{lang === 'mn' ? '🇲🇳 Монгол' : '🇺🇸 English'}</span>
-              </motion.span>
-            </AnimatePresence>
-          </motion.button>
-
-          {/* Animated Dark Mode Toggle Button */}
-          <motion.button
-            whileHover={{ scale: 1.08, rotate: isDark ? -15 : 15 }}
-            whileTap={{ scale: 0.9, rotate: isDark ? 45 : -45 }}
-            onClick={toggleDarkMode}
-            className={`w-10 h-10 border rounded-xl flex items-center justify-center transition-all cursor-pointer shadow-sm ${
-              isDark
-                ? 'bg-slate-900 border-slate-700 hover:border-amber-400/60'
-                : 'bg-amber-500/10 border-amber-500/30 hover:border-mango'
-            }`}
-            title="Toggle Dark / Light Theme"
-          >
-            <AnimatePresence mode="wait" initial={false}>
-              {isDark ? (
-                <motion.div
-                  key="dark"
-                  initial={{ scale: 0, rotate: -90, opacity: 0 }}
-                  animate={{ scale: 1, rotate: 0, opacity: 1 }}
-                  exit={{ scale: 0, rotate: 90, opacity: 0 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                >
-                  <Sun
-                    size={17}
-                    className="text-amber-400 filter drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]"
-                  />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="light"
-                  initial={{ scale: 0, rotate: 90, opacity: 0 }}
-                  animate={{ scale: 1, rotate: 0, opacity: 1 }}
-                  exit={{ scale: 0, rotate: -90, opacity: 0 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                >
-                  <Moon
-                    size={17}
-                    className="text-slate-700 filter drop-shadow-[0_0_4px_rgba(15,23,42,0.3)]"
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.button>
-        </div>
+            {profile.avatarUrl ? (
+              <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <User size={18} className="text-white" />
+            )}
+          </div>
+          <div className="flex-1 min-w-0 text-left">
+            <p className="text-[11px] font-black text-pestle-text truncate">{profile.name}</p>
+            <p className="text-[9px] text-gray-400 font-medium truncate">{profile.username}</p>
+          </div>
+          <UserCircle size={15} className="text-violet-500 shrink-0" />
+        </button>
       </div>
     </aside>
   );

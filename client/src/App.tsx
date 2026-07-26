@@ -11,21 +11,29 @@ import { StoreView } from './components/StoreView';
 import { CookingModeView } from './components/CookingModeView';
 import { RecipeView } from './components/RecipeView';
 import { CommunityView } from './components/CommunityView';
+import { ProfileView } from './components/ProfileView';
 import { FloatingAssistant } from './components/FloatingAssistant';
 import { PaymentModal } from './components/PaymentModal';
 import { SubscriptionModal } from './components/SubscriptionModal';
 import { ReceiptScannerModal } from './components/ReceiptScannerModal';
 
+import { HelpView } from './components/HelpView';
+import { NotFoundView } from './components/NotFoundView';
+
 const AppContent: React.FC = () => {
   const { activeTab, activeCookingRecipe } = useApp();
 
+  // Tabs that are known/valid
+  const validTabs = ['fridge', 'calendar', 'cooking', 'store', 'recipe', 'community', 'profile', 'help'];
+  const is404 = !validTabs.includes(activeTab);
+
   return (
-    <div className="min-h-screen bg-pestle-bg text-pestle-text flex flex-row w-full transition-colors duration-500 overflow-x-hidden">
+    <div className="h-screen w-screen overflow-hidden bg-pestle-bg text-pestle-text flex flex-row transition-colors duration-500">
       {/* Desktop Left Sidebar — hidden on mobile, shown md+ */}
       <SidebarNav />
 
       {/* Center content — full width on mobile, max-w-4xl on desktop */}
-      <div className="flex-1 min-w-0 min-h-screen flex flex-col bg-pestle-bg border-x border-pestle-border/20">
+      <div className="flex-1 min-w-0 h-full flex flex-col bg-pestle-bg border-x border-pestle-border/20 overflow-hidden">
         {/* Sticky Header */}
         <HeaderNav />
 
@@ -45,6 +53,9 @@ const AppContent: React.FC = () => {
               {activeTab === 'store' && <StoreView />}
               {activeTab === 'recipe' && <RecipeView />}
               {activeTab === 'community' && <CommunityView />}
+              {activeTab === 'profile' && <ProfileView />}
+              {activeTab === 'help' && <HelpView />}
+              {is404 && <NotFoundView />}
             </motion.div>
           </AnimatePresence>
         </main>
