@@ -8,6 +8,7 @@ export const BottomNav: React.FC = () => {
 
   const tabs = [
     { id: 'fridge', icon: Refrigerator, label: t('tabFridge') },
+    { id: 'recipe', icon: BookOpen, label: t('tabRecipe') },
     { id: 'cooking', icon: Flame, label: t('tabCooking') },
     { id: 'community', icon: Users, label: 'Нийгэм' },
     { id: 'store', icon: Store, label: t('tabStore'), badge: cart.length > 0 ? cart.length : null },

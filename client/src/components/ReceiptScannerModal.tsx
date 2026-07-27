@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Scan, Camera, Upload, CheckCircle2, Loader2, Sparkles, Plus } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useToast } from './Toast';
 import { parseReceiptImage } from '../services/geminiService';
 import { Ingredient } from '../types';
 
 export const ReceiptScannerModal: React.FC = () => {
   const { showScanModal, setShowScanModal, addIngredient, t } = useApp();
+  const { toastSuccess } = useToast();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [detectedItems, setDetectedItems] = useState<Partial<Ingredient>[]>([]);
@@ -80,6 +82,10 @@ export const ReceiptScannerModal: React.FC = () => {
   const handleAddAllDetected = () => {
     detectedItems.forEach((item) => addIngredient(item));
     setIsDone(true);
+    toastSuccess(
+      `${detectedItems.length} орц нэмэгдлээ! 🎉`,
+      'Хөргөгчийн жагсаалт амжилттай шинэчлэгдлээ.'
+    );
     setTimeout(() => {
       setIsDone(false);
       setSelectedImage(null);

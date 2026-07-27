@@ -1,10 +1,28 @@
 {
   "short_name": "Zity Chef",
   "name": "Zity Chef — Ухаалаг AI Тогооч Туслагч",
-  "description": "AI тогооч туслагч, хөргөгчний материал бүртгэл, долоо хоногийн хоолны хуваарь, дэлгүүрийн захиалга хүргэлт.",
+  "description": "AI тогооч туслагч, хөргөгчний материал бүртгэл, долоо хоногийн хоолны хуваарь, дэлгүүрийн захиалга хүргэлт. Монголын гэр бүлд зориулсан ухаалаг хоолны экосистем.",
   "lang": "mn",
   "dir": "ltr",
   "icons": [
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    },
     {
       "src": "/favicon.svg",
       "type": "image/svg+xml",
@@ -12,12 +30,39 @@
       "purpose": "any maskable"
     }
   ],
-  "screenshots": [],
+  "screenshots": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "form_factor": "narrow",
+      "label": "Зity Chef хөргөгч хуудас"
+    }
+  ],
   "start_url": "/",
   "scope": "/",
-  "background_color": "#F8FAFC",
-  "theme_color": "#FF9F1C",
+  "id": "/",
+  "background_color": "#090D16",
+  "theme_color": "#8B5CF6",
   "display": "standalone",
-  "orientation": "portrait",
-  "categories": ["food", "lifestyle", "productivity"]
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false,
+  "categories": ["food", "lifestyle", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Хөргөгч",
+      "short_name": "Хөргөгч",
+      "description": "Хөргөгчний материал харах",
+      "url": "/?tab=fridge",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Жор хайх",
+      "short_name": "Жор",
+      "description": "Хоолны жор хайх",
+      "url": "/?tab=recipe",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    }
+  ]
 }

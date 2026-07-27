@@ -1,11 +1,13 @@
-const CACHE_NAME = 'zity-chef-v1';
+// Zity Chef PWA Service Worker — v1.0.0
+const CACHE_NAME = 'zity-chef-v1.0.0';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/favicon.svg',
 ];
 
-// Install: pre-cache static assets
+// ── Install: pre-cache app shell ──────────────────────────────────
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -14,53 +16,76 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activate: clean old caches
+// ── Activate: delete old caches ───────────────────────────────────
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      );
-    }).then(() => self.clients.claim())
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys
+          .filter((key) => key !== CACHE_NAME)
+          .map((key) => caches.delete(key))
+      )
+    ).then(() => self.clients.claim())
   );
 });
 
-// Fetch: Stale-While-Revalidate strategy for static images & shell
+// ── Fetch strategy ────────────────────────────────────────────────
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Skip API requests from offline cache (handled by TanStack Query)
-  if (url.pathname.startsWith('/api/')) {
+  // Never cache API requests — always go to network
+  if (url.pathname.startsWith('/api/')) return;
+
+  // External resources (CDN fonts, unsplash images, etc.) — network first
+  if (url.origin !== self.location.origin) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
     return;
   }
 
-  // Images & static assets: cache first with network fallback
-  if (event.request.destination === 'image' || url.pathname.endsWith('.css') || url.pathname.endsWith('.js')) {
+  // JS/CSS assets (content-hashed filenames) — cache first (immutable)
+  if (url.pathname.match(/\/assets\/.+\.(js|css)$/)) {
     event.respondWith(
-      caches.match(event.request).then((cachedResponse) => {
-        if (cachedResponse) {
-          // Fetch update in background
-          fetch(event.request).then((networkResponse) => {
-            if (networkResponse.ok) {
-              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
-            }
-          }).catch(() => {});
-          return cachedResponse;
-        }
-        return fetch(event.request).then((networkResponse) => {
-          if (networkResponse.ok) {
-            const clone = networkResponse.clone();
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((res) => {
+          if (res.ok) {
+            const clone = res.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
           }
-          return networkResponse;
+          return res;
         });
       })
     );
     return;
   }
 
-  // Network-first with cache fallback for pages
+  // Images — stale-while-revalidate
+  if (event.request.destination === 'image') {
+    event.respondWith(
+      caches.open(CACHE_NAME).then(async (cache) => {
+        const cached = await cache.match(event.request);
+        const fetchPromise = fetch(event.request).then((res) => {
+          if (res.ok) cache.put(event.request, res.clone());
+          return res;
+        }).catch(() => cached);
+        return cached || fetchPromise;
+      })
+    );
+    return;
+  }
+
+  // HTML pages — network first, fallback to cache (offline shell)
   event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
+    fetch(event.request)
+      .then((res) => {
+        if (res.ok) {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
+        return res;
+      })
+      .catch(() => caches.match('/index.html'))
   );
 });

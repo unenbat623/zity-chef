@@ -10,11 +10,13 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useToast } from './Toast';
 import { MOCK_BANK_APPS } from '../constants';
 import { PaymentMethod } from '../types';
 
 export const PaymentModal: React.FC = () => {
   const { paymentModalState, closePaymentModal, t } = useApp();
+  const { toastSuccess } = useToast();
   const [method, setMethod] = useState<PaymentMethod>('qpay');
   const [selectedBank, setSelectedBank] = useState<string>('khanbank');
   const [timeLeft, setTimeLeft] = useState<number>(300); // 5 minutes
@@ -51,6 +53,10 @@ export const PaymentModal: React.FC = () => {
     setTimeout(() => {
       setIsProcessing(false);
       setIsSuccess(true);
+      toastSuccess(
+        'Төлбөр амжилттай бүртгэжлээлаа! 💳',
+        `₮${amount.toLocaleString()} гүйцэтгэлийг баталгаажууллаа.`
+      );
       setTimeout(() => {
         if (onSuccess) onSuccess();
         closePaymentModal();

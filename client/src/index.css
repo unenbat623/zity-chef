@@ -203,3 +203,37 @@ textarea:focus {
   background: linear-gradient(90deg, rgba(51, 65, 85, 0.6) 0%, rgba(71, 85, 105, 0.8) 50%, rgba(51, 65, 85, 0.6) 100%);
 }
 
+/* ── Toast animations ─────────────────────────────────────────── */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(50px) scale(0.92); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes toast-out {
+  from { opacity: 1; transform: translateX(0) scale(1); }
+  to   { opacity: 0; transform: translateX(50px) scale(0.88); }
+}
+
+/* ── Smooth active state glow for nav buttons ─────────────────── */
+@keyframes nav-glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--color-accent-shadow); }
+  50%       { box-shadow: 0 0 10px 3px var(--color-accent-shadow); }
+}
+
+/* ── Content transition will-change optimization ─────────────── */
+.page-content {
+  will-change: opacity, transform;
+  contain: layout style;
+}
+
+/* ── Smooth scrolling for all scrollable containers ──────────── */
+.overflow-y-auto,
+.overflow-x-auto {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Tab-switch smoothness: prevent content pop-in ───────────── */
+[data-framer-appear='true'] {
+  will-change: opacity, transform;
+}

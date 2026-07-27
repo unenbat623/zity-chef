@@ -2,42 +2,57 @@
 <html lang="mn">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
 
-    <!-- ── Албан ёсны Монгол гарчиг ───────────────────────────── -->
+    <!-- ── Гарчиг & SEO ───────────────────────────────────────── -->
     <title>Zity Chef — Ухаалаг AI Тогооч Туслагч</title>
     <meta name="description" content="Zity Chef — AI тогооч туслагч, хөргөгчний материал бүртгэл, долоо хоногийн хоолны хуваарь, дэлгүүрийн захиалга хүргэлт. Монголын гэр бүлд зориулсан ухаалаг хоолны экосистем." />
+    <meta name="keywords" content="зити шеф, zity chef, хоол хийх, AI тогооч, монгол хоол, жор, хөргөгч" />
+    <meta name="author" content="Zity Chef Team" />
+    <meta name="robots" content="index, follow" />
 
-    <!-- ── Open Graph / Social ────────────────────────────────── -->
+    <!-- ── Open Graph / Social Share ─────────────────────────── -->
     <meta property="og:title" content="Zity Chef — Ухаалаг AI Тогооч Туслагч" />
-    <meta property="og:description" content="Zity Chef — AI тогооч туслагч, хөргөгчний материал бүртгэл, долоо хоногийн хоолны хуваарь." />
+    <meta property="og:description" content="AI тогооч туслагч, хөргөгчний материал бүртгэл, долоо хоногийн хоолны хуваарь." />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="mn_MN" />
+    <meta property="og:site_name" content="Zity Chef" />
 
-    <!-- ── PWA ───────────────────────────────────────────────── -->
-    <meta name="theme-color" content="#FF9F1C" />
+    <!-- ── PWA Core ───────────────────────────────────────────── -->
+    <meta name="theme-color" content="#8B5CF6" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#8B5CF6" media="(prefers-color-scheme: light)" />
+    <meta name="color-scheme" content="dark light" />
+
+    <!-- ── Android PWA ───────────────────────────────────────── -->
     <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="Zity Chef" />
+
+    <!-- ── iOS / iPhone PWA ──────────────────────────────────── -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Zity Chef" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-    <!-- ── Icons ─────────────────────────────────────────────── -->
+    <!-- ── Icons & Manifest ──────────────────────────────────── -->
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
     <link rel="manifest" href="/manifest.json" />
 
-    <!-- ── Fonts ─────────────────────────────────────────────── -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- ── Preconnect Fonts ───────────────────────────────────── -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   </head>
   <body class="bg-pestle-bg antialiased text-pestle-text selection:bg-mango selection:text-white">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
+      // Register service worker — works on both localhost (dev) and HTTPS (prod)
+      if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(() => {});
+          navigator.serviceWorker.register('/sw.js')
+            .then((reg) => console.log('[SW] Registered, scope:', reg.scope))
+            .catch((err) => console.warn('[SW] Registration failed:', err));
         });
       }
     </script>

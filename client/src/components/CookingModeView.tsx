@@ -20,10 +20,12 @@ import {
   Layers,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useToast } from './Toast';
 import { Recipe, RecipeStep } from '../types';
 
 export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe }) => {
   const { lang, setActiveTab, t } = useApp();
+  const { toastWarning, toastSuccess } = useToast();
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [isCompleted, setIsCompleted] = useState<boolean>(false);
 
@@ -60,6 +62,8 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
       }, 1000);
     } else if (timerSeconds === 0 && isTimerRunning) {
       setIsTimerRunning(false);
+      // Toast the user that the timer is done
+      toastSuccess('Цаг хугацаа дууслаа! ⏰', 'Дараагийн алхам руу шилжихэд бэлэн.');
       // Play alert tone if browser supports
       try {
         const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -114,7 +118,10 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
 
   const toggleVoiceGuide = () => {
     if (!('speechSynthesis' in window)) {
-      alert('Уучлаарай, таны хөтөч дуут заавар дэмжихгүй байна.');
+      toastWarning(
+        'Дуут заавар дэмжигдэхгүй байна',
+        'Таны хөтөч Speech Synthesis API-г дэмжихгүй байна.'
+      );
       return;
     }
 
@@ -157,19 +164,30 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
     <div className="p-4 sm:p-6 space-y-6 max-w-4xl mx-auto">
       {/* Top Header & Breadcrumb */}
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-pestle-card border border-pestle-border p-4 rounded-2xl shadow-xs">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-extrabold text-mango uppercase tracking-widest bg-mango/10 px-2.5 py-0.5 rounded-full">
-              {recipe.cuisine || 'International'}
-            </span>
-            <span className="text-[10px] font-bold text-gray-400">
-              • {recipe.difficulty} • {steps.length} Алхамтай
-            </span>
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
+          <button
+            onClick={() => setActiveTab('recipe')}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-extrabold bg-pestle-bg border border-pestle-border text-pestle-text hover:border-mango hover:text-mango transition-all cursor-pointer shadow-xs shrink-0"
+            title="Жор цэс рүү буцах"
+          >
+            <ChevronLeft size={18} />
+            <span>Жор руу буцах</span>
+          </button>
+
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-extrabold text-mango uppercase tracking-widest bg-mango/10 px-2.5 py-0.5 rounded-full">
+                {recipe.cuisine || 'International'}
+              </span>
+              <span className="text-[10px] font-bold text-gray-400">
+                • {recipe.difficulty} • {steps.length} Алхамтай
+              </span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black text-pestle-text mt-1">{recipe.title}</h2>
           </div>
-          <h2 className="text-xl sm:text-2xl font-black text-pestle-text mt-1">{recipe.title}</h2>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
           <button
             onClick={toggleVoiceGuide}
             className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all cursor-pointer ${
@@ -205,13 +223,13 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
               Сайхан хооллоорой! Та masterclass түвшний хоолыг амжилттай хийж дуусгалаа. ✨
             </p>
           </div>
-          <div className="pt-2 flex justify-center gap-3">
+          <div className="pt-2 flex flex-wrap justify-center gap-3">
             <button
               onClick={() => {
                 setIsCompleted(false);
                 setCurrentStep(0);
               }}
-              className="btn-secondary py-3 px-6 text-xs font-bold"
+              className="btn-secondary py-3 px-5 text-xs font-bold cursor-pointer"
             >
               Дахин эхнээс нь үзэх
             </button>
@@ -219,9 +237,20 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
               onClick={() => {
                 setIsCompleted(false);
                 setCurrentStep(0);
+                setActiveTab('recipe');
+              }}
+              className="btn-primary py-3.5 px-7 text-xs font-bold shadow-lg shadow-mango/20 cursor-pointer flex items-center gap-1.5"
+            >
+              <ChevronLeft size={16} />
+              <span>Жор руу буцах</span>
+            </button>
+            <button
+              onClick={() => {
+                setIsCompleted(false);
+                setCurrentStep(0);
                 setActiveTab('fridge');
               }}
-              className="btn-primary py-3.5 px-8 text-xs font-bold shadow-lg shadow-mango/20"
+              className="btn-secondary py-3 px-5 text-xs font-bold cursor-pointer"
             >
               Хөргөгч рүү буцах
             </button>

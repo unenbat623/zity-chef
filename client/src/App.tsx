@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AppProvider, useApp } from './context/AppContext';
+import { ToastProvider } from './components/Toast';
 import { HeaderNav } from './components/HeaderNav';
 import { BottomNav } from './components/BottomNav';
 import { SidebarNav } from './components/SidebarNav';
@@ -16,7 +17,6 @@ import { FloatingAssistant } from './components/FloatingAssistant';
 import { PaymentModal } from './components/PaymentModal';
 import { SubscriptionModal } from './components/SubscriptionModal';
 import { ReceiptScannerModal } from './components/ReceiptScannerModal';
-
 import { HelpView } from './components/HelpView';
 import { NotFoundView } from './components/NotFoundView';
 
@@ -39,13 +39,13 @@ const AppContent: React.FC = () => {
 
         {/* Main scrollable content area */}
         <main className="flex-1 overflow-y-auto pb-20 md:pb-6">
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={activeTab}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2 }}
+              initial={{ opacity: 0, x: 12 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -12 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 34 }}
             >
               {activeTab === 'fridge' && <FridgeView />}
               {activeTab === 'calendar' && <CalendarView />}
@@ -83,7 +83,9 @@ const AppContent: React.FC = () => {
 export default function App() {
   return (
     <AppProvider>
-      <AppContent />
+      <ToastProvider>
+        <AppContent />
+      </ToastProvider>
     </AppProvider>
   );
 }
