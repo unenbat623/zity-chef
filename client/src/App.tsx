@@ -38,7 +38,7 @@ const AppContent: React.FC = () => {
         <HeaderNav />
 
         {/* Main scrollable content area */}
-        <main className="flex-1 overflow-y-auto pb-20 md:pb-6">
+        <main className="flex-1 overflow-y-auto pb-24 md:pb-6">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={activeTab}

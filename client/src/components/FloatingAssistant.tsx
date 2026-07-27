@@ -52,7 +52,8 @@ export const FloatingAssistant: React.FC = () => {
 
   return (
     <>
-      <div className="fixed bottom-20 right-4 z-40 flex flex-col items-end gap-2 pointer-events-none">
+      {/* Floating Trigger Button & Greeting Bubble */}
+      <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:bottom-6 right-3 sm:right-5 z-40 flex flex-col items-end gap-2 pointer-events-none">
         <AnimatePresence>
           {showBubble && !isOpen && (
             <motion.div
@@ -79,39 +80,49 @@ export const FloatingAssistant: React.FC = () => {
 
         <motion.button
           onClick={() => setIsOpen(!isOpen)}
-          animate={{ scale: [1, 1.05, 1] }}
+          animate={{ scale: [1, 1.04, 1] }}
           transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-          className="w-12 h-12 sm:w-14 sm:h-14 bg-mango rounded-full shadow-xl flex items-center justify-center text-white active:scale-90 transition-transform pointer-events-auto border-2 border-white dark:border-slate-900"
+          className="w-12 h-12 sm:w-14 sm:h-14 bg-mango rounded-full shadow-xl flex items-center justify-center text-white active:scale-90 transition-transform pointer-events-auto border-2 border-white dark:border-slate-900 cursor-pointer"
         >
           {isOpen ? <X size={22} /> : <MessageCircle size={22} />}
         </motion.button>
       </div>
 
+      {/* Floating Chat Modal */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-40 right-5 left-5 md:left-auto md:w-84 bg-pestle-card border border-pestle-border rounded-[28px] shadow-2xl z-[150] overflow-hidden flex flex-col h-[460px]"
+            className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom,0px))] md:bottom-24 right-3 left-3 sm:left-auto sm:right-6 sm:w-84 bg-pestle-card border border-pestle-border rounded-[28px] shadow-2xl z-[150] overflow-hidden flex flex-col h-[420px] max-h-[68vh]"
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-mango to-amber-500 p-4 text-white flex items-center gap-3 shrink-0 shadow-md">
-              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center font-bold text-lg">
-                👩‍🍳
+            <div className="bg-gradient-to-r from-mango to-amber-500 p-3.5 text-white flex items-center justify-between shrink-0 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center font-bold text-base">
+                  👩‍🍳
+                </div>
+                <div>
+                  <p className="font-extrabold text-xs sm:text-sm flex items-center gap-1.5">
+                    {t('assistantName')} <Sparkles size={13} className="text-amber-200" />
+                  </p>
+                  <p className="text-[9px] text-white/80 font-medium">
+                    Gemini 3 Flash • {t('online')}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="font-extrabold text-sm flex items-center gap-1.5">
-                  {t('assistantName')} <Sparkles size={14} className="text-amber-200" />
-                </p>
-                <p className="text-[10px] text-white/80 font-medium">
-                  Gemini 3 Flash • {t('online')}
-                </p>
-              </div>
+
+              <button
+                onClick={() => setIsOpen(false)}
+                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+              >
+                <X size={15} />
+              </button>
             </div>
 
             {/* Chat Body */}
-            <div className="p-4 flex-1 overflow-y-auto flex flex-col gap-3 bg-pestle-bg/50">
+            <div className="p-3.5 flex-1 overflow-y-auto flex flex-col gap-3 bg-pestle-bg/50">
               {messages.map((msg, idx) => (
                 <div
                   key={idx}
@@ -119,14 +130,14 @@ export const FloatingAssistant: React.FC = () => {
                     msg.role === 'assistant'
                       ? 'bg-pestle-card border border-pestle-border rounded-2xl rounded-tl-none self-start text-pestle-text'
                       : 'bg-mango text-white rounded-2xl rounded-tr-none self-end font-medium'
-                  } p-3.5 max-w-[85%] shadow-sm`}
+                  } p-3 max-w-[85%] shadow-xs`}
                 >
                   <p className="text-xs leading-relaxed whitespace-pre-wrap">{msg.text}</p>
                 </div>
               ))}
 
               {isLoading && (
-                <div className="bg-pestle-card border border-pestle-border p-3 rounded-2xl rounded-tl-none self-start shadow-sm flex gap-1.5 items-center">
+                <div className="bg-pestle-card border border-pestle-border p-3 rounded-2xl rounded-tl-none self-start shadow-xs flex gap-1.5 items-center">
                   <span className="w-1.5 h-1.5 bg-mango rounded-full animate-ping" />
                   <span className="text-[11px] font-bold text-gray-400">Эгч нь бодож байна...</span>
                 </div>
@@ -141,14 +152,14 @@ export const FloatingAssistant: React.FC = () => {
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                 placeholder={t('placeholderMsg')}
-                className="flex-1 bg-pestle-bg border border-pestle-border rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-mango transition-colors text-pestle-text"
+                className="flex-1 bg-pestle-bg border border-pestle-border rounded-xl px-3.5 py-2 text-xs font-medium focus:outline-none focus:border-mango transition-colors text-pestle-text"
               />
               <button
                 onClick={handleSend}
                 disabled={isLoading}
-                className="w-10 h-10 bg-mango text-white rounded-xl flex items-center justify-center active:scale-95 transition-transform disabled:opacity-50 shadow-sm"
+                className="w-9 h-9 bg-mango text-white rounded-xl flex items-center justify-center active:scale-95 transition-transform disabled:opacity-50 shadow-xs cursor-pointer shrink-0"
               >
-                <Send size={16} />
+                <Send size={15} />
               </button>
             </div>
           </motion.div>
