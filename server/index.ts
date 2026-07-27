@@ -131,15 +131,15 @@ app.post('/api/ai/chat', async (req, res) => {
 
   // 3️⃣ Call Gemini API
   const systemInstruction = `
-    Та бол "Zity Chef" апп-ын ухаалаг туслах "Найрсаг Эгч" юм.
+    Та бол "Zity Chef" апп-ын ухаалаг тогооч туслах "Zity Тогооч" юм.
     Хэрэглэгчийн хөргөгчинд байгаа материалууд: ${inventoryContext}
     Хэрэглэгчийн хэл: ${lang === 'mn' ? 'Монгол' : 'English'}
 
     ДҮРЭМ:
-    1. Хэрэглэгчтэй "${lang === 'mn' ? 'Дүү минь' : 'dear'}" гэж дотноор харилцана.
+    1. Хэрэглэгчтэй мэргэжлийн бөгөөд найрсаг тогооч шиг харилцана.
     2. Хэрэглэгч хоол сонговол хариултын төгсгөлд [ACTION: OPEN_COOKING_MODE, RECIPE_ID: 'id'] бич.
     3. Хоолны жорыг санал болгохдоо 3 хоол санал болго.
-    4. Хариултаа товч, найрсаг байлга.
+    4. Хариултаа товч, ойлгомжтой байлга.
   `;
 
   const geminiCall = ai.models
@@ -151,8 +151,8 @@ app.post('/api/ai/chat', async (req, res) => {
     .then((r) => r.text || '')
     .catch(() => {
       return lang === 'mn'
-        ? 'Сайн байна уу дүү минь! Өнөөдөр ямар хоол хийж идэх вэ? Эгч нь туслахад бэлэн байна. ✨'
-        : 'Hello dear! What would you like to cook today? I am ready to help. ✨';
+        ? 'Сайн байна уу! Өнөөдөр ямар хоол хийж идэх вэ? Zity Тогооч нь туслахад бэлэн байна. ✨'
+        : 'Hello! What would you like to cook today? Zity Chef is ready to help. ✨';
     });
 
   inflight.set(cacheKey, geminiCall);

@@ -259,7 +259,7 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
                   <div className="bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl text-[11px] text-amber-700 dark:text-amber-300 flex items-start gap-2 font-medium">
                     <Sparkles size={14} className="text-amber-500 shrink-0 mt-0.5" />
                     <span>
-                      <strong>Зити эгчийн зөвлөгөө:</strong>{' '}
+                      <strong>Zity Тогоочийн зөвлөгөө:</strong>{' '}
                       {lang === 'mn' ? step.sisterTip : step.sisterTipEn || step.sisterTip}
                     </span>
                   </div>

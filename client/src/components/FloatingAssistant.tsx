@@ -70,8 +70,8 @@ export const FloatingAssistant: React.FC = () => {
               </button>
               <p className="text-[11px] font-semibold leading-tight text-pestle-text">
                 {lang === 'mn'
-                  ? 'Сайн уу дүү минь! Эгч нь туслах уу? ✨'
-                  : 'Hello dear! Need help cooking today? ✨'}
+                  ? 'Сайн уу! Zity Тогоочоос зөвлөгөө авах уу? ✨'
+                  : 'Hello! Need chef tips today? ✨'}
               </p>
               <div className="absolute -bottom-1 right-4 w-2.5 h-2.5 bg-pestle-card border-r border-b border-pestle-border rotate-45" />
             </motion.div>
@@ -101,7 +101,7 @@ export const FloatingAssistant: React.FC = () => {
             <div className="bg-gradient-to-r from-mango to-amber-500 p-3.5 text-white flex items-center justify-between shrink-0 shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center font-bold text-base">
-                  👩‍🍳
+                  👨‍🍳
                 </div>
                 <div>
                   <p className="font-extrabold text-xs sm:text-sm flex items-center gap-1.5">
@@ -139,7 +139,7 @@ export const FloatingAssistant: React.FC = () => {
               {isLoading && (
                 <div className="bg-pestle-card border border-pestle-border p-3 rounded-2xl rounded-tl-none self-start shadow-xs flex gap-1.5 items-center">
                   <span className="w-1.5 h-1.5 bg-mango rounded-full animate-ping" />
-                  <span className="text-[11px] font-bold text-gray-400">Эгч нь бодож байна...</span>
+                  <span className="text-[11px] font-bold text-gray-400">Zity Тогооч бодож байна...</span>
                 </div>
               )}
             </div>

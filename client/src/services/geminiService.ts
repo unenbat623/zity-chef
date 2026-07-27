@@ -62,8 +62,8 @@ export async function getSisterAdvice(
     })
     .catch(() =>
       lang === 'mn'
-        ? 'Уучлаарай дүү минь, сервертэй холбогдож чадсангүй. Дахин оролдоод үзээрэй. ✨'
-        : 'Sorry dear, could not reach the server. Please try again. ✨'
+        ? 'Уучлаарай, сервертэй холбогдож чадсангүй. Дахин оролдоод үзээрэй. ✨'
+        : 'Sorry, could not reach the server. Please try again. ✨'
     )
     .finally(() => pendingRequests.delete(requestKey));
 

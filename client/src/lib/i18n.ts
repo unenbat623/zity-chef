@@ -24,7 +24,7 @@ export const translations = {
     upgradeBtn: 'Эрх Ахиулах',
     subPricePro: '₮7,900 / сар',
     subPriceFamily: '₮14,900 / сар',
-    proFeature1: 'Хязгааргүй AI Эгч туслах',
+    proFeature1: 'Хязгааргүй AI Zity Тогооч туслах',
     proFeature2: 'AI Баримт ба Зураг уншигч (OCR)',
     proFeature3: 'Калори ба Илчлэг тооцоолуур',
     proFeature4: 'Жорын дэлгэрэнгүй шим тэжээлийн шинжилгээ',
@@ -57,12 +57,12 @@ export const translations = {
     // Cooking & Recipes
     cookingTitle: 'Хоол хийх',
     noRecipeSelected: 'Хоол сонгогдоогүй байна',
-    chooseFromAssistant: 'Эгчтэйгээ чатлаж эсвэл жор хэсгээс хоолоо сонгоорой. ✨',
+    chooseFromAssistant: 'Zity Тогоочтой чатлаж эсвэл жор хэсгээс хоолоо сонгоорой. ✨',
     step: 'Алхам',
     prevStep: 'Өмнөх',
     nextStep: 'Дараах',
     finishCooking: 'Дуусгах',
-    sisterTip: 'Эгчийн зөвлөгөө:',
+    sisterTip: 'Zity Тогоочийн зөвлөгөө:',
     calories: 'Илчлэг',
     protein: 'Уураг',
     carbs: 'Нүүрс ус',
@@ -73,11 +73,11 @@ export const translations = {
     hard: 'Хэцүү',
 
     // AI Assistant
-    assistantName: 'Найрсаг Эгч AI',
+    assistantName: 'Ухаалаг Zity Тогооч',
     online: 'Онлайн байна',
     placeholderMsg: 'Зурвас бичих...',
     aiInitialGreeting:
-      'Сайн уу, дүү минь! Эгч нь хөргөгчийг чинь эмхлэхэд тусалъя. Юу байгаагаа бүртгэчих үү? ✨',
+      'Сайн уу! Zity Тогооч нь хөргөгчийг чинь эмхлэхэд тусалъя. Юу байгаагаа бүртгэчих үү? ✨',
   },
   en: {
     appName: 'Zity Chef',
@@ -104,7 +104,7 @@ export const translations = {
     upgradeBtn: 'Upgrade Plan',
     subPricePro: '$4.99 / mo',
     subPriceFamily: '$9.99 / mo',
-    proFeature1: 'Unlimited AI Sister Chef',
+    proFeature1: 'Unlimited AI Zity Chef',
     proFeature2: 'AI Receipt & Food Photo OCR',
     proFeature3: 'Smart Calorie & Macro Calculator',
     proFeature4: 'Detailed Meal Plan Nutrition Analytics',
@@ -137,12 +137,12 @@ export const translations = {
     // Cooking & Recipes
     cookingTitle: 'Cooking Assistant',
     noRecipeSelected: 'No recipe selected',
-    chooseFromAssistant: 'Chat with Sister AI or select a recipe from catalog to cook. ✨',
+    chooseFromAssistant: 'Chat with Zity Chef or select a recipe from catalog to cook. ✨',
     step: 'Step',
     prevStep: 'Previous',
     nextStep: 'Next',
     finishCooking: 'Complete',
-    sisterTip: "Sister's Tip:",
+    sisterTip: "Zity Chef's Tip:",
     calories: 'Calories',
     protein: 'Protein',
     carbs: 'Carbs',
@@ -153,10 +153,10 @@ export const translations = {
     hard: 'Hard',
 
     // AI Assistant
-    assistantName: 'Friendly AI Sister',
+    assistantName: 'Smart Zity Chef',
     online: 'Online',
     placeholderMsg: 'Type a message...',
     aiInitialGreeting:
-      'Hello dear! Let me help you organize your fridge. What ingredients do we have today? ✨',
+      'Hello! I am Zity Chef, let me help you organize your fridge. What ingredients do we have today? ✨',
   },
 };
