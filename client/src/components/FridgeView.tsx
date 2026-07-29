@@ -9,7 +9,11 @@ import { IngredientPicker } from './IngredientPicker';
 import { IngredientImage } from './SmartImage';
 import { getIngredientImageUrl } from '../lib/imageService';
 import { EditIngredientModal } from './EditIngredientModal';
-import { requestNotificationPermission, sendExpiryNotification } from '../lib/notificationService';
+import {
+  requestNotificationPermission,
+  sendExpiryNotification,
+  subscribeToPush,
+} from '../lib/notificationService';
 
 export const FridgeView: React.FC = () => {
   const {
@@ -33,7 +37,10 @@ export const FridgeView: React.FC = () => {
 
   const handleEnableNotifications = async () => {
     const granted = await requestNotificationPermission();
-    if (granted && expiringCount > 0) {
+    if (!granted) return;
+    // Register for server-sent Web Push (expiry reminders when the app is closed).
+    subscribeToPush();
+    if (expiringCount > 0) {
       sendExpiryNotification(expiringItems);
     }
   };

@@ -256,6 +256,18 @@ ALTER TABLE public.store_products ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "products_read" ON public.store_products FOR SELECT USING (true);
 -- No insert/update policy: only the service_role (admin/seed) can modify.
 
+-- ── Web Push subscriptions ────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.push_subscriptions (
+  id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id      UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  endpoint     TEXT NOT NULL UNIQUE,
+  subscription JSONB NOT NULL,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_push_user ON public.push_subscriptions(user_id);
+ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "push_own" ON public.push_subscriptions FOR ALL USING (auth.uid() = user_id);
+
 -- ════════════════════════════════════════════════════════════════════════════
 -- Grants — RLS still filters rows, but the API roles need table-level access.
 -- (Supabase's dashboard sets these automatically; a raw migration must be explicit.)
