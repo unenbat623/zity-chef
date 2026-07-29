@@ -310,10 +310,7 @@ export const ProfileView: React.FC = () => {
           </div>
 
           {/* Online badge */}
-          <div
-            className="absolute bottom-1 right-1 w-5 h-5 rounded-full border-2 border-pestle-card"
-            style={{ backgroundColor: '#22C55E' }}
-          />
+          <div className="absolute bottom-1 right-1 w-5 h-5 rounded-full border-2 border-pestle-card bg-mint" />
         </div>
       </div>
 

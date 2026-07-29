@@ -95,7 +95,7 @@ export const FloatingAssistant: React.FC = () => {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom,0px))] md:bottom-24 right-3 left-3 sm:left-auto sm:right-6 sm:w-84 bg-pestle-card border border-pestle-border rounded-[28px] shadow-2xl z-[150] overflow-hidden flex flex-col h-[420px] max-h-[68vh]"
+            className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom,0px))] md:bottom-24 right-3 left-3 sm:left-auto sm:right-6 sm:w-80 bg-pestle-card border border-pestle-border rounded-[28px] shadow-2xl z-[150] overflow-hidden flex flex-col h-[420px] max-h-[68vh]"
           >
             {/* Header */}
             <div className="bg-gradient-to-r from-mango to-amber-500 p-3.5 text-white flex items-center justify-between shrink-0 shadow-sm">
@@ -151,6 +151,7 @@ export const FloatingAssistant: React.FC = () => {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                aria-label={t('placeholderMsg')}
                 placeholder={t('placeholderMsg')}
                 className="flex-1 bg-pestle-bg border border-pestle-border rounded-xl px-3.5 py-2 text-xs font-medium focus:outline-none focus:border-mango transition-colors text-pestle-text"
               />

@@ -9,13 +9,10 @@ import {
   ChevronLeft,
   X,
   Utensils,
-  Filter,
   ChevronDown,
-  Check,
   Star,
   ChefHat,
   ShoppingBag,
-  Zap,
   RotateCcw,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
@@ -98,6 +95,7 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
 
         <button
           onClick={onClose}
+          aria-label="Буцах"
           className="absolute top-6 left-6 w-11 h-11 bg-black/60 backdrop-blur-md text-white rounded-full flex items-center justify-center shadow-xl hover:bg-mango transition-colors"
         >
           <ChevronLeft size={24} />
@@ -453,6 +451,7 @@ export const RecipeView: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onFocus={() => setIsSearchFocused(true)}
+            aria-label="Жор хайх"
             placeholder="Хоолны нэр, орц, эсвэл категороор хайх (жишээ нь: Лазанья, Сэлмон, Өндөг)..."
             className="w-full bg-pestle-card border border-pestle-border rounded-2xl py-3.5 pl-11 pr-10 text-xs sm:text-sm font-semibold focus:outline-none focus:border-mango focus:ring-2 focus:ring-mango/20 transition-all text-pestle-text shadow-sm"
           />

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import {
   Sparkles,
   ShoppingBag,
@@ -8,7 +7,6 @@ import {
   CheckCircle2,
   Mic,
   Droplets,
-  PlusCircle,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getSisterAdvice, getServerHealth } from '../services/geminiService';
@@ -149,6 +147,7 @@ export const DesktopWidgetPanel: React.FC = () => {
             value={inputVal}
             onChange={(e) => setInputVal(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSendText(inputVal)}
+            aria-label={t('placeholderMsg')}
             placeholder={t('placeholderMsg')}
             className="flex-1 bg-pestle-bg border border-pestle-border rounded-xl px-3 py-2 text-xs font-medium focus:outline-none focus:border-mango text-pestle-text"
           />
@@ -229,10 +228,10 @@ export const DesktopWidgetPanel: React.FC = () => {
         </div>
       )}
 
-      {/* System Health / Cache Savings Badge */}
+      {/* System Health / Cache Savings Badge — reflects the real health check */}
       <div className="pt-2 border-t border-pestle-border/60 flex items-center justify-between text-[10px] text-gray-400 font-bold">
-        <span className="flex items-center gap-1 text-mint">
-          <CheckCircle2 size={12} /> Edge BFF Connected
+        <span className={`flex items-center gap-1 ${healthData ? 'text-mint' : 'text-gray-400'}`}>
+          <CheckCircle2 size={12} /> {healthData ? 'Edge BFF Connected' : 'Холбогдож байна…'}
         </span>
         {healthData?.cache?.totalCacheHits > 0 && (
           <span className="text-mango">Cache hits: {healthData.cache.totalCacheHits}</span>

@@ -4,7 +4,6 @@ import {
   Store,
   ShoppingBag,
   Plus,
-  Minus,
   Trash2,
   MapPin,
   CheckCircle,
@@ -25,6 +24,8 @@ export const StoreView: React.FC = () => {
     triggerPayment,
     createOrder,
     orders,
+    ordersLoading,
+    ordersError,
     t,
   } = useApp();
   const [address, setAddress] = useState<string>('Сүхбаатар дүүрэг, 1-р хороо, Zity Tower 402');
@@ -81,6 +82,16 @@ export const StoreView: React.FC = () => {
             }`}
           >
             Сагс ({cart.length})
+          </button>
+          <button
+            onClick={() => setActiveSubTab('orders')}
+            className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg transition-all text-center ${
+              activeSubTab === 'orders'
+                ? 'bg-mango text-white'
+                : 'text-gray-400 hover:text-pestle-text'
+            }`}
+          >
+            Захиалга
           </button>
         </div>
       </header>
@@ -243,7 +254,18 @@ export const StoreView: React.FC = () => {
           <h3 className="text-sm font-bold text-pestle-text">
             Миний захиалгын түүх ({orders.length})
           </h3>
-          {orders.length === 0 ? (
+          {ordersLoading ? (
+            <div className="space-y-3">
+              {[0, 1].map((i) => (
+                <div key={i} className="pestle-card p-4 h-24 animate-pulse bg-pestle-bg/50" />
+              ))}
+            </div>
+          ) : ordersError ? (
+            <div className="text-center py-8 bg-red-500/5 border border-red-500/20 rounded-2xl p-5 space-y-2">
+              <p className="text-xs font-bold text-red-500">Захиалгын түүх ачаалж чадсангүй</p>
+              <p className="text-[11px] text-gray-400">Сервертэй холбогдож чадсангүй. Дараа дахин оролдоно уу.</p>
+            </div>
+          ) : orders.length === 0 ? (
             <p className="text-xs text-gray-400">Одоогоор захиалга байхгүй байна.</p>
           ) : (
             orders.map((order) => (

@@ -9,16 +9,10 @@ import {
   ChefHat,
   Image,
   Sparkles,
-  BookOpen,
   MessageSquare,
   Camera,
   Bookmark,
   Share2,
-  ChevronLeft,
-  ChevronRight,
-  Smile,
-  Check,
-  Tag,
 } from 'lucide-react';
 import { SmartImage } from './SmartImage';
 import { MOCK_RECIPES } from '../data/recipes';
@@ -383,6 +377,7 @@ const StoryViewerModal: React.FC<{
               type="text"
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
+              aria-label="Хариу бичих"
               placeholder={`${storyGroup.userName}-д хариу бичих...`}
               className="flex-1 bg-white/15 backdrop-blur-md border border-white/25 rounded-full px-4 py-2.5 text-xs text-white placeholder-white/70 focus:outline-none focus:border-white"
             />
@@ -541,6 +536,7 @@ const CreateStoryModal: React.FC<{
             type="text"
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
+            aria-label="Story гарчиг"
             placeholder="Story дээр гарах гарчиг, сэтгэгдэл..."
             className="w-full bg-pestle-bg border border-pestle-border rounded-xl px-3.5 py-2.5 text-xs font-medium text-pestle-text focus:outline-none focus:border-mango"
           />
@@ -661,6 +657,7 @@ const DirectChatDrawer: React.FC<{
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+            aria-label="Зурвас бичих"
             placeholder="Зурвас бичих..."
             className="flex-1 bg-pestle-card border border-pestle-border rounded-xl px-4 py-2.5 text-xs text-pestle-text focus:outline-none focus:border-mango"
           />
@@ -813,6 +810,7 @@ const CreatePostModal: React.FC<{ onClose: () => void; onPost: (p: any) => void 
           rows={3}
           value={caption}
           onChange={(e) => setCaption(e.target.value)}
+          aria-label="Нийтлэлийн тайлбар"
           placeholder="Хоолынхоо тухай бичнэ үү... #ZityChef #Healthy"
           className="w-full bg-pestle-bg border border-pestle-border rounded-xl px-4 py-3 text-xs font-medium text-pestle-text focus:outline-none focus:border-mango resize-none"
         />
@@ -960,7 +958,19 @@ const PostCard: React.FC<{
             <span className="text-xs font-extrabold">{post.comments.length}</span>
           </button>
 
-          <button className="text-pestle-text hover:text-mango transition-colors">
+          <button
+            onClick={() => {
+              const url = window.location.href;
+              const shareData = { title: 'Zity Chef', text: 'Zity Chef дээрх жор', url };
+              if (navigator.share) {
+                navigator.share(shareData).catch(() => {});
+              } else {
+                navigator.clipboard?.writeText(url).catch(() => {});
+              }
+            }}
+            aria-label="Хуваалцах"
+            className="text-pestle-text hover:text-mango transition-colors"
+          >
             <Share2 size={19} />
           </button>
         </div>
@@ -1003,6 +1013,7 @@ const PostCard: React.FC<{
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleComment()}
+                aria-label="Сэтгэгдэл бичих"
                 placeholder="Сэтгэгдэл бичих..."
                 className="flex-1 bg-pestle-bg border border-pestle-border rounded-xl px-3.5 py-2 text-xs font-medium focus:outline-none focus:border-mango"
               />
@@ -1157,7 +1168,7 @@ export const CommunityView: React.FC = () => {
                     : 'bg-gradient-to-tr from-amber-500 via-rose-500 to-fuchsia-600'
                 }`}
               >
-                <div className="w-15 h-15 sm:w-16 sm:h-16 rounded-full border-2 border-pestle-card overflow-hidden relative">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-pestle-card overflow-hidden relative">
                   <img
                     src={group.userAvatar}
                     alt={group.userName}

@@ -12,7 +12,6 @@ import {
   Moon,
   RotateCw,
   ChefHat,
-  HeartHandshake,
   TrendingUp,
   Check,
 } from 'lucide-react';
@@ -138,11 +137,11 @@ export const CalendarView: React.FC = () => {
     setTimeout(() => setAddedToast(null), 3000);
   };
 
-  // AI Re-plan simulation based on fridge inventory
+  // Re-plan the week by picking new recipes for each day.
+  // (Genuine inventory-aware AI planning is a Phase 2 server endpoint.)
   const handleRegeneratePlan = () => {
     setIsRegenerating(true);
     setTimeout(() => {
-      // Shuffle schedule to simulate AI optimization
       setSchedule((prev) =>
         prev.map((s) => {
           const randB = MOCK_RECIPES[Math.floor(Math.random() * MOCK_RECIPES.length)];
@@ -157,7 +156,7 @@ export const CalendarView: React.FC = () => {
         })
       );
       setIsRegenerating(false);
-      setAddedToast('✨ Хөргөгчинд байгаа орцуудад тааруулан AI шинэчлэн төлөвлөлөө!');
+      setAddedToast('🍳 Долоо хоногийн хоолны хуваарь шинэчлэгдлээ!');
       setTimeout(() => setAddedToast(null), 3500);
     }, 800);
   };

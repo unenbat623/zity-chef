@@ -94,6 +94,7 @@ export const PaymentModal: React.FC = () => {
             </div>
             <button
               onClick={closePaymentModal}
+              aria-label="Хаах"
               className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
             >
               <X size={18} />

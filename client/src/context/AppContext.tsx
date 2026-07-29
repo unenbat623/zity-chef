@@ -30,6 +30,8 @@ interface AppContextType {
   clearCart: () => void;
   totalCartAmount: number;
   orders: Order[];
+  ordersLoading: boolean;
+  ordersError: boolean;
   createOrder: (address: string, paymentMethod: 'qpay' | 'socialpay' | 'card') => Order;
   activeTab: string;
   setActiveTab: (tab: string) => void;
@@ -82,7 +84,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     updateIngredient,
     removeIngredient,
   } = useInventory();
-  const { orders, createOrder: createOrderMutation } = useOrders();
+  const {
+    orders,
+    isLoading: ordersLoading,
+    isError: ordersError,
+    createOrder: createOrderMutation,
+  } = useOrders();
 
   const [subscription, setSubscriptionState] = useState<SubscriptionTier>(() => {
     return (localStorage.getItem('zity_subscription') as SubscriptionTier) || 'free';
@@ -287,6 +294,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       clearCart,
       totalCartAmount,
       orders: (orders as unknown as Order[]) || [],
+      ordersLoading,
+      ordersError,
       createOrder: handleCreateOrder,
       activeTab,
       setActiveTab,
@@ -322,6 +331,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       clearCart,
       totalCartAmount,
       orders,
+      ordersLoading,
+      ordersError,
       handleCreateOrder,
       activeTab,
       activeCookingRecipe,

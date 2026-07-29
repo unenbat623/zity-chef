@@ -236,7 +236,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               </div>
             </div>
 
-            <button onClick={onClose} className="modal-close-btn">
+            <button onClick={onClose} aria-label="Хаах" className="modal-close-btn">
               <X size={18} />
             </button>
           </div>

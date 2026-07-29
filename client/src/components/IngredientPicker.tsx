@@ -343,6 +343,7 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                   <button
                     type="button"
                     onClick={() => setQuantity(Math.max(1, quantity - (unit === 'гр' ? 100 : 1)))}
+                    aria-label="Хэмжээ хасах"
                     className="w-10 h-10 rounded-xl bg-pestle-bg border border-pestle-border flex items-center justify-center text-pestle-text"
                   >
                     <Minus size={16} />
@@ -356,6 +357,7 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                   <button
                     type="button"
                     onClick={() => setQuantity(quantity + (unit === 'гр' ? 100 : 1))}
+                    aria-label="Хэмжээ нэмэх"
                     className="w-10 h-10 rounded-xl bg-pestle-bg border border-pestle-border flex items-center justify-center text-pestle-text"
                   >
                     <Plus size={16} />
@@ -410,6 +412,7 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
 
                 <div className="flex items-center gap-3">
                   <button
+                    aria-label="Хэмжээ хасах"
                     onClick={() => setQuantity(Math.max(1, quantity - (unit === 'гр' ? 50 : 1)))}
                     className="w-10 h-10 rounded-xl bg-pestle-card border border-pestle-border flex items-center justify-center text-pestle-text"
                   >
@@ -425,6 +428,7 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                     className="flex-1 h-2 bg-gray-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-mango"
                   />
                   <button
+                    aria-label="Хэмжээ нэмэх"
                     onClick={() => setQuantity(quantity + (unit === 'гр' ? 50 : 1))}
                     className="w-10 h-10 rounded-xl bg-pestle-card border border-pestle-border flex items-center justify-center text-pestle-text"
                   >

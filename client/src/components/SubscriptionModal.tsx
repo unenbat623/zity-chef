@@ -239,6 +239,7 @@ export const SubscriptionModal: React.FC = () => {
             </div>
             <button
               onClick={() => setShowSubModal(false)}
+              aria-label="Хаах"
               className="w-9 h-9 border border-pestle-border rounded-2xl flex items-center justify-center text-gray-400 hover:text-pestle-text hover:border-pestle-text transition-colors mt-1"
             >
               <X size={17} />

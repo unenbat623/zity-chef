@@ -118,6 +118,7 @@ export const FridgeView: React.FC = () => {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            aria-label="Орц материалаар хайх"
             placeholder="Орц материалаар хайх..."
             className="w-full bg-pestle-card border border-pestle-border rounded-xl py-2.5 pl-10 pr-4 text-xs font-medium focus:outline-none focus:border-mango transition-colors text-pestle-text shadow-sm"
           />

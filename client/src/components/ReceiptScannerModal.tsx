@@ -125,6 +125,7 @@ export const ReceiptScannerModal: React.FC = () => {
                 setSelectedImage(null);
                 setDetectedItems([]);
               }}
+              aria-label="Хаах"
               className="modal-close-btn"
             >
               <X size={18} />

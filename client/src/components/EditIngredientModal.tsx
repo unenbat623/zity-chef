@@ -81,7 +81,7 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
             <h2 className="text-lg font-extrabold text-pestle-text">Материал Засах / Шинэчлэх</h2>
             <p className="text-xs text-gray-400 font-medium">{ingredient.name}</p>
           </div>
-          <button onClick={onClose} className="modal-close-btn">
+          <button onClick={onClose} aria-label="Хаах" className="modal-close-btn">
             <X size={18} />
           </button>
         </div>
