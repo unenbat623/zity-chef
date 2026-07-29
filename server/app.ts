@@ -9,6 +9,7 @@ import ordersRouter from './routes/orders.js';
 import aiRouter from './routes/ai.js';
 import communityRouter from './routes/community.js';
 import paymentsRouter from './routes/payments.js';
+import storeRouter from './routes/store.js';
 
 const IS_PROD = process.env.NODE_ENV === 'production';
 
@@ -102,6 +103,7 @@ export function createApp(): Express {
   app.use('/api/ai', aiRouter);
   app.use('/api/community', communityRouter);
   app.use('/api/payments', paymentsRouter);
+  app.use('/api/store', storeRouter);
 
   // ── Health & metrics ────────────────────────────────────────────────────
   app.get('/api/health', (_req, res) => {

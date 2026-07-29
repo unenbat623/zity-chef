@@ -21,6 +21,17 @@ export const supabaseAdmin =
 export const isSupabaseConfigured = Boolean(supabaseUrl && anonKey);
 
 /**
+ * Anon client for reading PUBLIC data (e.g. the store catalog) with no user
+ * session. RLS still applies, so it only sees rows exposed by a public policy.
+ */
+export const supabasePublic =
+  supabaseUrl && anonKey
+    ? createClient(supabaseUrl, anonKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      })
+    : null;
+
+/**
  * Returns a Supabase client scoped to a specific user's access token. RLS
  * policies apply, so the user can only read/write their own rows — even though
  * the server never manually filters by user_id.

@@ -14,6 +14,16 @@ import { useApp } from '../context/AppContext';
 import { MOCK_INGREDIENTS } from '../constants';
 import { SmartImage } from './SmartImage';
 import { getIngredientImageUrl } from '../lib/imageService';
+import { useStoreProducts } from '../hooks/useStoreProducts';
+
+interface CatalogItem {
+  id: string;
+  name: string;
+  nameEn?: string | null;
+  emoji: string;
+  unit: string;
+  pricePerUnit?: number;
+}
 
 export const StoreView: React.FC = () => {
   const {
@@ -26,15 +36,21 @@ export const StoreView: React.FC = () => {
     orders,
     ordersLoading,
     ordersError,
+    lang,
     t,
   } = useApp();
+  const { products } = useStoreProducts();
+  // Real DB catalog when available; fall back to the bundled mock list.
+  const catalog: CatalogItem[] = products.length ? products : (MOCK_INGREDIENTS as CatalogItem[]);
+  const nameOf = (item: CatalogItem) => (lang === 'en' && item.nameEn ? item.nameEn : item.name);
+
   const [address, setAddress] = useState<string>('Сүхбаатар дүүрэг, 1-р хороо, Zity Tower 402');
   const [activeSubTab, setActiveSubTab] = useState<'catalog' | 'cart' | 'orders'>('catalog');
 
-  const handleAddToCart = (item: (typeof MOCK_INGREDIENTS)[0]) => {
+  const handleAddToCart = (item: CatalogItem, displayName: string) => {
     addToCart({
       id: `cart-${item.id}-${Date.now()}`,
-      name: item.name,
+      name: displayName,
       emoji: item.emoji,
       unit: item.unit,
       quantity: item.unit === 'гр' ? 500 : 1,
@@ -118,24 +134,26 @@ export const StoreView: React.FC = () => {
           <div className="space-y-3">
             <h3 className="text-sm font-bold text-pestle-text">{t('store_freshProducts')}</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
-              {MOCK_INGREDIENTS.map((item) => (
+              {catalog.map((item) => {
+                const displayName = nameOf(item);
+                return (
                 <div
                   key={item.id}
                   className="pestle-card overflow-hidden flex flex-col hover:border-mango transition-colors group cursor-pointer"
                 >
                   {/* Product Photo */}
                   <SmartImage
-                    src={getIngredientImageUrl(item.name, item.nameEn)}
-                    alt={item.name}
+                    src={getIngredientImageUrl(item.name, item.nameEn ?? undefined)}
+                    alt={displayName}
                     emoji={item.emoji}
-                    fallbackLabel={item.name}
+                    fallbackLabel={displayName}
                     className="h-32 w-full"
                   />
 
                   <div className="p-3 flex flex-col flex-1 justify-between">
                     <div>
                       <h4 className="font-bold text-xs text-pestle-text line-clamp-1">
-                        {item.name}
+                        {displayName}
                       </h4>
                       <span className="text-[10px] text-gray-400 font-medium">
                         {t('store_productTag')}
@@ -151,7 +169,7 @@ export const StoreView: React.FC = () => {
                       </div>
 
                       <button
-                        onClick={() => handleAddToCart(item)}
+                        onClick={() => handleAddToCart(item, displayName)}
                         className="w-8 h-8 bg-mango text-white rounded-xl flex items-center justify-center active:scale-95 transition-transform shadow-md shadow-mango/20"
                       >
                         <Plus size={16} />
@@ -159,7 +177,8 @@ export const StoreView: React.FC = () => {
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>

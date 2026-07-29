@@ -237,6 +237,25 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.direct_messages;
 
 CREATE TRIGGER touch_chat_sessions   BEFORE UPDATE ON public.chat_sessions   FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
 
+-- ── Store catalog ─────────────────────────────────────────────────────────────
+-- Public product catalog (read-only for users; seeded/managed by admin).
+CREATE TABLE IF NOT EXISTS public.store_products (
+  id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name           TEXT NOT NULL,
+  name_en        TEXT,
+  emoji          TEXT NOT NULL DEFAULT '📦',
+  category       TEXT,
+  unit           TEXT NOT NULL DEFAULT 'ш',
+  price_per_unit NUMERIC(12,2) NOT NULL DEFAULT 0,
+  image_url      TEXT,
+  in_stock       BOOLEAN NOT NULL DEFAULT true,
+  sort_order     INTEGER NOT NULL DEFAULT 0,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE public.store_products ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "products_read" ON public.store_products FOR SELECT USING (true);
+-- No insert/update policy: only the service_role (admin/seed) can modify.
+
 -- ════════════════════════════════════════════════════════════════════════════
 -- Grants — RLS still filters rows, but the API roles need table-level access.
 -- (Supabase's dashboard sets these automatically; a raw migration must be explicit.)
