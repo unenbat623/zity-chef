@@ -13,6 +13,7 @@ import { useApp } from '../context/AppContext';
 import { useToast } from './Toast';
 import { MOCK_BANK_APPS } from '../constants';
 import { PaymentMethod } from '../types';
+import { createQpayInvoice, checkQpayPayment, type QpayInvoice } from '../services/qpayService';
 
 export const PaymentModal: React.FC = () => {
   const { paymentModalState, closePaymentModal, t } = useApp();
@@ -22,12 +23,14 @@ export const PaymentModal: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState<number>(300); // 5 minutes
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
+  const [invoice, setInvoice] = useState<QpayInvoice | null>(null);
 
   useEffect(() => {
     if (!paymentModalState) {
       setIsSuccess(false);
       setIsProcessing(false);
       setTimeLeft(300);
+      setInvoice(null);
       return;
     }
 
@@ -37,6 +40,33 @@ export const PaymentModal: React.FC = () => {
 
     return () => clearInterval(timer);
   }, [paymentModalState]);
+
+  // Create a QPay invoice when the QPay tab is active (real or simulated).
+  useEffect(() => {
+    if (!paymentModalState || method !== 'qpay') return;
+    let active = true;
+    setInvoice(null);
+    createQpayInvoice(paymentModalState.amount, paymentModalState.title).then((inv) => {
+      if (active) setInvoice(inv);
+    });
+    return () => {
+      active = false;
+    };
+  }, [paymentModalState, method]);
+
+  // Poll for payment completion once an invoice exists.
+  useEffect(() => {
+    if (!invoice || isSuccess || !paymentModalState) return;
+    const id = setInterval(async () => {
+      const paid = await checkQpayPayment(invoice.invoiceId);
+      if (paid) {
+        clearInterval(id);
+        handleSuccess();
+      }
+    }, 3000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invoice, isSuccess]);
 
   if (!paymentModalState) return null;
 
@@ -48,20 +78,35 @@ export const PaymentModal: React.FC = () => {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const handleSimulatePayment = () => {
-    setIsProcessing(true);
+  function handleSuccess() {
+    setIsProcessing(false);
+    setIsSuccess(true);
+    toastSuccess(
+      'Төлбөр амжилттай баталгаажлаа! 💳',
+      `₮${amount.toLocaleString()} төлбөрийг хүлээн авлаа.`
+    );
     setTimeout(() => {
+      if (onSuccess) onSuccess();
+      closePaymentModal();
+    }, 1800);
+  }
+
+  const handlePay = async () => {
+    if (method === 'qpay' && invoice) {
+      setIsProcessing(true);
+      const paid = await checkQpayPayment(invoice.invoiceId);
       setIsProcessing(false);
-      setIsSuccess(true);
-      toastSuccess(
-        'Төлбөр амжилттай бүртгэжлээлаа! 💳',
-        `₮${amount.toLocaleString()} гүйцэтгэлийг баталгаажууллаа.`
-      );
-      setTimeout(() => {
-        if (onSuccess) onSuccess();
-        closePaymentModal();
-      }, 1800);
-    }, 1500);
+      if (paid) handleSuccess();
+      else
+        toastSuccess(
+          'Төлбөр хүлээгдэж байна ⏳',
+          'Банкны апп-аараа QR уншуулаад төлбөрөө хийнэ үү.'
+        );
+      return;
+    }
+    // SocialPay / Card — simulated confirmation.
+    setIsProcessing(true);
+    setTimeout(() => handleSuccess(), 1500);
   };
 
   return (
@@ -169,32 +214,24 @@ export const PaymentModal: React.FC = () => {
                 {/* QR Code Container */}
                 {method === 'qpay' && (
                   <div className="flex flex-col items-center justify-center p-4 bg-white rounded-2xl border border-pestle-border relative shadow-inner">
-                    {/* Render visual QR Code pattern */}
-                    <div className="w-44 h-44 bg-slate-900 rounded-xl p-3 flex flex-col justify-between items-center relative overflow-hidden shadow-lg">
-                      <div className="grid grid-cols-6 gap-1 w-full h-full p-2 bg-white rounded-lg">
-                        {Array.from({ length: 36 }).map((_, i) => (
-                          <div
-                            key={i}
-                            className={`rounded-[2px] ${
-                              (i % 2 === 0 && i % 3 === 0) ||
-                              i === 0 ||
-                              i === 5 ||
-                              i === 30 ||
-                              i === 35
-                                ? 'bg-slate-900'
-                                : 'bg-transparent'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-10 h-10 bg-mango rounded-xl flex items-center justify-center text-white font-extrabold shadow-md">
+                    {invoice?.qrImage ? (
+                      <img
+                        src={invoice.qrImage}
+                        alt="QPay QR код"
+                        className="w-44 h-44 rounded-xl object-contain bg-white"
+                      />
+                    ) : (
+                      // Loading placeholder while the invoice is being created.
+                      <div className="w-44 h-44 bg-slate-900 rounded-xl p-3 flex items-center justify-center relative overflow-hidden shadow-lg">
+                        <div className="w-10 h-10 bg-mango rounded-xl flex items-center justify-center text-white font-extrabold shadow-md animate-pulse">
                           Z
                         </div>
                       </div>
-                    </div>
+                    )}
                     <p className="text-[11px] text-gray-500 font-semibold mt-3 text-center">
-                      Банкны апп-аараа QR кодыг уншуулна уу
+                      {invoice?.simulated
+                        ? 'Демо горим — “Баталгаажуулах” дарж үзнэ үү'
+                        : 'Банкны апп-аараа QR кодыг уншуулна уу'}
                     </p>
                   </div>
                 )}
@@ -262,10 +299,10 @@ export const PaymentModal: React.FC = () => {
                   </div>
                 )}
 
-                {/* Simulate Payment Action Button */}
+                {/* Payment Action Button */}
                 <button
-                  onClick={handleSimulatePayment}
-                  disabled={isProcessing}
+                  onClick={handlePay}
+                  disabled={isProcessing || (method === 'qpay' && !invoice)}
                   className="w-full btn-primary py-3.5 flex items-center justify-center gap-2 shadow-lg shadow-mango/20 disabled:opacity-50"
                 >
                   {isProcessing ? (
