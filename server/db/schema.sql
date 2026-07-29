@@ -255,14 +255,17 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO anon;
 -- Storage policies — allow authenticated users to upload to the public
 -- "uploads" bucket (avatars, community/story photos). Public read.
 -- ════════════════════════════════════════════════════════════════════════════
+-- Users may only write under their own uid folder: "<folder>/<uid>/<file>".
 DO $$ BEGIN
   CREATE POLICY "uploads_insert" ON storage.objects
-    FOR INSERT TO authenticated WITH CHECK (bucket_id = 'uploads');
+    FOR INSERT TO authenticated
+    WITH CHECK (bucket_id = 'uploads' AND (storage.foldername(name))[2] = auth.uid()::text);
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
   CREATE POLICY "uploads_update" ON storage.objects
-    FOR UPDATE TO authenticated USING (bucket_id = 'uploads');
+    FOR UPDATE TO authenticated
+    USING (bucket_id = 'uploads' AND (storage.foldername(name))[2] = auth.uid()::text);
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
