@@ -495,6 +495,7 @@ export const translations = {
     fridge_serverError: 'Сервертэй холбогдож чадсангүй. Дахин оролдоно уу.',
     fridge_retry: 'Дахин ачаалах',
     fridge_edit: 'Засах',
+    fridge_noItems: 'Материал олдсонгүй',
   },
   en: {
     appName: 'Zity Chef',
@@ -992,5 +993,6 @@ export const translations = {
     fridge_serverError: 'Couldn’t reach the server. Please try again.',
     fridge_retry: 'Retry',
     fridge_edit: 'Edit',
+    fridge_noItems: 'No ingredients found',
   },
 };
