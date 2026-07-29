@@ -17,6 +17,7 @@ import {
   Grid3x3,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { uploadImage } from '../lib/storage';
 
 // ── Theme Gradient Options ───────────────────────────────────────────────────
 const THEME_GRADIENTS = [
@@ -46,11 +47,15 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [form, setForm] = useState({ ...profile });
   const [avatarPreview, setAvatarPreview] = useState<string | null>(profile.avatarUrl);
   const [activeSection, setActiveSection] = useState<'info' | 'theme'>('info');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setSelectedFile(file);
+    // Instant local preview via base64 while the (optional) upload happens on save.
     const reader = new FileReader();
     reader.onloadend = () => {
       const result = reader.result as string;
@@ -60,8 +65,16 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     reader.readAsDataURL(file);
   };
 
-  const handleSave = () => {
-    setProfile({ ...form, avatarUrl: avatarPreview });
+  const handleSave = async () => {
+    setSaving(true);
+    // Upload to Supabase Storage when available; otherwise keep the base64 preview.
+    let avatarUrl = avatarPreview;
+    if (selectedFile) {
+      const uploadedUrl = await uploadImage(selectedFile, 'avatars');
+      if (uploadedUrl) avatarUrl = uploadedUrl;
+    }
+    setProfile({ ...form, avatarUrl });
+    setSaving(false);
     onClose();
   };
 
@@ -230,10 +243,17 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           </button>
           <button
             onClick={handleSave}
+            disabled={saving}
             style={{ background: selectedTheme.accent }}
-            className="flex-1 py-3 text-xs font-bold text-white rounded-2xl shadow-lg flex items-center justify-center gap-1.5 hover:opacity-90 transition-opacity"
+            className="flex-1 py-3 text-xs font-bold text-white rounded-2xl shadow-lg flex items-center justify-center gap-1.5 hover:opacity-90 transition-opacity disabled:opacity-60"
           >
-            <Check size={15} /> Хадгалах
+            {saving ? (
+              <Sparkles size={15} className="animate-spin" />
+            ) : (
+              <>
+                <Check size={15} /> Хадгалах
+              </>
+            )}
           </button>
         </div>
       </motion.div>

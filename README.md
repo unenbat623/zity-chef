@@ -153,8 +153,15 @@ Auth is real (Supabase Auth) and each user's fridge/orders are isolated by
 3. **Authentication → Providers**: enable **Anonymous sign-ins** (every device
    gets its own isolated data instantly), **Email**, and **Google** (optional).
    For phone OTP, configure an SMS provider (e.g. Twilio) under Phone.
-4. Copy the keys from **Project Settings → API** into `.env` (see above).
-5. Restart `npm run dev`.
+4. **Storage → New bucket**: create a public bucket named `uploads` (used for
+   avatars/photos). Optional — without it, images fall back to inline base64.
+5. Copy the keys from **Project Settings → API** into `.env` (see above).
+6. Restart `npm run dev`.
+
+**Optional — shared cache/rate-limit at scale:** create an
+[Upstash Redis](https://upstash.com) database and set `UPSTASH_REDIS_REST_URL` +
+`UPSTASH_REDIS_REST_TOKEN`. Without them the server uses an in-memory cache
+(fine for a single instance).
 
 > Without Supabase configured the app still runs in **demo mode**: no accounts,
 > data is kept in the server's in-memory store (per session, lost on restart).
