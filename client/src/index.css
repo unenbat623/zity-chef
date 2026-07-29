@@ -157,19 +157,13 @@ button {
   transition-timing-function: ease-in-out;
 }
 
-/* Focus ring for form inputs — premium look */
+/* Focus ring for form inputs — uses the (theme-aware) accent color */
 input:focus,
 select:focus,
 textarea:focus {
   outline: none;
-  box-shadow: 0 0 0 2.5px rgba(255, 159, 28, 0.35);
-  border-color: #FF9F1C !important;
-}
-
-/* Interactive button lift + glow on hover */
-.btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(255, 159, 28, 0.35);
+  box-shadow: 0 0 0 2.5px var(--color-accent-shadow, rgba(139, 92, 246, 0.35));
+  border-color: var(--color-accent, #8B5CF6) !important;
 }
 
 .btn-primary:active {

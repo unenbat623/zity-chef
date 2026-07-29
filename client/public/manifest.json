@@ -30,15 +30,6 @@
       "purpose": "any maskable"
     }
   ],
-  "screenshots": [
-    {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "form_factor": "narrow",
-      "label": "Зity Chef хөргөгч хуудас"
-    }
-  ],
   "start_url": "/",
   "scope": "/",
   "id": "/",

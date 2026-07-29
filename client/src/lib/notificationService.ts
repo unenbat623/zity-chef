@@ -34,10 +34,10 @@ export function sendExpiryNotification(expiringItems: Ingredient[]) {
   try {
     new Notification(title, {
       body,
-      icon: '/favicon.ico',
-      badge: '/favicon.ico',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
     });
   } catch (e) {
-    console.log('Notification error:', e);
+    console.error('Notification error:', e);
   }
 }
