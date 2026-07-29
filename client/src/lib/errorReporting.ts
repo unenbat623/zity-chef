@@ -12,15 +12,20 @@
 
 const DSN = import.meta.env.VITE_SENTRY_DSN || '';
 
+// Loaded lazily only when a DSN is configured, so the Sentry SDK stays out of
+// the bundle for deployments that don't use it.
+let sentry: typeof import('@sentry/browser') | null = null;
+
 export function reportError(error: unknown, context?: Record<string, unknown>): void {
   // eslint-disable-next-line no-console
   console.error('[Zity Chef] reportError:', error, context ?? '');
-  // if (sentryLoaded) Sentry.captureException(error, { extra: context });
+  if (sentry) sentry.captureException(error, { extra: context });
 }
 
 /**
  * Installs global handlers so uncaught errors and unhandled promise rejections
- * anywhere in the app are captured (not just React render errors).
+ * anywhere in the app are captured (not just React render errors). When
+ * VITE_SENTRY_DSN is set, also initializes the Sentry SDK.
  */
 export function initErrorReporting(): void {
   if (typeof window === 'undefined') return;
@@ -32,8 +37,14 @@ export function initErrorReporting(): void {
     reportError(e.reason, { kind: 'unhandledrejection' });
   });
 
-  if (DSN && import.meta.env.DEV) {
-    // eslint-disable-next-line no-console
-    console.info('[Zity Chef] VITE_SENTRY_DSN set — wire @sentry/react in initErrorReporting().');
+  if (DSN) {
+    import('@sentry/browser')
+      .then((mod) => {
+        sentry = mod;
+        mod.init({ dsn: DSN, tracesSampleRate: 0.1, environment: import.meta.env.MODE });
+      })
+      .catch(() => {
+        /* Sentry is optional — ignore load failures */
+      });
   }
 }

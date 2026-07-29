@@ -1035,7 +1035,8 @@ const PostCard: React.FC<{
 // ── MAIN COMMUNITY VIEW ────────────────────────────────────────────────────────
 export const CommunityView: React.FC = () => {
   const { profile } = useApp();
-  const { feedPosts, persistLike, persistComment, persistPost } = useCommunity();
+  const { feedPosts, persistLike, persistComment, persistPost, serverStoryGroups, persistStory } =
+    useCommunity();
 
   // Build own story group from profile
   const ownStoryGroup: UserStoryGroup = {
@@ -1069,6 +1070,20 @@ export const CommunityView: React.FC = () => {
       setPosts([...feedPosts, ...INITIAL_POSTS]);
     }
   }, [feedPosts]);
+
+  // Merge server story groups (other users) into the strip, keeping the local
+  // own-group and the seed stories.
+  useEffect(() => {
+    if (!serverStoryGroups.length) return;
+    setStories((prev) => {
+      const seenIds = new Set(prev.map((s) => s.id));
+      const fresh = serverStoryGroups.filter((g: UserStoryGroup) => !g.isOwn && !seenIds.has(g.id));
+      if (!fresh.length) return prev;
+      const own = prev.filter((s) => s.isOwn);
+      const others = prev.filter((s) => !s.isOwn);
+      return [...own, ...fresh, ...others];
+    });
+  }, [serverStoryGroups]);
 
   const handleLike = (postId: string) => {
     let nextLiked = false;
@@ -1106,6 +1121,13 @@ export const CommunityView: React.FC = () => {
   };
 
   const handleAddStory = (newStory: StoryItem) => {
+    persistStory({
+      imageUrl: newStory.img && newStory.img.startsWith('http') ? newStory.img : null,
+      caption: newStory.caption ?? null,
+      sticker: newStory.sticker ?? null,
+      authorName: profile.name || 'Zity Chef',
+      authorAvatar: profile.avatarUrl || '',
+    });
     setStories((prev) => {
       const ownIndex = prev.findIndex((s) => s.isOwn);
       if (ownIndex >= 0) {

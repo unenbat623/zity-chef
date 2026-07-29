@@ -194,6 +194,25 @@ CREATE POLICY "comments_read"   ON public.post_comments FOR SELECT USING (true);
 CREATE POLICY "comments_insert" ON public.post_comments FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "comments_delete" ON public.post_comments FOR DELETE USING (auth.uid() = user_id);
 
+-- ── Stories (ephemeral, 24h) ──────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.stories (
+  id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id       UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  author_name   TEXT NOT NULL DEFAULT 'Zity Chef',
+  author_avatar TEXT,
+  image_url     TEXT,
+  caption       TEXT,
+  sticker       TEXT,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  expires_at    TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '24 hours')
+);
+CREATE INDEX IF NOT EXISTS idx_stories_expiry ON public.stories(expires_at);
+
+ALTER TABLE public.stories ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "stories_read"   ON public.stories FOR SELECT USING (true);
+CREATE POLICY "stories_insert" ON public.stories FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "stories_delete" ON public.stories FOR DELETE USING (auth.uid() = user_id);
+
 CREATE TRIGGER touch_chat_sessions   BEFORE UPDATE ON public.chat_sessions   FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
 
 -- ════════════════════════════════════════════════════════════════════════════

@@ -200,4 +200,111 @@ router.post('/posts/:id/comments', async (req: AuthenticatedRequest, res) => {
   return res.status(201).json({ comment: { user: authorName, text }, source: 'supabase' });
 });
 
+// ── Stories ───────────────────────────────────────────────────────────────────
+interface MemStory {
+  id: string;
+  userId: string;
+  authorName: string;
+  authorAvatar: string;
+  image: string | null;
+  caption: string | null;
+  sticker: string | null;
+  createdAt: number;
+}
+const memoryStories: MemStory[] = [];
+
+function groupStories(
+  rows: { user_id: string; author_name: string; author_avatar: string | null; id: string; image_url: string | null; caption: string | null; sticker: string | null; created_at: string }[],
+  meId: string
+) {
+  const groups = new Map<string, any>();
+  for (const r of rows) {
+    if (!groups.has(r.user_id)) {
+      groups.set(r.user_id, {
+        id: r.user_id,
+        userName: r.author_name,
+        userAvatar: avatarFor(r.author_name, r.author_avatar),
+        isOwn: r.user_id === meId,
+        seen: false,
+        stories: [],
+      });
+    }
+    groups.get(r.user_id).stories.push({
+      id: r.id,
+      img: r.image_url || undefined,
+      caption: r.caption || undefined,
+      sticker: r.sticker || undefined,
+      createdAt: relativeTime(r.created_at),
+    });
+  }
+  return [...groups.values()];
+}
+
+// ── GET /api/community/stories ────────────────────────────────────────────────
+router.get('/stories', async (req: AuthenticatedRequest, res) => {
+  const meId = req.user!.id;
+
+  if (!usesDb(req)) {
+    const rows = memoryStories.map((s) => ({
+      user_id: s.userId,
+      author_name: s.authorName,
+      author_avatar: s.authorAvatar,
+      id: s.id,
+      image_url: s.image,
+      caption: s.caption,
+      sticker: s.sticker,
+      created_at: new Date(s.createdAt).toISOString(),
+    }));
+    return res.json({ groups: groupStories(rows, meId), source: 'memory' });
+  }
+
+  const db = getSupabaseForUser(req.accessToken!);
+  const { data, error } = await db
+    .from('stories')
+    .select('*')
+    .gt('expires_at', new Date().toISOString())
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.error('[Community Stories Error]', error.message);
+    return res.status(502).json({ error: 'Failed to load stories' });
+  }
+  return res.json({ groups: groupStories(data || [], meId), source: 'supabase' });
+});
+
+// ── POST /api/community/stories ───────────────────────────────────────────────
+router.post('/stories', async (req: AuthenticatedRequest, res) => {
+  const { imageUrl = null, caption = null, sticker = null, authorName = 'Zity Chef', authorAvatar = '' } = req.body;
+  const uid = req.user!.id;
+
+  if (!usesDb(req)) {
+    const story: MemStory = {
+      id: `mem-${Date.now()}`,
+      userId: uid,
+      authorName,
+      authorAvatar,
+      image: imageUrl,
+      caption,
+      sticker,
+      createdAt: Date.now(),
+    };
+    memoryStories.unshift(story);
+    return res.status(201).json({ ok: true, source: 'memory' });
+  }
+
+  const db = getSupabaseForUser(req.accessToken!);
+  const { error } = await db.from('stories').insert({
+    user_id: uid,
+    author_name: authorName,
+    author_avatar: authorAvatar,
+    image_url: imageUrl,
+    caption,
+    sticker,
+  });
+  if (error) {
+    console.error('[Community Story Create Error]', error.message);
+    return res.status(502).json({ error: 'Failed to create story' });
+  }
+  return res.status(201).json({ ok: true, source: 'supabase' });
+});
+
 export default router;
