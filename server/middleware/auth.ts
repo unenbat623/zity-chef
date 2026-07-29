@@ -55,7 +55,10 @@ export async function authenticateToken(
   // 1️⃣ Local verification with the project JWT secret.
   if (SUPABASE_JWT_SECRET) {
     try {
-      const payload = jwt.verify(token, SUPABASE_JWT_SECRET) as jwt.JwtPayload;
+      // clockTolerance absorbs minor host/container clock skew ("iat in future").
+      const payload = jwt.verify(token, SUPABASE_JWT_SECRET, {
+        clockTolerance: 30,
+      }) as jwt.JwtPayload;
       if (payload.sub) {
         req.user = {
           id: payload.sub,

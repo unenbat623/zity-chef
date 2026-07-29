@@ -10,6 +10,11 @@ function usesDb(req: AuthenticatedRequest): boolean {
 }
 
 // Relative "N цаг/өдөр" label from a timestamp (Mongolian).
+function avatarFor(name: string, url?: string | null): string {
+  if (url) return url;
+  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name || 'chef')}`;
+}
+
 function relativeTime(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
   const min = Math.floor(diffMs / 60000);
@@ -73,7 +78,7 @@ router.get('/posts', async (req: AuthenticatedRequest, res) => {
     const postLikes = (likes || []).filter((l) => l.post_id === p.id);
     return {
       id: p.id,
-      user: { name: p.author_name, avatar: p.author_avatar || '' },
+      user: { name: p.author_name, avatar: avatarFor(p.author_name, p.author_avatar) },
       image: p.image_url,
       caption: p.caption,
       recipe: null,
@@ -98,7 +103,7 @@ router.post('/posts', async (req: AuthenticatedRequest, res) => {
   if (!usesDb(req)) {
     const post: FeedPost = {
       id: `mem-${Date.now()}`,
-      user: { name: authorName, avatar: authorAvatar },
+      user: { name: authorName, avatar: avatarFor(authorName, authorAvatar) },
       image: imageUrl,
       caption,
       recipe: null,
@@ -131,7 +136,7 @@ router.post('/posts', async (req: AuthenticatedRequest, res) => {
 
   const post: FeedPost = {
     id: data.id,
-    user: { name: data.author_name, avatar: data.author_avatar || '' },
+    user: { name: data.author_name, avatar: avatarFor(data.author_name, data.author_avatar) },
     image: data.image_url,
     caption: data.caption,
     recipe: null,
