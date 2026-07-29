@@ -18,6 +18,7 @@ import { SmartImage } from './SmartImage';
 import { MOCK_RECIPES } from '../data/recipes';
 import { useApp } from '../context/AppContext';
 import { useCommunity } from '../hooks/useCommunity';
+import { useDirectMessages } from '../hooks/useDirectMessages';
 
 // ── Types & Mock Data ──────────────────────────────────────────────────────────
 interface StoryItem {
@@ -576,24 +577,13 @@ const DirectChatDrawer: React.FC<{
   recipient: { name: string; avatar: string };
   onClose: () => void;
 }> = ({ recipient, onClose }) => {
-  const [messages, setMessages] = useState([
-    { sender: recipient.name, text: 'Сайн уу! Өнөөдөр ямар амттай хоол хийж байна?', time: '14:20' },
-    { sender: 'Би', text: 'Сайн сайн! Zity Chef-ийн заавраар хоол хийлээ 🍝', time: '14:22' },
-  ]);
+  const { messages, send } = useDirectMessages(recipient.name);
   const [inputText, setInputText] = useState('');
 
   const handleSend = () => {
     if (!inputText.trim()) return;
-    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    setMessages((prev) => [...prev, { sender: 'Би', text: inputText.trim(), time: now }]);
+    send(inputText);
     setInputText('');
-
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        { sender: recipient.name, text: 'Үнэхээр гоё харагдаж байна! Жороо нааш нь явуулаарай 👨‍🍳', time: now },
-      ]);
-    }, 1000);
   };
 
   return (
@@ -633,10 +623,10 @@ const DirectChatDrawer: React.FC<{
         </div>
 
         <div className="flex-1 p-4 overflow-y-auto space-y-3">
-          {messages.map((m, idx) => {
+          {messages.map((m) => {
             const isMe = m.sender === 'Би';
             return (
-              <div key={idx} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+              <div key={m.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                 <div
                   className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-xs font-medium shadow-sm ${
                     isMe

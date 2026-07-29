@@ -213,6 +213,28 @@ CREATE POLICY "stories_read"   ON public.stories FOR SELECT USING (true);
 CREATE POLICY "stories_insert" ON public.stories FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "stories_delete" ON public.stories FOR DELETE USING (auth.uid() = user_id);
 
+-- ── Direct messages (realtime) ────────────────────────────────────────────────
+-- conversation_id embeds the participant ids (e.g. "dm:<uidA>|<uidB>"), so RLS
+-- can grant access to a message iff the caller's uid appears in it.
+CREATE TABLE IF NOT EXISTS public.direct_messages (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  conversation_id TEXT NOT NULL,
+  sender_id       UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  sender_name     TEXT NOT NULL DEFAULT 'Хэрэглэгч',
+  text            TEXT NOT NULL,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_dm_conversation ON public.direct_messages(conversation_id, created_at);
+
+ALTER TABLE public.direct_messages ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "dm_read"   ON public.direct_messages
+  FOR SELECT USING (position(auth.uid()::text in conversation_id) > 0);
+CREATE POLICY "dm_insert" ON public.direct_messages
+  FOR INSERT WITH CHECK (sender_id = auth.uid() AND position(auth.uid()::text in conversation_id) > 0);
+
+-- Broadcast INSERTs over Supabase Realtime.
+ALTER PUBLICATION supabase_realtime ADD TABLE public.direct_messages;
+
 CREATE TRIGGER touch_chat_sessions   BEFORE UPDATE ON public.chat_sessions   FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
 
 -- ════════════════════════════════════════════════════════════════════════════
