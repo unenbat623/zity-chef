@@ -7,6 +7,7 @@ import { aiResponseCache, ocrResultCache, redisClient, cacheBackend } from './ca
 import inventoryRouter from './routes/inventory.js';
 import ordersRouter from './routes/orders.js';
 import aiRouter from './routes/ai.js';
+import communityRouter from './routes/community.js';
 
 const IS_PROD = process.env.NODE_ENV === 'production';
 
@@ -98,6 +99,7 @@ export function createApp(): Express {
   app.use('/api/inventory', inventoryRouter);
   app.use('/api/orders', ordersRouter);
   app.use('/api/ai', aiRouter);
+  app.use('/api/community', communityRouter);
 
   // ── Health & metrics ────────────────────────────────────────────────────
   app.get('/api/health', (_req, res) => {

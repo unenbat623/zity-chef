@@ -142,4 +142,56 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER touch_profiles        BEFORE UPDATE ON public.profiles        FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
 CREATE TRIGGER touch_inventory       BEFORE UPDATE ON public.inventory_items FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
 CREATE TRIGGER touch_orders          BEFORE UPDATE ON public.orders          FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- Community (social feed) — Phase 2
+-- Posts are a PUBLIC feed (everyone can read); writes are restricted to the owner.
+-- ════════════════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS public.community_posts (
+  id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id       UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  author_name   TEXT NOT NULL DEFAULT 'Zity Chef',
+  author_avatar TEXT,
+  image_url     TEXT,
+  caption       TEXT NOT NULL DEFAULT '',
+  recipe_id     TEXT,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_posts_created ON public.community_posts(created_at DESC);
+
+CREATE TABLE IF NOT EXISTS public.post_likes (
+  post_id    UUID NOT NULL REFERENCES public.community_posts(id) ON DELETE CASCADE,
+  user_id    UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (post_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.post_comments (
+  id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  post_id     UUID NOT NULL REFERENCES public.community_posts(id) ON DELETE CASCADE,
+  user_id     UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  author_name TEXT NOT NULL DEFAULT 'Хэрэглэгч',
+  text        TEXT NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_comments_post ON public.post_comments(post_id);
+
+ALTER TABLE public.community_posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.post_likes      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.post_comments   ENABLE ROW LEVEL SECURITY;
+
+-- Public read; owner-only writes.
+CREATE POLICY "posts_read"    ON public.community_posts FOR SELECT USING (true);
+CREATE POLICY "posts_insert"  ON public.community_posts FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "posts_modify"  ON public.community_posts FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "posts_delete"  ON public.community_posts FOR DELETE USING (auth.uid() = user_id);
+
+CREATE POLICY "likes_read"    ON public.post_likes FOR SELECT USING (true);
+CREATE POLICY "likes_insert"  ON public.post_likes FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "likes_delete"  ON public.post_likes FOR DELETE USING (auth.uid() = user_id);
+
+CREATE POLICY "comments_read"   ON public.post_comments FOR SELECT USING (true);
+CREATE POLICY "comments_insert" ON public.post_comments FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "comments_delete" ON public.post_comments FOR DELETE USING (auth.uid() = user_id);
 CREATE TRIGGER touch_chat_sessions   BEFORE UPDATE ON public.chat_sessions   FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();

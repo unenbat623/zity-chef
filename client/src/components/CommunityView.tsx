@@ -17,6 +17,7 @@ import {
 import { SmartImage } from './SmartImage';
 import { MOCK_RECIPES } from '../data/recipes';
 import { useApp } from '../context/AppContext';
+import { useCommunity } from '../hooks/useCommunity';
 
 // ── Types & Mock Data ──────────────────────────────────────────────────────────
 interface StoryItem {
@@ -1034,6 +1035,7 @@ const PostCard: React.FC<{
 // ── MAIN COMMUNITY VIEW ────────────────────────────────────────────────────────
 export const CommunityView: React.FC = () => {
   const { profile } = useApp();
+  const { feedPosts, persistLike, persistComment, persistPost } = useCommunity();
 
   // Build own story group from profile
   const ownStoryGroup: UserStoryGroup = {
@@ -1054,24 +1056,34 @@ export const CommunityView: React.FC = () => {
   };
 
   const [stories, setStories] = useState<UserStoryGroup[]>([ownStoryGroup, ...OTHER_STORIES]);
-  const [posts, setPosts] = useState(INITIAL_POSTS);
+  const [posts, setPosts] = useState<any[]>(INITIAL_POSTS);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [showCreateStory, setShowCreateStory] = useState(false);
   const [activeStoryGroup, setActiveStoryGroup] = useState<UserStoryGroup | null>(null);
   const [chatUser, setChatUser] = useState<{ name: string; avatar: string } | null>(null);
 
+  // Merge server feed on top of the seed posts (keeps the UI populated in demo
+  // mode where the backend returns an empty feed).
+  useEffect(() => {
+    if (feedPosts.length) {
+      setPosts([...feedPosts, ...INITIAL_POSTS]);
+    }
+  }, [feedPosts]);
+
   const handleLike = (postId: string) => {
+    let nextLiked = false;
     setPosts((prev) =>
-      prev.map((p) =>
-        p.id === postId ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 } : p
-      )
+      prev.map((p) => {
+        if (p.id !== postId) return p;
+        nextLiked = !p.liked;
+        return { ...p, liked: nextLiked, likes: p.liked ? p.likes - 1 : p.likes + 1 };
+      })
     );
+    persistLike(postId, nextLiked); // fire-and-forget; no-ops for demo/seed posts
   };
 
   const handleSave = (postId: string) => {
-    setPosts((prev) =>
-      prev.map((p) => (p.id === postId ? { ...p, saved: !p.saved } : p))
-    );
+    setPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, saved: !p.saved } : p)));
   };
 
   const handleComment = (postId: string, text: string) => {
@@ -1080,10 +1092,17 @@ export const CommunityView: React.FC = () => {
         p.id === postId ? { ...p, comments: [...p.comments, { user: 'Би', text }] } : p
       )
     );
+    persistComment(postId, text, profile.name || 'Би');
   };
 
   const handleNewPost = (post: any) => {
     setPosts((prev) => [post, ...prev]);
+    persistPost({
+      caption: post.caption || '',
+      imageUrl: typeof post.image === 'string' && post.image.startsWith('http') ? post.image : null,
+      authorName: profile.name || 'Zity Chef',
+      authorAvatar: profile.avatarUrl || '',
+    });
   };
 
   const handleAddStory = (newStory: StoryItem) => {
