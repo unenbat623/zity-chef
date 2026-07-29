@@ -16,6 +16,9 @@ interface AppContextType {
   isDark: boolean;
   toggleDarkMode: () => void;
   inventory: Ingredient[];
+  inventoryLoading: boolean;
+  inventoryError: boolean;
+  refetchInventory: () => void;
   addIngredient: (item: Partial<Ingredient>) => void;
   updateIngredient: (item: Ingredient) => void;
   removeIngredient: (id: string) => void;
@@ -62,7 +65,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   // ── TanStack Query server state ──────────────────────────────────────────
-  const { inventory, addIngredient, updateIngredient, removeIngredient } = useInventory();
+  const {
+    inventory,
+    isLoading: inventoryLoading,
+    isError: inventoryError,
+    refetch: refetchInventory,
+    addIngredient,
+    updateIngredient,
+    removeIngredient,
+  } = useInventory();
   const { orders, createOrder: createOrderMutation } = useOrders();
 
   const [subscription, setSubscriptionState] = useState<SubscriptionTier>(() => {
@@ -226,6 +237,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isDark,
         toggleDarkMode,
         inventory: inventory || [],
+        inventoryLoading,
+        inventoryError,
+        refetchInventory: () => {
+          refetchInventory();
+        },
         addIngredient,
         updateIngredient,
         removeIngredient,

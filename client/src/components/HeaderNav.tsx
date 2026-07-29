@@ -1,50 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { Sparkles, Sun, Moon, User } from 'lucide-react';
-import { AuthModal, UserProfile } from './AuthModal';
+import { AuthModal } from './AuthModal';
 
 export const HeaderNav: React.FC = () => {
-  const {
-    lang,
-    setLang,
-    isDark,
-    toggleDarkMode,
-    subscription,
-    setShowSubModal,
-    profile,
-    setProfile,
-    t,
-  } = useApp();
+  const { lang, setLang, isDark, toggleDarkMode, subscription, setShowSubModal, profile, setProfile, t } =
+    useApp();
+  const { user: authUser, isAnonymous } = useAuth();
 
-  const [user, setUser] = useState<UserProfile | null>(() => {
-    const saved = localStorage.getItem('zity_user');
-    return saved
-      ? JSON.parse(saved)
-      : {
-          name: profile.name,
-          email: 'user@zity.mn',
-          avatarUrl: profile.avatarUrl || '',
-          isVerified: true,
-        };
-  });
   const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
 
-  const handleLoginSuccess = (loggedInUser: UserProfile) => {
-    setUser(loggedInUser);
-    localStorage.setItem('zity_user', JSON.stringify(loggedInUser));
-    setProfile({
-      ...profile,
-      name: loggedInUser.name,
-      avatarUrl: loggedInUser.avatarUrl,
-    });
-  };
+  // Display info for the header avatar/name, derived from the real session.
+  const isLoggedIn = Boolean(authUser && !isAnonymous);
+  const user = isLoggedIn
+    ? {
+        name:
+          (authUser!.user_metadata?.full_name as string) ||
+          authUser!.email?.split('@')[0] ||
+          profile.name,
+        email: authUser!.email || authUser!.phone || '',
+        avatarUrl: (authUser!.user_metadata?.avatar_url as string) || '',
+      }
+    : null;
 
-  const handleLogout = () => {
-    setUser(null);
-    localStorage.removeItem('zity_user');
-    setShowAuthModal(false);
-  };
+  // When a real user signs in, seed the local profile once from their identity.
+  useEffect(() => {
+    if (isLoggedIn && user) {
+      setProfile({
+        ...profile,
+        name: profile.name && profile.name !== 'Таны Нэр' ? profile.name : user.name,
+        avatarUrl: profile.avatarUrl || user.avatarUrl || null,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoggedIn]);
 
   return (
     <>
@@ -174,13 +165,7 @@ export const HeaderNav: React.FC = () => {
       </header>
 
       {/* Auth & Profile Modal */}
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        user={user}
-        onLoginSuccess={handleLoginSuccess}
-        onLogout={handleLogout}
-      />
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </>
   );
 };

@@ -123,19 +123,41 @@ Open your browser at `http://localhost:5173`.
 
 ## ⚙️ Environment Variables
 
-Ensure the following environment variables are set in your `.env` file:
+Copy `.env.example` → `.env` and fill it in. See that file for the full,
+commented list. The essentials:
 
 ```env
-# Google Gemini AI Key
-VITE_GEMINI_API_KEY=your_gemini_api_key_here
+# AI (server-side only — never exposed to the browser)
+GEMINI_API_KEY=your_gemini_api_key_here
 
-# Backend BFF API URL
-VITE_API_URL=http://localhost:3000
+# Supabase — Auth + per-user database (server)
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_ANON_KEY=your_supabase_anon_key           # used for RLS-scoped clients
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key     # server only
+SUPABASE_JWT_SECRET=your_jwt_secret                 # fast local token verify
 
-# Supabase Credentials (Optional for Backend persistence)
-SUPABASE_URL=https://your-supabase-project.supabase.co
-SUPABASE_ANON_KEY=your_supabase_anon_key
+# Supabase — same project, exposed to the browser (anon key is safe with RLS)
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_API_URL=http://localhost:3002
 ```
+
+## 🔐 Authentication & Per-User Data (Setup)
+
+Auth is real (Supabase Auth) and each user's fridge/orders are isolated by
+**Row Level Security**. To enable it:
+
+1. Create a project at [supabase.com](https://supabase.com).
+2. **SQL Editor → New Query** → paste & run [`server/db/schema.sql`](server/db/schema.sql)
+   (creates tables, RLS policies, and the profile-on-signup trigger).
+3. **Authentication → Providers**: enable **Anonymous sign-ins** (every device
+   gets its own isolated data instantly), **Email**, and **Google** (optional).
+   For phone OTP, configure an SMS provider (e.g. Twilio) under Phone.
+4. Copy the keys from **Project Settings → API** into `.env` (see above).
+5. Restart `npm run dev`.
+
+> Without Supabase configured the app still runs in **demo mode**: no accounts,
+> data is kept in the server's in-memory store (per session, lost on restart).
 
 ---
 

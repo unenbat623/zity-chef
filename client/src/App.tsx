@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AppProvider, useApp } from './context/AppContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './components/Toast';
 import { HeaderNav } from './components/HeaderNav';
 import { BottomNav } from './components/BottomNav';
@@ -80,12 +81,38 @@ const AppContent: React.FC = () => {
   );
 };
 
+/**
+ * Blocks rendering the app until the initial auth session is resolved, so the
+ * very first data fetch already carries a token (avoids a guest→user refetch
+ * race). Shows a brief branded splash.
+ */
+const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-pestle-bg text-pestle-text gap-3">
+        <div className="w-12 h-12 rounded-2xl bg-mango text-white font-black flex items-center justify-center text-xl shadow-lg animate-pulse">
+          Z
+        </div>
+        <p className="text-xs font-semibold text-gray-400">Ачааллаж байна…</p>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+};
+
 export default function App() {
   return (
-    <AppProvider>
-      <ToastProvider>
-        <AppContent />
-      </ToastProvider>
-    </AppProvider>
+    <AuthProvider>
+      <AuthGate>
+        <AppProvider>
+          <ToastProvider>
+            <AppContent />
+          </ToastProvider>
+        </AppProvider>
+      </AuthGate>
+    </AuthProvider>
   );
 }

@@ -17,33 +17,43 @@ import {
   ChefHat,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-
-export interface UserProfile {
-  name: string;
-  email: string;
-  avatarUrl: string;
-  isVerified: boolean;
-}
+import { useAuth } from '../context/AuthContext';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  user: UserProfile | null;
-  onLoginSuccess: (user: UserProfile) => void;
-  onLogout: () => void;
 }
 
 type AuthView = 'login' | 'register' | 'otp' | 'forgot' | 'profile';
 
-export const AuthModal: React.FC<AuthModalProps> = ({
-  isOpen,
-  onClose,
-  user,
-  onLoginSuccess,
-  onLogout,
-}) => {
-  const { lang, subscription, setShowSubModal, profile, setActiveTab, t } = useApp();
-  const [view, setView] = useState<AuthView>(user ? 'profile' : 'login');
+export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
+  const { subscription, setShowSubModal, profile, setActiveTab } = useApp();
+  const {
+    user: authUser,
+    isAnonymous,
+    signInWithPassword,
+    signUpWithPassword,
+    verifyEmailOtp,
+    resendEmailOtp,
+    signInWithGoogle,
+    resetPassword,
+    signOut,
+  } = useAuth();
+
+  // A "real" (non-anonymous) signed-in user, shaped for the profile view JSX.
+  const isLoggedIn = Boolean(authUser && !isAnonymous);
+  const user = isLoggedIn
+    ? {
+        name:
+          (authUser!.user_metadata?.full_name as string) ||
+          authUser!.email?.split('@')[0] ||
+          'Хэрэглэгч',
+        email: authUser!.email || authUser!.phone || '',
+        avatarUrl: (authUser!.user_metadata?.avatar_url as string) || '',
+      }
+    : null;
+
+  const [view, setView] = useState<AuthView>(isLoggedIn ? 'profile' : 'login');
 
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
@@ -59,12 +69,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
-    if (user) {
+    // Keep the view in sync with real auth state (e.g. after OAuth redirect).
+    if (isLoggedIn && view !== 'profile') {
       setView('profile');
-    } else {
-      setView('login');
     }
-  }, [user, isOpen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoggedIn, isOpen]);
 
   // Resend OTP countdown timer
   useEffect(() => {
@@ -91,7 +101,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
       setErrorMsg('И-мэйл болон нууц үгээ оруулна уу.');
@@ -99,36 +109,40 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
     setLoading(true);
     setErrorMsg('');
-
-    setTimeout(() => {
-      setLoading(false);
-      onLoginSuccess({
-        name: email.split('@')[0] || 'Бат-Эрдэнэ',
-        email,
-        avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
-        isVerified: true,
-      });
-      onClose();
-    }, 800);
+    const res = await signInWithPassword(email, password);
+    setLoading(false);
+    if (!res.ok) {
+      setErrorMsg(res.error || 'Нэвтрэхэд алдаа гарлаа.');
+      return;
+    }
+    onClose();
   };
 
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName || !email || !password) {
-      setErrorMsg('Бүх талбарыг бөгөлнө үү.');
+      setErrorMsg('Бүх талбарыг бөглөнө үү.');
       return;
     }
     setLoading(true);
     setErrorMsg('');
-
-    setTimeout(() => {
-      setLoading(false);
+    const res = await signUpWithPassword(email, password, fullName);
+    setLoading(false);
+    if (!res.ok) {
+      setErrorMsg(res.error || 'Бүртгэл үүсгэхэд алдаа гарлаа.');
+      return;
+    }
+    if (res.pendingVerification) {
+      setOtpValues(['', '', '', '', '', '']);
       setOtpTimer(60);
+      setSuccessMsg('Баталгаажуулах код и-мэйл рүү илгээгдлээ.');
       setView('otp');
-    }, 800);
+    } else {
+      onClose();
+    }
   };
 
-  const handleOtpVerify = () => {
+  const handleOtpVerify = async () => {
     const code = otpValues.join('');
     if (code.length < 6) {
       setErrorMsg('6 оронтой баталгаажуулах кодыг бүтэн оруулна уу.');
@@ -136,34 +150,44 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
     setLoading(true);
     setErrorMsg('');
-
-    setTimeout(() => {
-      setLoading(false);
-      onLoginSuccess({
-        name: fullName || email.split('@')[0] || 'Хэрэглэгч',
-        email,
-        avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
-        isVerified: true,
-      });
-      onClose();
-    }, 800);
+    const res = await verifyEmailOtp(email, code);
+    setLoading(false);
+    if (!res.ok) {
+      setErrorMsg(res.error || 'Код буруу байна.');
+      return;
+    }
+    onClose();
   };
 
-  const handleSocialLogin = (provider: 'Google' | 'Apple') => {
+  const handleResendOtp = async () => {
+    setErrorMsg('');
+    const res = await resendEmailOtp(email);
+    if (!res.ok) {
+      setErrorMsg(res.error || 'Код дахин илгээхэд алдаа гарлаа.');
+      return;
+    }
+    setOtpTimer(60);
+    setSuccessMsg('Шинэ код илгээгдлээ.');
+  };
+
+  const handleSocialLogin = async (provider: 'Google' | 'Apple') => {
+    if (provider !== 'Google') return;
     setLoading(true);
-    setTimeout(() => {
+    setErrorMsg('');
+    const res = await signInWithGoogle();
+    // On success the browser redirects to Google, so we only handle errors here.
+    if (!res.ok) {
       setLoading(false);
-      onLoginSuccess({
-        name: `${provider} User`,
-        email: `user@${provider.toLowerCase()}.com`,
-        avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${provider}`,
-        isVerified: true,
-      });
-      onClose();
-    }, 700);
+      setErrorMsg(res.error || 'Google-ээр нэвтрэхэд алдаа гарлаа.');
+    }
   };
 
-  const handleForgotSubmit = (e: React.FormEvent) => {
+  const handleLogout = async () => {
+    await signOut();
+    onClose();
+  };
+
+  const handleForgotSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
       setErrorMsg('И-мэйл хаягаа оруулна уу.');
@@ -171,11 +195,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
     setLoading(true);
     setErrorMsg('');
-
-    setTimeout(() => {
-      setLoading(false);
-      setSuccessMsg('Нууц үг сэргээх код и-мэйл рүү очлоо!');
-    }, 800);
+    const res = await resetPassword(email);
+    setLoading(false);
+    if (!res.ok) {
+      setErrorMsg(res.error || 'Алдаа гарлаа.');
+      return;
+    }
+    setSuccessMsg('Нууц үг сэргээх холбоос и-мэйл рүү очлоо!');
   };
 
   if (!isOpen) return null;
@@ -450,7 +476,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </span>
                   ) : (
                     <button
-                      onClick={() => setOtpTimer(60)}
+                      onClick={handleResendOtp}
                       className="text-mango font-bold hover:underline"
                     >
                       Дахин код авах
@@ -569,7 +595,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </button>
 
                   <button
-                    onClick={onLogout}
+                    onClick={handleLogout}
                     className="w-full bg-red-500/10 border border-red-500/20 p-3.5 rounded-2xl text-xs font-bold text-red-500 flex items-center justify-center gap-2 hover:bg-red-500 hover:text-white transition-all cursor-pointer active:scale-[0.98] shadow-xs"
                   >
                     <LogOut size={16} />

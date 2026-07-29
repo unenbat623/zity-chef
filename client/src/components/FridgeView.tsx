@@ -12,7 +12,16 @@ import { EditIngredientModal } from './EditIngredientModal';
 import { requestNotificationPermission, sendExpiryNotification } from '../lib/notificationService';
 
 export const FridgeView: React.FC = () => {
-  const { inventory, removeIngredient, updateIngredient, setShowScanModal, t } = useApp();
+  const {
+    inventory,
+    inventoryLoading,
+    inventoryError,
+    refetchInventory,
+    removeIngredient,
+    updateIngredient,
+    setShowScanModal,
+    t,
+  } = useApp();
   const [showPicker, setShowPicker] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCat, setSelectedCat] = useState<string>('all');
@@ -141,7 +150,37 @@ export const FridgeView: React.FC = () => {
         </div>
       </div>
 
+      {/* Error state */}
+      {inventoryError && (
+        <div className="text-center py-10 bg-red-500/5 border border-red-500/20 rounded-2xl p-6 space-y-3">
+          <AlertTriangle size={28} className="text-red-500 mx-auto" />
+          <p className="text-sm font-bold text-red-500">Хөргөгчийн мэдээлэл ачаалж чадсангүй</p>
+          <p className="text-xs text-gray-400">Сервертэй холбогдож чадсангүй. Дахин оролдоно уу.</p>
+          <button
+            onClick={() => refetchInventory()}
+            className="btn-primary px-5 py-2.5 text-xs font-bold inline-flex items-center gap-2"
+          >
+            <Sparkles size={14} /> Дахин ачаалах
+          </button>
+        </div>
+      )}
+
+      {/* Loading skeleton */}
+      {inventoryLoading && !inventoryError && inventory.length === 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="pestle-card p-3.5 animate-pulse">
+              <div className="w-full h-28 rounded-xl bg-pestle-bg mb-3" />
+              <div className="h-3 w-2/3 mx-auto rounded bg-pestle-bg mb-2" />
+              <div className="h-2 w-1/3 mx-auto rounded bg-pestle-bg mb-3" />
+              <div className="h-1.5 w-full rounded-full bg-pestle-bg" />
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Inventory Grid */}
+      {!inventoryError && (
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5">
         {filteredInventory.map((item) => {
           const isExpiring = item.expiryDays <= 3;
@@ -207,8 +246,9 @@ export const FridgeView: React.FC = () => {
           );
         })}
       </div>
+      )}
 
-      {filteredInventory.length === 0 && (
+      {!inventoryLoading && !inventoryError && filteredInventory.length === 0 && (
         <div className="text-center py-12 bg-pestle-card border border-pestle-border rounded-2xl p-6">
           <p className="text-sm font-bold text-gray-400">Материал олдсонгүй</p>
         </div>

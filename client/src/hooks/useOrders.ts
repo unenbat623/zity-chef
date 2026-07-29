@@ -1,17 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { OrderRecord, CartItem } from '../types';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+import { authedFetch } from '../lib/apiClient';
 
 async function fetchOrders(): Promise<OrderRecord[]> {
-  try {
-    const res = await fetch(`${API_BASE}/api/orders`);
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.orders || [];
-  } catch {
-    return [];
-  }
+  const res = await authedFetch('/api/orders');
+  if (!res.ok) throw new Error('Failed to fetch orders');
+  const data = await res.json();
+  return data.orders || [];
 }
 
 async function createOrderApi(payload: {
@@ -20,9 +15,8 @@ async function createOrderApi(payload: {
   deliveryAddress: string;
   paymentMethod: string;
 }): Promise<OrderRecord> {
-  const res = await fetch(`${API_BASE}/api/orders`, {
+  const res = await authedFetch('/api/orders', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error('Failed to create order');
@@ -36,7 +30,6 @@ export function useOrders() {
   const query = useQuery({
     queryKey: ['orders'],
     queryFn: fetchOrders,
-    initialData: [],
   });
 
   const createOrderMutation = useMutation({
@@ -47,7 +40,9 @@ export function useOrders() {
   });
 
   return {
-    orders: query.data,
+    orders: query.data ?? [],
+    isLoading: query.isLoading,
+    isError: query.isError,
     createOrder: createOrderMutation.mutate,
   };
 }

@@ -11,7 +11,9 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- Supabase Auth handles authentication; this extends auth.users with app data
 CREATE TABLE IF NOT EXISTS public.profiles (
   id            UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  email         TEXT UNIQUE NOT NULL,
+  -- email is nullable: anonymous sign-in creates a real user with no email.
+  -- (In Postgres, UNIQUE permits multiple NULLs, so anon users don't collide.)
+  email         TEXT UNIQUE,
   display_name  TEXT,
   avatar_url    TEXT,
   subscription_tier TEXT NOT NULL DEFAULT 'free'

@@ -1,24 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ingredient } from '../types';
-import { MOCK_INGREDIENTS } from '../constants';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+import { authedFetch } from '../lib/apiClient';
 
 async function fetchInventory(): Promise<Ingredient[]> {
-  try {
-    const res = await fetch(`${API_BASE}/api/inventory`);
-    if (!res.ok) throw new Error('Failed to fetch inventory');
-    const data = await res.json();
-    return data.items || MOCK_INGREDIENTS;
-  } catch {
-    return MOCK_INGREDIENTS;
-  }
+  const res = await authedFetch('/api/inventory');
+  if (!res.ok) throw new Error('Failed to fetch inventory');
+  const data = await res.json();
+  return data.items || [];
 }
 
 async function addInventoryItem(item: Partial<Ingredient>): Promise<Ingredient> {
-  const res = await fetch(`${API_BASE}/api/inventory`, {
+  const res = await authedFetch('/api/inventory', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(item),
   });
   if (!res.ok) throw new Error('Failed to add item');
@@ -27,22 +20,17 @@ async function addInventoryItem(item: Partial<Ingredient>): Promise<Ingredient> 
 }
 
 async function updateInventoryItem(item: Ingredient): Promise<Ingredient> {
-  try {
-    const res = await fetch(`${API_BASE}/api/inventory/${item.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(item),
-    });
-    if (!res.ok) return item;
-    const data = await res.json();
-    return data.item;
-  } catch {
-    return item;
-  }
+  const res = await authedFetch(`/api/inventory/${item.id}`, {
+    method: 'PUT',
+    body: JSON.stringify(item),
+  });
+  if (!res.ok) throw new Error('Failed to update item');
+  const data = await res.json();
+  return data.item;
 }
 
 async function deleteInventoryItem(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/api/inventory/${id}`, {
+  const res = await authedFetch(`/api/inventory/${id}`, {
     method: 'DELETE',
   });
   if (!res.ok) throw new Error('Failed to delete item');
@@ -54,7 +42,6 @@ export function useInventory() {
   const query = useQuery({
     queryKey: ['inventory'],
     queryFn: fetchInventory,
-    initialData: MOCK_INGREDIENTS,
   });
 
   const addItemMutation = useMutation({
@@ -129,8 +116,10 @@ export function useInventory() {
   });
 
   return {
-    inventory: query.data,
+    inventory: query.data ?? [],
     isLoading: query.isLoading,
+    isError: query.isError,
+    refetch: query.refetch,
     addIngredient: addItemMutation.mutate,
     updateIngredient: updateItemMutation.mutate,
     removeIngredient: removeItemMutation.mutate,
