@@ -69,9 +69,7 @@ export const FloatingAssistant: React.FC = () => {
                 <X size={10} />
               </button>
               <p className="text-[11px] font-semibold leading-tight text-pestle-text">
-                {lang === 'mn'
-                  ? 'Сайн уу! Zity Тогоочоос зөвлөгөө авах уу? ✨'
-                  : 'Hello! Need chef tips today? ✨'}
+                {t('assistant_greetingBubble')}
               </p>
               <div className="absolute -bottom-1 right-4 w-2.5 h-2.5 bg-pestle-card border-r border-b border-pestle-border rotate-45" />
             </motion.div>
@@ -139,7 +137,7 @@ export const FloatingAssistant: React.FC = () => {
               {isLoading && (
                 <div className="bg-pestle-card border border-pestle-border p-3 rounded-2xl rounded-tl-none self-start shadow-xs flex gap-1.5 items-center">
                   <span className="w-1.5 h-1.5 bg-mango rounded-full animate-ping" />
-                  <span className="text-[11px] font-bold text-gray-400">Zity Тогооч бодож байна...</span>
+                  <span className="text-[11px] font-bold text-gray-400">{t('assistant_thinking')}</span>
                 </div>
               )}
             </div>

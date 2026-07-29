@@ -10,9 +10,9 @@ export const BottomNav: React.FC = () => {
     { id: 'fridge', icon: Refrigerator, label: t('tabFridge') },
     { id: 'recipe', icon: BookOpen, label: t('tabRecipe') },
     { id: 'cooking', icon: Flame, label: t('tabCooking') },
-    { id: 'community', icon: Users, label: 'Нийгэм' },
+    { id: 'community', icon: Users, label: t('bottomnav_community') },
     { id: 'store', icon: Store, label: t('tabStore'), badge: cart.length > 0 ? cart.length : null },
-    { id: 'profile', icon: User, label: 'Профайл', isProfile: true },
+    { id: 'profile', icon: User, label: t('bottomnav_profile'), isProfile: true },
   ];
 
   return (

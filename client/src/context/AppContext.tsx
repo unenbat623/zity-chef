@@ -51,8 +51,8 @@ interface AppContextType {
   triggerPayment: (amount: number, title: string, onSuccess?: () => void) => void;
   closePaymentModal: () => void;
 
-  // Translation helper
-  t: (key: keyof (typeof translations)['mn'], params?: Record<string, string | number>) => string;
+  // Translation helper (accepts any key; falls back to mn then the key itself)
+  t: (key: string, params?: Record<string, string | number>) => string;
 }
 
 const VALID_TABS = ['fridge', 'calendar', 'cooking', 'store', 'recipe', 'community', 'profile', 'help'];
@@ -257,8 +257,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   const t = useCallback(
-    (key: keyof (typeof translations)['mn'], params?: Record<string, string | number>): string => {
-      let str = translations[lang][key] || translations['mn'][key] || key;
+    (key: string, params?: Record<string, string | number>): string => {
+      const dictMn = translations.mn as Record<string, string>;
+      const dict = translations[lang] as Record<string, string>;
+      let str = dict[key] || dictMn[key] || key;
       if (params) {
         Object.entries(params).forEach(([k, v]) => {
           str = str.replace(`{${k}}`, String(v));

@@ -20,13 +20,13 @@ import { MOCK_RECIPES } from '../data/recipes';
 import { Recipe, RecipeCategory } from '../types';
 import { SmartImage } from './SmartImage';
 
-const CATEGORY_OPTIONS: { label: string; value: RecipeCategory | 'all'; icon: string }[] = [
-  { label: 'Бүх ангилал', value: 'all', icon: '🍽️' },
-  { label: 'Өглөөний цай & Бранч', value: 'Өглөөний цай', icon: '🌅' },
-  { label: 'Салат & Хөнгөн зууш', value: 'Салат ба Хөнгөн зууш', icon: '🥗' },
-  { label: 'Үндсэн хоол', value: 'Үндсэн хоол', icon: '🥩' },
-  { label: 'Шөл & Бүлээн хоол', value: 'Шөл ба Бүлээн хоол', icon: '🥣' },
-  { label: 'Эрүүл дессерт & Ундаа', value: 'Эрүүл дессерт ба Ундаа', icon: '🍨' },
+const CATEGORY_OPTIONS: { labelKey: string; value: RecipeCategory | 'all'; icon: string }[] = [
+  { labelKey: 'recipe_categoryAll', value: 'all', icon: '🍽️' },
+  { labelKey: 'recipe_categoryBreakfast', value: 'Өглөөний цай', icon: '🌅' },
+  { labelKey: 'recipe_categorySalad', value: 'Салат ба Хөнгөн зууш', icon: '🥗' },
+  { labelKey: 'recipe_categoryMain', value: 'Үндсэн хоол', icon: '🥩' },
+  { labelKey: 'recipe_categorySoup', value: 'Шөл ба Бүлээн хоол', icon: '🥣' },
+  { labelKey: 'recipe_categoryDessert', value: 'Эрүүл дессерт ба Ундаа', icon: '🍨' },
 ];
 
 export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }> = ({
@@ -95,7 +95,7 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
 
         <button
           onClick={onClose}
-          aria-label="Буцах"
+          aria-label={t('recipe_back')}
           className="absolute top-6 left-6 w-11 h-11 bg-black/60 backdrop-blur-md text-white rounded-full flex items-center justify-center shadow-xl hover:bg-mango transition-colors"
         >
           <ChevronLeft size={24} />
@@ -131,17 +131,17 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
         <div className="grid grid-cols-3 gap-3 bg-pestle-card p-4 rounded-2xl border border-pestle-border text-center shadow-md">
           <div className="flex flex-col items-center gap-1">
             <Clock size={20} className="text-mango" />
-            <span className="text-[10px] text-gray-400 font-extrabold uppercase">Хугацаа</span>
+            <span className="text-[10px] text-gray-400 font-extrabold uppercase">{t('recipe_timeLabel')}</span>
             <span className="text-xs sm:text-sm font-black text-pestle-text">{recipe.time}</span>
           </div>
           <div className="flex flex-col items-center gap-1 border-x border-pestle-border/60">
             <Flame size={20} className="text-mint" />
-            <span className="text-[10px] text-gray-400 font-extrabold uppercase">Түвшин</span>
+            <span className="text-[10px] text-gray-400 font-extrabold uppercase">{t('recipe_levelLabel')}</span>
             <span className="text-xs sm:text-sm font-black text-pestle-text">{recipe.difficulty}</span>
           </div>
           <div className="flex flex-col items-center gap-1">
             <Utensils size={20} className="text-amber-500" />
-            <span className="text-[10px] text-gray-400 font-extrabold uppercase">Илчлэг</span>
+            <span className="text-[10px] text-gray-400 font-extrabold uppercase">{t('calories')}</span>
             <span className="text-xs sm:text-sm font-black text-pestle-text">
               {recipe.nutrition.calories} kcal
             </span>
@@ -152,10 +152,10 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
         <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/5 p-4 rounded-2xl border border-emerald-500/20 space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-              <ChefHat size={16} /> Хөргөгчний бэлэн байдал: {matchDetails.count}/{matchDetails.total} орц
+              <ChefHat size={16} /> {t('recipe_fridgeReadiness', { count: matchDetails.count, total: matchDetails.total })}
             </span>
             <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-300">
-              {Math.round((matchDetails.count / matchDetails.total) * 100)}% Бэлэн
+              {t('recipe_percentReady', { n: Math.round((matchDetails.count / matchDetails.total) * 100) })}
             </span>
           </div>
           <div className="w-full bg-gray-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
@@ -169,7 +169,7 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
         {/* Nutrition Detail Box */}
         <div className="space-y-2">
           <h3 className="text-xs font-bold text-pestle-text uppercase tracking-wider">
-            {lang === 'mn' ? 'Шим тэжээлийн үзүүлэлт (1 Порц)' : 'Nutritional Information'}
+            {t('recipe_nutritionInfo')}
           </h3>
           <div className="grid grid-cols-3 gap-3 bg-pestle-card p-3.5 rounded-xl border border-pestle-border text-center text-xs">
             <div>
@@ -190,7 +190,7 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
         {/* Ingredients list */}
         <div className="space-y-3">
           <h3 className="text-xs font-bold text-pestle-text uppercase tracking-wider">
-            Шаардлагатай орцууд
+            {t('recipe_requiredIngredients')}
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {recipeIngredients.map((ing, i) => {
@@ -222,7 +222,7 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
                       onClick={() => handleAddMissingToCart(ing)}
                       className="text-[10px] bg-mango/15 hover:bg-mango text-mango hover:text-white px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 font-bold"
                     >
-                      <ShoppingBag size={11} /> Захиалах
+                      <ShoppingBag size={11} /> {t('recipe_order')}
                     </button>
                   )}
                 </div>
@@ -234,7 +234,7 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
         {/* Cooking Steps */}
         <div className="space-y-4">
           <h3 className="text-xs font-bold text-pestle-text uppercase tracking-wider">
-            Бэлтгэх ба хийх алхмууд ({recipe.steps.length})
+            {t('recipe_cookingSteps', { n: recipe.steps.length })}
           </h3>
           <div className="space-y-3">
             {recipe.steps.map((step, idx) => (
@@ -244,7 +244,7 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-black text-mango bg-mango/10 px-3 py-1 rounded-full">
-                    Алхам {idx + 1}
+                    {t('step')} {idx + 1}
                   </span>
                   <span className="text-xs font-bold text-pestle-text">
                     {lang === 'mn' ? step.title : step.titleEn || step.title}
@@ -257,7 +257,7 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
                   <div className="bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl text-[11px] text-amber-700 dark:text-amber-300 flex items-start gap-2 font-medium">
                     <Sparkles size={14} className="text-amber-500 shrink-0 mt-0.5" />
                     <span>
-                      <strong>Zity Тогоочийн зөвлөгөө:</strong>{' '}
+                      <strong>{t('sisterTip')}</strong>{' '}
                       {lang === 'mn' ? step.sisterTip : step.sisterTipEn || step.sisterTip}
                     </span>
                   </div>
@@ -275,12 +275,12 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
           {recipe.isPremium && subscription === 'free' ? (
             <>
               <Lock size={18} />
-              <span>Pro Chef идэвхжүүлж хийх</span>
+              <span>{t('recipe_activateProChef')}</span>
             </>
           ) : (
             <>
               <Flame size={18} className="animate-bounce" />
-              <span>Хоол хийж эхлэх</span>
+              <span>{t('recipe_startCooking')}</span>
             </>
           )}
         </button>
@@ -417,27 +417,27 @@ export const RecipeView: React.FC = () => {
           <h2 className="text-2xl sm:text-3xl font-black text-pestle-text tracking-tight flex items-center gap-2">
             <span>{t('tabRecipe')}</span>
             <span className="text-xs bg-mango/15 text-mango px-2.5 py-1 rounded-full font-bold">
-              {MOCK_RECIPES.length} Жор
+              {t('recipe_recipeCount', { n: MOCK_RECIPES.length })}
             </span>
           </h2>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">
-            Эрүүл, амттай хоолны жор хайж, хөргөгчиндөө байгаа орцоор шууд бэлдээрэй!
+            {t('recipe_subtitle')}
           </p>
         </div>
 
         {/* Sort selector dropdown */}
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold text-gray-400 uppercase tracking-wider hidden sm:inline">
-            Эрэмбэлэх:
+            {t('recipe_sortBy')}
           </span>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as any)}
             className="bg-pestle-card border border-pestle-border rounded-xl px-3 py-2 text-xs font-bold text-pestle-text focus:outline-none focus:border-mango shadow-xs cursor-pointer"
           >
-            <option value="fridgeMatch">✨ Хөргөгчний бэлэн байдлаар</option>
-            <option value="rating">⭐ Өндөр үнэлгээтэй</option>
-            <option value="time">⚡ Хурдан бэлтгэгдэх</option>
+            <option value="fridgeMatch">{t('recipe_sortFridgeMatch')}</option>
+            <option value="rating">{t('recipe_sortRating')}</option>
+            <option value="time">{t('recipe_sortTime')}</option>
           </select>
         </div>
       </header>
@@ -451,8 +451,8 @@ export const RecipeView: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onFocus={() => setIsSearchFocused(true)}
-            aria-label="Жор хайх"
-            placeholder="Хоолны нэр, орц, эсвэл категороор хайх (жишээ нь: Лазанья, Сэлмон, Өндөг)..."
+            aria-label={t('recipe_searchAria')}
+            placeholder={t('recipe_searchPlaceholder')}
             className="w-full bg-pestle-card border border-pestle-border rounded-2xl py-3.5 pl-11 pr-10 text-xs sm:text-sm font-semibold focus:outline-none focus:border-mango focus:ring-2 focus:ring-mango/20 transition-all text-pestle-text shadow-sm"
           />
           {search && (
@@ -475,8 +475,8 @@ export const RecipeView: React.FC = () => {
               className="absolute top-full left-0 right-0 mt-2 bg-pestle-card border border-pestle-border rounded-2xl shadow-2xl overflow-hidden z-50 max-h-80 overflow-y-auto divide-y divide-pestle-border/40"
             >
               <div className="p-2 bg-mango/5 text-[11px] font-bold text-mango uppercase tracking-wider px-4 flex justify-between items-center">
-                <span>Хайлтын илэрц ({searchSuggestions.length})</span>
-                <span className="text-gray-400 text-[10px]">Дарж дэлгэрэнгүй үзэх</span>
+                <span>{t('recipe_searchResults', { n: searchSuggestions.length })}</span>
+                <span className="text-gray-400 text-[10px]">{t('recipe_clickToView')}</span>
               </div>
               {searchSuggestions.map((rec) => (
                 <div
@@ -509,7 +509,7 @@ export const RecipeView: React.FC = () => {
                       <span>{rec.time}</span>
                       <span>•</span>
                       <span className="text-emerald-500 font-bold">
-                        {rec.matchedCount}/{rec.totalIngredients} орц бэлэн
+                        {t('recipe_ingredientsReady', { matched: rec.matchedCount, total: rec.totalIngredients })}
                       </span>
                     </div>
                   </div>
@@ -532,7 +532,7 @@ export const RecipeView: React.FC = () => {
             >
               {CATEGORY_OPTIONS.map((cat) => (
                 <option key={cat.value} value={cat.value}>
-                  {cat.icon} {cat.label}
+                  {cat.icon} {t(cat.labelKey)}
                 </option>
               ))}
             </select>
@@ -549,10 +549,10 @@ export const RecipeView: React.FC = () => {
               onChange={(e) => setSelectedDifficulty(e.target.value)}
               className="w-full appearance-none bg-pestle-card border border-pestle-border rounded-xl py-2.5 pl-3.5 pr-8 text-xs font-bold text-pestle-text focus:outline-none focus:border-mango shadow-xs cursor-pointer"
             >
-              <option value="all">⚡ Түвшин: Бүгд</option>
-              <option value="easy">Easy (Амархан)</option>
-              <option value="medium">Medium (Дунд)</option>
-              <option value="hard">Hard (Хэцүү)</option>
+              <option value="all">{t('recipe_difficultyAll')}</option>
+              <option value="easy">{t('recipe_difficultyEasy')}</option>
+              <option value="medium">{t('recipe_difficultyMedium')}</option>
+              <option value="hard">{t('recipe_difficultyHard')}</option>
             </select>
             <ChevronDown
               size={14}
@@ -567,7 +567,7 @@ export const RecipeView: React.FC = () => {
             onClick={resetFilters}
             className="flex items-center justify-center gap-1.5 text-xs font-bold text-mango hover:text-amber-600 bg-mango/10 hover:bg-mango/20 px-3 py-2 rounded-xl transition-colors shrink-0"
           >
-            <RotateCcw size={14} /> Цэвэрлэх
+            <RotateCcw size={14} /> {t('recipe_clear')}
           </button>
         )}
       </div>
@@ -587,7 +587,7 @@ export const RecipeView: React.FC = () => {
               }`}
             >
               <span>{cat.icon}</span>
-              <span>{cat.label}</span>
+              <span>{t(cat.labelKey)}</span>
             </button>
           );
         })}
@@ -599,7 +599,7 @@ export const RecipeView: React.FC = () => {
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-black text-pestle-text flex items-center gap-2">
               <Sparkles size={18} className="text-emerald-500 animate-pulse" />
-              <span>Хөргөгчинд байгаа орцоор санал болгох хоолнууд</span>
+              <span>{t('recipe_fridgeRecommendations')}</span>
             </h3>
             <span className="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest bg-emerald-500/15 px-2.5 py-1 rounded-full">
               AI Smart Suggest
@@ -621,7 +621,7 @@ export const RecipeView: React.FC = () => {
                 />
                 <div className="flex-1 min-w-0">
                   <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full inline-block">
-                    ✓ {recipe.matchedCount}/{recipe.totalIngredients} орц бэлэн
+                    ✓ {t('recipe_ingredientsReady', { matched: recipe.matchedCount, total: recipe.totalIngredients })}
                   </span>
                   <h4 className="text-xs font-black text-pestle-text truncate mt-1">
                     {lang === 'mn' ? recipe.title : recipe.titleEn || recipe.title}
@@ -640,7 +640,7 @@ export const RecipeView: React.FC = () => {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-xs font-extrabold text-gray-400 uppercase tracking-wider">
-            Жорны цулгуулга ({filteredRecipes.length})
+            {t('recipe_recipeCollection', { n: filteredRecipes.length })}
           </span>
         </div>
 
@@ -650,13 +650,13 @@ export const RecipeView: React.FC = () => {
               🔍
             </div>
             <div className="space-y-1">
-              <h3 className="text-base font-black text-pestle-text">Уучлаарай, Жор олдсонгүй</h3>
+              <h3 className="text-base font-black text-pestle-text">{t('recipe_noRecipesTitle')}</h3>
               <p className="text-xs text-gray-400 max-w-xs mx-auto">
-                Таны хайсан түлхүүр үг эсвэл шүүлтүүрт тохирох хоол одоогоор байхгүй байна.
+                {t('recipe_noRecipesDesc')}
               </p>
             </div>
             <button onClick={resetFilters} className="btn-primary py-2.5 px-6 text-xs font-bold">
-              Бүх жорыг харах
+              {t('recipe_viewAllRecipes')}
             </button>
           </div>
         ) : (
@@ -713,7 +713,7 @@ export const RecipeView: React.FC = () => {
                               : 'bg-black/50 text-gray-300 border-white/10'
                           }`}
                         >
-                          ✓ {recipe.matchedCount}/{recipe.totalIngredients} орц хөргөгчинд
+                          ✓ {t('recipe_ingredientsInFridge', { matched: recipe.matchedCount, total: recipe.totalIngredients })}
                         </span>
                       </div>
                     </div>

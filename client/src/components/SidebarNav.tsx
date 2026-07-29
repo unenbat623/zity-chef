@@ -41,8 +41,8 @@ export const SidebarNav: React.FC = () => {
     { id: 'cooking', label: t('tabCooking'), icon: Flame },
     { id: 'store', label: t('tabStore'), icon: Store, count: cart.length },
     { id: 'recipe', label: t('tabRecipe'), icon: BookOpen },
-    { id: 'community', label: 'Хамтын орчин', icon: Users, badge: 'NEW' },
-    { id: 'help', label: 'Тусламж & FAQ', icon: HelpCircle },
+    { id: 'community', label: t('sidebar_community'), icon: Users, badge: 'NEW' },
+    { id: 'help', label: t('sidebar_help'), icon: HelpCircle },
   ];
 
   const expiringCount = inventory.filter((i) => i.expiryDays <= 3).length;
@@ -75,19 +75,19 @@ export const SidebarNav: React.FC = () => {
         <div className="bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-mango/15 border border-mango/30 p-4 rounded-2xl space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-extrabold uppercase text-mango tracking-wider flex items-center gap-1">
-              <Sparkles size={12} /> {subscription === 'free' ? 'Free Tier' : 'Pro Chef Tier'}
+              <Sparkles size={12} /> {subscription === 'free' ? t('sidebar_freeTier') : t('sidebar_proTier')}
             </span>
             <Crown size={16} className="text-amber-500" />
           </div>
           <p className="text-xs text-pestle-text font-bold">
-            {subscription === 'free' ? 'AI жор & OCR скан идэвхжүүлэх' : 'Бүх боломж идэвхтэй'}
+            {subscription === 'free' ? t('sidebar_freeDesc') : t('sidebar_proDesc')}
           </p>
           {subscription === 'free' && (
             <button
               onClick={() => setShowSubModal(true)}
               className="w-full bg-mango text-white text-xs font-bold py-2 rounded-xl shadow-md shadow-mango/20 hover:bg-mango/90 transition-colors"
             >
-              Идэвхжүүлэх (₮7,900)
+              {t('sidebar_activate')}
             </button>
           )}
         </div>
@@ -139,7 +139,7 @@ export const SidebarNav: React.FC = () => {
       <div className="space-y-4 pt-4 border-t border-pestle-border/60">
         {expiringCount > 0 && (
           <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-xl flex items-center justify-between text-red-500 text-xs font-bold">
-            <span>⚠️ Муудах дөхсөн</span>
+            <span>⚠️ {t('sidebar_expiring')}</span>
             <span className="bg-red-500 text-white px-2 py-0.5 rounded-full text-[10px]">
               {expiringCount}
             </span>

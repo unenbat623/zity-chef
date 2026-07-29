@@ -30,7 +30,7 @@ export const HeaderNav: React.FC = () => {
     if (isLoggedIn && user) {
       setProfile({
         ...profile,
-        name: profile.name && profile.name !== 'Таны Нэр' ? profile.name : user.name,
+        name: profile.name && profile.name !== t('header_defaultName') ? profile.name : user.name,
         avatarUrl: profile.avatarUrl || user.avatarUrl || null,
       });
     }
@@ -68,7 +68,7 @@ export const HeaderNav: React.FC = () => {
           <button
             onClick={() => setShowAuthModal(true)}
             className="flex items-center gap-1.5 bg-pestle-card border border-pestle-border p-1 sm:px-3 sm:py-1.5 rounded-xl text-xs font-bold text-pestle-text hover:border-mango transition-all active:scale-95 shadow-xs cursor-pointer"
-            title="User Profile & Account"
+            title={t('header_profileTitle')}
           >
             <div
               className={`w-6 h-6 rounded-lg overflow-hidden flex items-center justify-center bg-gradient-to-br ${profile.coverGradient} shrink-0`}
@@ -84,7 +84,7 @@ export const HeaderNav: React.FC = () => {
               )}
             </div>
             <span className="hidden md:inline text-xs font-bold text-pestle-text truncate max-w-[80px]">
-              {profile.name || user?.name || 'Таны Нэр'}
+              {profile.name || user?.name || t('header_defaultName')}
             </span>
           </button>
 
@@ -106,7 +106,7 @@ export const HeaderNav: React.FC = () => {
             whileTap={{ scale: 0.92 }}
             onClick={() => setLang(lang === 'mn' ? 'en' : 'mn')}
             className="relative h-8 px-2 sm:px-2.5 bg-pestle-card border border-pestle-border hover:border-mango/60 rounded-xl flex items-center justify-center gap-1 text-xs font-bold text-pestle-text shadow-xs transition-all shrink-0 cursor-pointer overflow-hidden group"
-            title="Switch Language / Хэл солих"
+            title={t('header_switchLang')}
           >
             <AnimatePresence mode="wait" initial={false}>
               <motion.span
@@ -135,7 +135,7 @@ export const HeaderNav: React.FC = () => {
                 ? 'bg-slate-900 border-slate-700 hover:border-amber-400/60'
                 : 'bg-amber-500/10 border-amber-500/30 hover:border-mango'
             }`}
-            title="Toggle Dark / Light Theme"
+            title={t('header_toggleTheme')}
           >
             <AnimatePresence mode="wait" initial={false}>
               {isDark ? (

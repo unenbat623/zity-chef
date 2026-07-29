@@ -27,7 +27,7 @@ interface AuthModalProps {
 type AuthView = 'login' | 'register' | 'otp' | 'forgot' | 'profile';
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
-  const { subscription, setShowSubModal, profile, setActiveTab } = useApp();
+  const { subscription, setShowSubModal, profile, setActiveTab, t } = useApp();
   const {
     user: authUser,
     isAnonymous,
@@ -47,7 +47,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         name:
           (authUser!.user_metadata?.full_name as string) ||
           authUser!.email?.split('@')[0] ||
-          'Хэрэглэгч',
+          t('auth_defaultUserName'),
         email: authUser!.email || authUser!.phone || '',
         avatarUrl: (authUser!.user_metadata?.avatar_url as string) || '',
       }
@@ -104,7 +104,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      setErrorMsg('И-мэйл болон нууц үгээ оруулна уу.');
+      setErrorMsg(t('auth_errEmailPassword'));
       return;
     }
     setLoading(true);
@@ -112,7 +112,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     const res = await signInWithPassword(email, password);
     setLoading(false);
     if (!res.ok) {
-      setErrorMsg(res.error || 'Нэвтрэхэд алдаа гарлаа.');
+      setErrorMsg(res.error || t('auth_errLoginFailed'));
       return;
     }
     onClose();
@@ -121,7 +121,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName || !email || !password) {
-      setErrorMsg('Бүх талбарыг бөглөнө үү.');
+      setErrorMsg(t('auth_errFillAll'));
       return;
     }
     setLoading(true);
@@ -129,13 +129,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     const res = await signUpWithPassword(email, password, fullName);
     setLoading(false);
     if (!res.ok) {
-      setErrorMsg(res.error || 'Бүртгэл үүсгэхэд алдаа гарлаа.');
+      setErrorMsg(res.error || t('auth_errRegisterFailed'));
       return;
     }
     if (res.pendingVerification) {
       setOtpValues(['', '', '', '', '', '']);
       setOtpTimer(60);
-      setSuccessMsg('Баталгаажуулах код и-мэйл рүү илгээгдлээ.');
+      setSuccessMsg(t('auth_otpSent'));
       setView('otp');
     } else {
       onClose();
@@ -145,7 +145,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const handleOtpVerify = async () => {
     const code = otpValues.join('');
     if (code.length < 6) {
-      setErrorMsg('6 оронтой баталгаажуулах кодыг бүтэн оруулна уу.');
+      setErrorMsg(t('auth_errOtpIncomplete'));
       return;
     }
     setLoading(true);
@@ -153,7 +153,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     const res = await verifyEmailOtp(email, code);
     setLoading(false);
     if (!res.ok) {
-      setErrorMsg(res.error || 'Код буруу байна.');
+      setErrorMsg(res.error || t('auth_errOtpWrong'));
       return;
     }
     onClose();
@@ -163,11 +163,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setErrorMsg('');
     const res = await resendEmailOtp(email);
     if (!res.ok) {
-      setErrorMsg(res.error || 'Код дахин илгээхэд алдаа гарлаа.');
+      setErrorMsg(res.error || t('auth_errResendFailed'));
       return;
     }
     setOtpTimer(60);
-    setSuccessMsg('Шинэ код илгээгдлээ.');
+    setSuccessMsg(t('auth_newCodeSent'));
   };
 
   const handleSocialLogin = async (provider: 'Google' | 'Apple') => {
@@ -178,7 +178,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     // On success the browser redirects to Google, so we only handle errors here.
     if (!res.ok) {
       setLoading(false);
-      setErrorMsg(res.error || 'Google-ээр нэвтрэхэд алдаа гарлаа.');
+      setErrorMsg(res.error || t('auth_errGoogleFailed'));
     }
   };
 
@@ -190,7 +190,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const handleForgotSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      setErrorMsg('И-мэйл хаягаа оруулна уу.');
+      setErrorMsg(t('auth_errEnterEmail'));
       return;
     }
     setLoading(true);
@@ -198,10 +198,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     const res = await resetPassword(email);
     setLoading(false);
     if (!res.ok) {
-      setErrorMsg(res.error || 'Алдаа гарлаа.');
+      setErrorMsg(res.error || t('auth_errGeneric'));
       return;
     }
-    setSuccessMsg('Нууц үг сэргээх холбоос и-мэйл рүү очлоо!');
+    setSuccessMsg(t('auth_resetLinkSent'));
   };
 
   if (!isOpen) return null;
@@ -226,17 +226,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               </div>
               <div>
                 <h3 className="font-extrabold text-sm text-pestle-text">
-                  {view === 'login' && 'Zity Chef Нэвтрэх'}
-                  {view === 'register' && 'Шинэ бүртгэл үүсгэх'}
-                  {view === 'otp' && 'И-мэйл баталгаажуулах'}
-                  {view === 'forgot' && 'Нууц үг сэргээх'}
-                  {view === 'profile' && 'Миний бүртгэл'}
+                  {view === 'login' && t('auth_titleLogin')}
+                  {view === 'register' && t('auth_titleRegister')}
+                  {view === 'otp' && t('auth_titleOtp')}
+                  {view === 'forgot' && t('auth_titleForgot')}
+                  {view === 'profile' && t('auth_titleProfile')}
                 </h3>
                 <p className="text-[10px] text-gray-400 font-semibold">AI Kitchen Ecosystem</p>
               </div>
             </div>
 
-            <button onClick={onClose} aria-label="Хаах" className="modal-close-btn">
+            <button onClick={onClose} aria-label={t('close')} className="modal-close-btn">
               <X size={18} />
             </button>
           </div>
@@ -260,7 +260,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               <form onSubmit={handleLoginSubmit} className="space-y-3">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
-                    <Mail size={14} className="text-mango" /> И-мэйл хаяг
+                    <Mail size={14} className="text-mango" /> {t('auth_emailLabel')}
                   </label>
                   <input
                     type="email"
@@ -276,14 +276,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 <div className="space-y-1">
                   <div className="flex justify-between items-center">
                     <label className="text-xs font-bold text-pestle-text flex items-center gap-1">
-                      <Lock size={12} className="text-mango" /> Нууц үг
+                      <Lock size={12} className="text-mango" /> {t('auth_passwordLabel')}
                     </label>
                     <button
                       type="button"
                       onClick={() => setView('forgot')}
                       className="text-[11px] font-bold text-mango hover:underline"
                     >
-                      Мартсан уу?
+                      {t('auth_forgotQ')}
                     </button>
                   </div>
                   <div className="relative">
@@ -315,7 +315,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     <RefreshCw size={14} className="animate-spin" />
                   ) : (
                     <>
-                      <span>Нэвтрэх</span>
+                      <span>{t('auth_loginBtn')}</span>
                       <ArrowRight size={14} />
                     </>
                   )}
@@ -328,12 +328,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     onClick={() => handleSocialLogin('Google')}
                     className="w-full bg-pestle-bg border border-pestle-border py-2 rounded-xl text-xs font-bold text-pestle-text flex items-center justify-center gap-2 hover:border-mango transition-colors"
                   >
-                    <span>🌐 Google-ээр нэвтрэх</span>
+                    <span>🌐 {t('auth_googleLogin')}</span>
                   </button>
                 </div>
 
                 <div className="text-center">
-                  <span className="text-xs text-gray-400 font-medium">Шинэ хэрэглэгч үү? </span>
+                  <span className="text-xs text-gray-400 font-medium">{t('auth_newUserQ')} </span>
                   <button
                     type="button"
                     onClick={() => {
@@ -342,7 +342,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     }}
                     className="text-xs font-bold text-mango hover:underline"
                   >
-                    Бүртгүүлэх
+                    {t('auth_registerBtn')}
                   </button>
                 </div>
               </form>
@@ -353,7 +353,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               <form onSubmit={handleRegisterSubmit} className="space-y-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
-                    <User size={14} className="text-mango" /> Бүтэн нэр
+                    <User size={14} className="text-mango" /> {t('auth_fullNameLabel')}
                   </label>
                   <input
                     type="text"
@@ -361,14 +361,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     autoComplete="name"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Бат-Эрдэнэ"
+                    placeholder={t('auth_fullNamePlaceholder')}
                     className="w-full bg-pestle-bg border border-pestle-border rounded-xl px-4 py-3 text-xs font-medium text-pestle-text focus:outline-none focus:border-mango"
                   />
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
-                    <Mail size={14} className="text-mango" /> И-мэйл хаяг
+                    <Mail size={14} className="text-mango" /> {t('auth_emailLabel')}
                   </label>
                   <input
                     type="email"
@@ -382,7 +382,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
-                    <Lock size={14} className="text-mango" /> Нууц үг үүсгэх
+                    <Lock size={14} className="text-mango" /> {t('auth_createPasswordLabel')}
                   </label>
                   <input
                     type="password"
@@ -404,14 +404,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     <RefreshCw size={16} className="animate-spin" />
                   ) : (
                     <>
-                      <span>Код хүлээн авах (OTP)</span>
+                      <span>{t('auth_getOtpBtn')}</span>
                       <ArrowRight size={16} />
                     </>
                   )}
                 </button>
 
                 <div className="text-center pt-2">
-                  <span className="text-xs text-gray-400 font-medium">Бүртгэлтэй юу? </span>
+                  <span className="text-xs text-gray-400 font-medium">{t('auth_haveAccountQ')} </span>
                   <button
                     type="button"
                     onClick={() => {
@@ -420,7 +420,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     }}
                     className="text-xs font-bold text-mango hover:underline"
                   >
-                    Нэвтрэх
+                    {t('auth_loginBtn')}
                   </button>
                 </div>
               </form>
@@ -434,11 +434,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 </div>
                 <div>
                   <h4 className="text-sm font-extrabold text-pestle-text">
-                    6 Оронтой Код Оруулна уу
+                    {t('auth_otpHeading')}
                   </h4>
                   <p className="text-xs text-gray-400 mt-1">
-                    <span className="font-bold text-mango">{email}</span> хаяг руу баталгаажуулах
-                    код очив.
+                    {t('auth_otpSentPrefix')}{' '}
+                    <span className="font-bold text-mango">{email}</span>{' '}
+                    {t('auth_otpSentSuffix')}
                   </p>
                 </div>
 
@@ -467,21 +468,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   {loading ? (
                     <RefreshCw size={16} className="animate-spin mx-auto" />
                   ) : (
-                    'Баталгаажуулах'
+                    t('auth_verifyBtn')
                   )}
                 </button>
 
                 <div className="text-xs text-gray-400 font-medium">
                   {otpTimer > 0 ? (
                     <span>
-                      Дахин илгээх: <strong className="text-mango">{otpTimer}s</strong>
+                      {t('auth_resendIn')} <strong className="text-mango">{otpTimer}s</strong>
                     </span>
                   ) : (
                     <button
                       onClick={handleResendOtp}
                       className="text-mango font-bold hover:underline"
                     >
-                      Дахин код авах
+                      {t('auth_resendCode')}
                     </button>
                   )}
                 </div>
@@ -492,11 +493,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             {view === 'forgot' && (
               <form onSubmit={handleForgotSubmit} className="space-y-4">
                 <p className="text-xs text-gray-400">
-                  Бүртгэлтэй и-мэйл хаягаа оруулбал нууц үг сэргээх холбоос очих болно.
+                  {t('auth_forgotDesc')}
                 </p>
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
-                    <Mail size={14} className="text-mango" /> И-мэйл хаяг
+                    <Mail size={14} className="text-mango" /> {t('auth_emailLabel')}
                   </label>
                   <input
                     type="email"
@@ -517,7 +518,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   {loading ? (
                     <RefreshCw size={16} className="animate-spin mx-auto" />
                   ) : (
-                    'Код Илгээх'
+                    t('auth_sendCodeBtn')
                   )}
                 </button>
 
@@ -526,7 +527,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   onClick={() => setView('login')}
                   className="w-full text-xs font-bold text-gray-400 hover:text-pestle-text py-2"
                 >
-                  ← Нэвтрэх рүү буцах
+                  ← {t('auth_backToLogin')}
                 </button>
               </form>
             )}
@@ -552,7 +553,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
                   <div className="flex-1 min-w-0">
                     <h4 className="font-extrabold text-sm text-pestle-text flex items-center gap-1.5 truncate">
-                      <span>{profile.name || user?.name || 'Таны Нэр'}</span>
+                      <span>{profile.name || user?.name || t('auth_yourName')}</span>
                       <ShieldCheck size={16} className="text-mint shrink-0" />
                     </h4>
                     <p className="text-xs text-gray-400 font-medium truncate">
@@ -575,7 +576,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   >
                     <span className="flex items-center gap-2.5">
                       <User size={16} className="text-mango" />
-                      <span>Миний профайл хуудас рүү очих</span>
+                      <span>{t('auth_goToProfile')}</span>
                     </span>
                     <ArrowRight size={14} className="text-gray-400" />
                   </button>
@@ -589,7 +590,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   >
                     <span className="flex items-center gap-2.5">
                       <Sparkles size={16} className="text-amber-500" />
-                      <span>Миний сунгалт & Эрхийн төлөв</span>
+                      <span>{t('auth_subscriptionStatus')}</span>
                     </span>
                     <span className="text-[10px] font-black bg-amber-500/15 text-amber-500 px-2 py-0.5 rounded-lg uppercase">
                       {subscription}
@@ -601,7 +602,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     className="w-full bg-red-500/10 border border-red-500/20 p-3.5 rounded-2xl text-xs font-bold text-red-500 flex items-center justify-center gap-2 hover:bg-red-500 hover:text-white transition-all cursor-pointer active:scale-[0.98] shadow-xs"
                   >
                     <LogOut size={16} />
-                    <span>Системээс Гарах</span>
+                    <span>{t('auth_logout')}</span>
                   </button>
                 </div>
               </div>

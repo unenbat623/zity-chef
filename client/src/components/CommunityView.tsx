@@ -167,6 +167,7 @@ const StoryViewerModal: React.FC<{
   onSelectGroup: (group: UserStoryGroup) => void;
   onChat: (userName: string, avatar: string) => void;
 }> = ({ storyGroup, allGroups, onClose, onSelectGroup, onChat }) => {
+  const { t } = useApp();
   const [slideIndex, setSlideIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -379,8 +380,8 @@ const StoryViewerModal: React.FC<{
               type="text"
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
-              aria-label="Хариу бичих"
-              placeholder={`${storyGroup.userName}-д хариу бичих...`}
+              aria-label={t('community_replyToAria')}
+              placeholder={t('community_replyTo', { name: storyGroup.userName })}
               className="flex-1 bg-white/15 backdrop-blur-md border border-white/25 rounded-full px-4 py-2.5 text-xs text-white placeholder-white/70 focus:outline-none focus:border-white"
             />
             {replyText.trim() && (
@@ -406,6 +407,7 @@ const CreateStoryModal: React.FC<{
   onClose: () => void;
   onAddStory: (story: StoryItem) => void;
 }> = ({ onClose, onAddStory }) => {
+  const { t } = useApp();
   const [caption, setCaption] = useState('');
   const [sticker, setSticker] = useState('📍 Zity Chef Kitchen');
   const [selectedGradient, setSelectedGradient] = useState(GRADIENT_PRESETS[0]);
@@ -426,9 +428,9 @@ const CreateStoryModal: React.FC<{
       id: `s-${Date.now()}`,
       img: imageBase64 || undefined,
       gradient: !imageBase64 ? selectedGradient : undefined,
-      caption: caption.trim() || 'Шинэхэн Story ✨',
+      caption: caption.trim() || t('community_defaultStoryCaption'),
       sticker,
-      createdAt: 'Яг одоо',
+      createdAt: t('community_justNow'),
     });
     onClose();
   };
@@ -448,7 +450,7 @@ const CreateStoryModal: React.FC<{
       >
         <div className="flex justify-between items-center">
           <h3 className="text-sm font-black text-pestle-text flex items-center gap-2">
-            <Camera size={18} className="text-mango" /> Story Үүсгэх
+            <Camera size={18} className="text-mango" /> {t('community_createStoryTitle')}
           </h3>
           <button
             onClick={onClose}
@@ -467,7 +469,7 @@ const CreateStoryModal: React.FC<{
               className={`w-full h-full bg-gradient-to-br ${selectedGradient} absolute inset-0 flex items-center justify-center p-4 text-center text-white`}
             >
               <p className="text-sm font-black drop-shadow-md">
-                {caption || 'Story текстээ доор бичнэ үү...'}
+                {caption || t('community_storyTextPlaceholder')}
               </p>
             </div>
           )}
@@ -512,7 +514,7 @@ const CreateStoryModal: React.FC<{
               className="flex-1 bg-pestle-bg border border-pestle-border py-2 px-3 rounded-xl text-xs font-bold text-pestle-text hover:border-mango flex items-center justify-center gap-2"
             >
               <Camera size={15} className="text-mango" />
-              <span>Зураг оруулах</span>
+              <span>{t('community_addPhoto')}</span>
             </button>
 
             {/* Gradient Swatches if no image */}
@@ -538,13 +540,13 @@ const CreateStoryModal: React.FC<{
             type="text"
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
-            aria-label="Story гарчиг"
-            placeholder="Story дээр гарах гарчиг, сэтгэгдэл..."
+            aria-label={t('community_storyCaptionAria')}
+            placeholder={t('community_storyCaptionPlaceholder')}
             className="w-full bg-pestle-bg border border-pestle-border rounded-xl px-3.5 py-2.5 text-xs font-medium text-pestle-text focus:outline-none focus:border-mango"
           />
 
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-            {['📍 Улаанбаатар', '🍳 Zity Chef', '🥑 Healthy Food', '🔥 Шинэ Жор'].map((st) => (
+            {[t('community_stickerUlaanbaatar'), '🍳 Zity Chef', '🥑 Healthy Food', t('community_stickerNewRecipe')].map((st) => (
               <button
                 key={st}
                 onClick={() => setSticker(st)}
@@ -565,7 +567,7 @@ const CreateStoryModal: React.FC<{
           onClick={handlePublish}
           className="w-full btn-primary py-3 text-xs font-bold shadow-xl shadow-mango/25 flex items-center justify-center gap-2"
         >
-          <Sparkles size={16} /> Story Нийтлэх ✨
+          <Sparkles size={16} /> {t('community_publishStory')}
         </button>
       </motion.div>
     </motion.div>
@@ -577,6 +579,7 @@ const DirectChatDrawer: React.FC<{
   recipient: { name: string; avatar: string };
   onClose: () => void;
 }> = ({ recipient, onClose }) => {
+  const { t } = useApp();
   const { messages, send } = useDirectMessages(recipient.name);
   const [inputText, setInputText] = useState('');
 
@@ -610,7 +613,7 @@ const DirectChatDrawer: React.FC<{
             <div>
               <h3 className="font-extrabold text-sm text-pestle-text">{recipient.name}</h3>
               <span className="text-[10px] text-mint font-bold flex items-center gap-1">
-                ● Онлайн байна
+                ● {t('online')}
               </span>
             </div>
           </div>
@@ -648,8 +651,8 @@ const DirectChatDrawer: React.FC<{
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            aria-label="Зурвас бичих"
-            placeholder="Зурвас бичих..."
+            aria-label={t('community_messageAria')}
+            placeholder={t('placeholderMsg')}
             className="flex-1 bg-pestle-card border border-pestle-border rounded-xl px-4 py-2.5 text-xs text-pestle-text focus:outline-none focus:border-mango"
           />
           <button
@@ -669,6 +672,7 @@ const CreatePostModal: React.FC<{ onClose: () => void; onPost: (p: any) => void 
   onClose,
   onPost,
 }) => {
+  const { t } = useApp();
   const [caption, setCaption] = useState('');
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<any | null>(null);
@@ -694,7 +698,7 @@ const CreatePostModal: React.FC<{ onClose: () => void; onPost: (p: any) => void 
       likes: 0,
       liked: false,
       saved: false,
-      time: 'Яг одоо',
+      time: t('community_justNow'),
       comments: [],
     });
     onClose();
@@ -715,7 +719,7 @@ const CreatePostModal: React.FC<{ onClose: () => void; onPost: (p: any) => void 
         className="bg-pestle-card border border-pestle-border w-full max-w-lg rounded-[32px] p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto"
       >
         <div className="flex justify-between items-center">
-          <h2 className="text-base font-black text-pestle-text">Instagram Пост Нийтлэх</h2>
+          <h2 className="text-base font-black text-pestle-text">{t('community_createPostTitle')}</h2>
           <button
             onClick={onClose}
             className="w-8 h-8 rounded-full border border-pestle-border flex items-center justify-center text-gray-400 hover:text-pestle-text"
@@ -725,21 +729,21 @@ const CreatePostModal: React.FC<{ onClose: () => void; onPost: (p: any) => void 
         </div>
 
         <div className="flex bg-pestle-bg rounded-xl p-1 border border-pestle-border gap-1">
-          {(['photo', 'recipe'] as const).map((t) => (
+          {(['photo', 'recipe'] as const).map((tabId) => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
+              key={tabId}
+              onClick={() => setTab(tabId)}
               className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                tab === t ? 'bg-mango text-white shadow-sm' : 'text-gray-400'
+                tab === tabId ? 'bg-mango text-white shadow-sm' : 'text-gray-400'
               }`}
             >
-              {t === 'photo' ? (
+              {tabId === 'photo' ? (
                 <>
-                  <Image size={14} /> Зураг ба Текст
+                  <Image size={14} /> {t('community_photoAndText')}
                 </>
               ) : (
                 <>
-                  <ChefHat size={14} /> Жор Холбох
+                  <ChefHat size={14} /> {t('community_attachRecipe')}
                 </>
               )}
             </button>
@@ -767,7 +771,7 @@ const CreatePostModal: React.FC<{ onClose: () => void; onPost: (p: any) => void 
                     <Image size={24} />
                   </div>
                   <span className="text-xs font-bold text-pestle-text block">
-                    Зураг сонгох эсвэл чирж оруулна уу
+                    {t('community_selectPhoto')}
                   </span>
                 </div>
               )}
@@ -801,20 +805,20 @@ const CreatePostModal: React.FC<{ onClose: () => void; onPost: (p: any) => void 
           rows={3}
           value={caption}
           onChange={(e) => setCaption(e.target.value)}
-          aria-label="Нийтлэлийн тайлбар"
-          placeholder="Хоолынхоо тухай бичнэ үү... #ZityChef #Healthy"
+          aria-label={t('community_captionAria')}
+          placeholder={t('community_captionPlaceholder')}
           className="w-full bg-pestle-bg border border-pestle-border rounded-xl px-4 py-3 text-xs font-medium text-pestle-text focus:outline-none focus:border-mango resize-none"
         />
 
         <div className="flex gap-3">
           <button onClick={onClose} className="btn-secondary flex-1 py-3 text-xs font-bold">
-            Болих
+            {t('community_cancel')}
           </button>
           <button
             onClick={handlePost}
             className="btn-primary flex-1 py-3 text-xs font-bold shadow-xl shadow-mango/20 flex items-center justify-center gap-1.5"
           >
-            <Send size={14} /> Нийтлэх
+            <Send size={14} /> {t('community_publish')}
           </button>
         </div>
       </motion.div>
@@ -831,6 +835,7 @@ const PostCard: React.FC<{
   onChat: () => void;
   onOpenStory?: () => void;
 }> = ({ post, onLike, onSave, onComment, onChat, onOpenStory }) => {
+  const { t } = useApp();
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [showHeartOverlay, setShowHeartOverlay] = useState(false);
@@ -884,7 +889,7 @@ const PostCard: React.FC<{
           onClick={onChat}
           className="px-3 py-1.5 rounded-xl bg-pestle-bg border border-pestle-border text-[11px] font-bold text-pestle-text hover:border-mango flex items-center gap-1.5 shadow-2xs"
         >
-          <MessageSquare size={13} className="text-mango" /> Чатлах
+          <MessageSquare size={13} className="text-mango" /> {t('community_chat')}
         </button>
       </div>
 
@@ -952,14 +957,14 @@ const PostCard: React.FC<{
           <button
             onClick={() => {
               const url = window.location.href;
-              const shareData = { title: 'Zity Chef', text: 'Zity Chef дээрх жор', url };
+              const shareData = { title: 'Zity Chef', text: t('community_shareText'), url };
               if (navigator.share) {
                 navigator.share(shareData).catch(() => {});
               } else {
                 navigator.clipboard?.writeText(url).catch(() => {});
               }
             }}
-            aria-label="Хуваалцах"
+            aria-label={t('community_shareAria')}
             className="text-pestle-text hover:text-mango transition-colors"
           >
             <Share2 size={19} />
@@ -1004,8 +1009,8 @@ const PostCard: React.FC<{
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleComment()}
-                aria-label="Сэтгэгдэл бичих"
-                placeholder="Сэтгэгдэл бичих..."
+                aria-label={t('community_commentAria')}
+                placeholder={t('community_commentPlaceholder')}
                 className="flex-1 bg-pestle-bg border border-pestle-border rounded-xl px-3.5 py-2 text-xs font-medium focus:outline-none focus:border-mango"
               />
               <button
@@ -1024,7 +1029,7 @@ const PostCard: React.FC<{
 
 // ── MAIN COMMUNITY VIEW ────────────────────────────────────────────────────────
 export const CommunityView: React.FC = () => {
-  const { profile } = useApp();
+  const { profile, t } = useApp();
   const { feedPosts, persistLike, persistComment, persistPost, serverStoryGroups, persistStory } =
     useCommunity();
 
@@ -1149,10 +1154,10 @@ export const CommunityView: React.FC = () => {
       <header className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl sm:text-3xl font-black text-pestle-text tracking-tight">
-            Хамтын орчин
+            {t('community_title')}
           </h2>
           <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5">
-            Хоолны хийсэн зургуудаа хуваалцаж, бусад тогооч нартай харилцаарай.
+            {t('community_subtitle')}
           </p>
         </div>
 
@@ -1162,7 +1167,7 @@ export const CommunityView: React.FC = () => {
             className="bg-pestle-card border border-pestle-border py-2.5 px-3.5 rounded-2xl text-xs font-bold text-pestle-text hover:border-mango flex items-center gap-1.5 shadow-xs transition-all"
           >
             <Camera size={16} className="text-mango" />
-            <span className="hidden sm:inline">Story Нэмэх</span>
+            <span className="hidden sm:inline">{t('community_addStory')}</span>
           </button>
 
           <button
@@ -1170,7 +1175,7 @@ export const CommunityView: React.FC = () => {
             className="btn-primary py-2.5 px-4 rounded-2xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-mango/20"
           >
             <Plus size={16} />
-            <span>Нийтлэх</span>
+            <span>{t('community_publish')}</span>
           </button>
         </div>
       </header>
@@ -1215,7 +1220,7 @@ export const CommunityView: React.FC = () => {
               </div>
 
               <span className="text-[10px] font-bold text-pestle-text text-center w-16 truncate">
-                {group.isOwn ? 'Таны Story' : group.userName.split('-')[0]}
+                {group.isOwn ? t('community_yourStory') : group.userName.split('-')[0]}
               </span>
             </button>
           ))}

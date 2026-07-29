@@ -82,8 +82,8 @@ export const PaymentModal: React.FC = () => {
     setIsProcessing(false);
     setIsSuccess(true);
     toastSuccess(
-      'Төлбөр амжилттай баталгаажлаа! 💳',
-      `₮${amount.toLocaleString()} төлбөрийг хүлээн авлаа.`
+      t('pay_successToastTitle'),
+      t('pay_successToastBody', { n: amount.toLocaleString() })
     );
     setTimeout(() => {
       if (onSuccess) onSuccess();
@@ -99,8 +99,8 @@ export const PaymentModal: React.FC = () => {
       if (paid) handleSuccess();
       else
         toastSuccess(
-          'Төлбөр хүлээгдэж байна ⏳',
-          'Банкны апп-аараа QR уншуулаад төлбөрөө хийнэ үү.'
+          t('pay_pendingToastTitle'),
+          t('pay_pendingToastBody')
         );
       return;
     }
@@ -139,7 +139,7 @@ export const PaymentModal: React.FC = () => {
             </div>
             <button
               onClick={closePaymentModal}
-              aria-label="Хаах"
+              aria-label={t('close')}
               className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
             >
               <X size={18} />
@@ -157,7 +157,7 @@ export const PaymentModal: React.FC = () => {
                   <CheckCircle2 size={40} />
                 </div>
                 <h3 className="text-xl font-bold text-pestle-text mb-2">{t('paymentSuccess')}</h3>
-                <p className="text-xs text-gray-400">Гүйцэтгэлийг баталгаажууллаа</p>
+                <p className="text-xs text-gray-400">{t('pay_transactionConfirmed')}</p>
               </motion.div>
             ) : (
               <>
@@ -217,7 +217,7 @@ export const PaymentModal: React.FC = () => {
                     {invoice?.qrImage ? (
                       <img
                         src={invoice.qrImage}
-                        alt="QPay QR код"
+                        alt={t('pay_qrAlt')}
                         className="w-44 h-44 rounded-xl object-contain bg-white"
                       />
                     ) : (
@@ -230,8 +230,8 @@ export const PaymentModal: React.FC = () => {
                     )}
                     <p className="text-[11px] text-gray-500 font-semibold mt-3 text-center">
                       {invoice?.simulated
-                        ? 'Демо горим — “Баталгаажуулах” дарж үзнэ үү'
-                        : 'Банкны апп-аараа QR кодыг уншуулна уу'}
+                        ? t('pay_demoHint')
+                        : t('pay_scanQrHint')}
                     </p>
                   </div>
                 )}
@@ -269,10 +269,10 @@ export const PaymentModal: React.FC = () => {
                       SP
                     </div>
                     <h4 className="font-bold text-sm text-pestle-text mb-1">
-                      SocialPay-ээр шилжүүлэх
+                      {t('pay_socialpayTitle')}
                     </h4>
                     <p className="text-xs text-gray-500">
-                      Утасны дугаараар шууд холбогдон төлбөр тооцоог хийнэ.
+                      {t('pay_socialpayDesc')}
                     </p>
                   </div>
                 )}
@@ -281,7 +281,7 @@ export const PaymentModal: React.FC = () => {
                   <div className="space-y-3">
                     <input
                       type="text"
-                      placeholder="Картын дугаар (4000 0000 0000 0000)"
+                      placeholder={t('pay_cardNumberPlaceholder')}
                       className="w-full bg-pestle-bg border border-pestle-border rounded-xl px-4 py-2.5 text-xs font-mono text-pestle-text focus:outline-none focus:border-mango"
                     />
                     <div className="flex gap-2">

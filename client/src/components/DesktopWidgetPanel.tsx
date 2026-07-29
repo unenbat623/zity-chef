@@ -68,7 +68,7 @@ export const DesktopWidgetPanel: React.FC = () => {
     setIsListening(true);
     setTimeout(() => {
       setIsListening(false);
-      handleSendText('Муудах дөхсөн орцуудаар хурдан болох амттай хоол санал болгоорой!');
+      handleSendText(t('widget_promptMic'));
     }, 2000);
   };
 
@@ -83,11 +83,11 @@ export const DesktopWidgetPanel: React.FC = () => {
             </div>
             <div>
               <h3 className="font-extrabold text-xs text-pestle-text">{t('assistantName')}</h3>
-              <p className="text-[10px] text-mint font-bold">Gemini 3 Flash • Online</p>
+              <p className="text-[10px] text-mint font-bold">Gemini 3 Flash • {t('online')}</p>
             </div>
           </div>
           <span className="text-[9px] bg-mint/15 text-mint font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
-            <Sparkles size={10} /> Active
+            <Sparkles size={10} /> {t('widget_active')}
           </span>
         </div>
 
@@ -107,7 +107,7 @@ export const DesktopWidgetPanel: React.FC = () => {
           ))}
           {loading && (
             <div className="text-[10px] text-mango font-bold animate-pulse p-2">
-              ✨ Эгч нь жор бэлдэж байна...
+              ✨ {t('widget_preparing')}
             </div>
           )}
         </div>
@@ -115,16 +115,16 @@ export const DesktopWidgetPanel: React.FC = () => {
         {/* Quick Suggestion Chips */}
         <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
           <button
-            onClick={() => handleSendText('Муудах дөхсөн орцоор хоол санал болго')}
+            onClick={() => handleSendText(t('widget_promptExpiring'))}
             className="text-[10px] font-bold bg-pestle-bg border border-pestle-border px-2.5 py-1 rounded-lg text-gray-500 hover:text-mango hover:border-mango transition-colors whitespace-nowrap"
           >
-            💡 Муудах орцоор
+            💡 {t('widget_chipExpiring')}
           </button>
           <button
-            onClick={() => handleSendText('15 минутад болох өглөөний хоол')}
+            onClick={() => handleSendText(t('widget_promptBreakfast'))}
             className="text-[10px] font-bold bg-pestle-bg border border-pestle-border px-2.5 py-1 rounded-lg text-gray-500 hover:text-mango hover:border-mango transition-colors whitespace-nowrap"
           >
-            ⚡ Өглөөний хоол
+            ⚡ {t('widget_chipBreakfast')}
           </button>
         </div>
 
@@ -137,7 +137,7 @@ export const DesktopWidgetPanel: React.FC = () => {
                 ? 'bg-red-500 text-white border-red-500 animate-pulse'
                 : 'bg-pestle-bg border-pestle-border text-gray-400 hover:text-mango'
             }`}
-            title="Дуугаар тушаал өгөх"
+            title={t('widget_micTitle')}
           >
             <Mic size={15} />
           </button>
@@ -180,7 +180,7 @@ export const DesktopWidgetPanel: React.FC = () => {
         {/* Water Tracker */}
         <div className="pt-2 border-t border-pestle-border/60 flex items-center justify-between text-xs">
           <span className="font-bold text-pestle-text flex items-center gap-1">
-            <Droplets size={14} className="text-sky-500" /> Ус уух:{' '}
+            <Droplets size={14} className="text-sky-500" /> {t('widget_water')}:{' '}
             <strong className="text-sky-500">{waterGlasses * 250}ml</strong>
           </span>
           <button
@@ -193,13 +193,13 @@ export const DesktopWidgetPanel: React.FC = () => {
 
         <div className="grid grid-cols-3 text-center text-[10px] text-gray-400 font-bold pt-1 border-t border-pestle-border/40">
           <div>
-            Уураг: <span className="text-pestle-text">42g</span>
+            {t('widget_protein')}: <span className="text-pestle-text">42g</span>
           </div>
           <div>
-            Нүүрс ус: <span className="text-pestle-text">68g</span>
+            {t('widget_carbs')}: <span className="text-pestle-text">68g</span>
           </div>
           <div>
-            Өөх тос: <span className="text-pestle-text">18g</span>
+            {t('widget_fat')}: <span className="text-pestle-text">18g</span>
           </div>
         </div>
       </div>
@@ -209,7 +209,7 @@ export const DesktopWidgetPanel: React.FC = () => {
         <div className="bg-gradient-to-br from-teal-500/10 to-emerald-500/10 border border-teal-500/20 rounded-2xl p-4 space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
-              <ShoppingBag size={14} className="text-teal-600" /> Сагс ({cart.length})
+              <ShoppingBag size={14} className="text-teal-600" /> {t('widget_cart', { n: cart.length })}
             </span>
             <span className="text-xs font-black text-mango">
               ₮{totalCartAmount.toLocaleString()}
@@ -223,7 +223,7 @@ export const DesktopWidgetPanel: React.FC = () => {
             }}
             className="w-full bg-teal-600 text-white text-xs font-bold py-2.5 rounded-xl shadow-md shadow-teal-600/20 hover:bg-teal-700 transition-colors"
           >
-            QPay-ээр захиалах
+            {t('widget_qpayOrder')}
           </button>
         </div>
       )}
@@ -231,7 +231,7 @@ export const DesktopWidgetPanel: React.FC = () => {
       {/* System Health / Cache Savings Badge — reflects the real health check */}
       <div className="pt-2 border-t border-pestle-border/60 flex items-center justify-between text-[10px] text-gray-400 font-bold">
         <span className={`flex items-center gap-1 ${healthData ? 'text-mint' : 'text-gray-400'}`}>
-          <CheckCircle2 size={12} /> {healthData ? 'Edge BFF Connected' : 'Холбогдож байна…'}
+          <CheckCircle2 size={12} /> {healthData ? t('widget_connected') : t('widget_connecting')}
         </span>
         {healthData?.cache?.totalCacheHits > 0 && (
           <span className="text-mango">Cache hits: {healthData.cache.totalCacheHits}</span>

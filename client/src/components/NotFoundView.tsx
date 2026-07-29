@@ -4,7 +4,7 @@ import { ChefHat, Home, BookOpen, HelpCircle, ArrowLeft } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export const NotFoundView: React.FC = () => {
-  const { setActiveTab, profile } = useApp();
+  const { setActiveTab, profile, t } = useApp();
 
   return (
     <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-6 py-12 space-y-8">
@@ -47,13 +47,13 @@ export const NotFoundView: React.FC = () => {
         className="space-y-3 max-w-sm"
       >
         <h1 className="text-3xl sm:text-4xl font-black text-pestle-text tracking-tight">
-          Хуудас олдсонгүй!
+          {t('notfound_title')}
         </h1>
         <p className="text-sm text-gray-500 font-medium leading-relaxed">
-          Таны хайсан хуудас нүүгдсэн, устгагдсан эсвэл огт байхгүй байна. Эгч уучлаарай! 🙏
+          {t('notfound_desc')} 🙏
         </p>
         <p className="text-xs text-gray-400 font-medium bg-pestle-card border border-pestle-border px-4 py-2 rounded-xl inline-block">
-          Алдааны код: <strong className="text-red-500">404 Not Found</strong>
+          {t('notfound_errorCode')}: <strong className="text-red-500">404 Not Found</strong>
         </p>
       </motion.div>
 
@@ -69,14 +69,14 @@ export const NotFoundView: React.FC = () => {
           className="flex-1 btn-primary py-3.5 text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-mango/20 cursor-pointer"
         >
           <Home size={17} />
-          <span>Нүүр хуудас руу</span>
+          <span>{t('notfound_home')}</span>
         </button>
         <button
           onClick={() => setActiveTab('help')}
           className="flex-1 btn-secondary py-3.5 text-sm font-bold flex items-center justify-center gap-2 cursor-pointer"
         >
           <HelpCircle size={17} />
-          <span>Тусламж авах</span>
+          <span>{t('notfound_help')}</span>
         </button>
       </motion.div>
 
@@ -87,13 +87,13 @@ export const NotFoundView: React.FC = () => {
         transition={{ delay: 0.55 }}
         className="w-full max-w-sm space-y-2"
       >
-        <p className="text-xs font-bold text-gray-400 text-left">Магадгүй эдгээр хуудсуудыг хайсан байж болох:</p>
+        <p className="text-xs font-bold text-gray-400 text-left">{t('notfound_suggested')}</p>
         <div className="grid grid-cols-2 gap-2">
           {[
-            { label: 'Миний хөргөгч', tab: 'fridge', icon: '🧊' },
-            { label: 'Жорын ном', tab: 'recipe', icon: '📖' },
-            { label: 'Дэлгүүр', tab: 'store', icon: '🛒' },
-            { label: 'Профайл', tab: 'profile', icon: '👤' },
+            { label: t('notfound_pageFridge'), tab: 'fridge', icon: '🧊' },
+            { label: t('notfound_pageRecipe'), tab: 'recipe', icon: '📖' },
+            { label: t('notfound_pageStore'), tab: 'store', icon: '🛒' },
+            { label: t('notfound_pageProfile'), tab: 'profile', icon: '👤' },
           ].map((page) => (
             <button
               key={page.tab}

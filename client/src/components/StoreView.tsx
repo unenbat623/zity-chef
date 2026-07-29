@@ -71,7 +71,7 @@ export const StoreView: React.FC = () => {
                 : 'text-gray-400 hover:text-pestle-text'
             }`}
           >
-            Дэлгүүр
+            {t('store_subtabStore')}
           </button>
           <button
             onClick={() => setActiveSubTab('cart')}
@@ -81,7 +81,7 @@ export const StoreView: React.FC = () => {
                 : 'text-gray-400 hover:text-pestle-text'
             }`}
           >
-            Сагс ({cart.length})
+            {t('store_subtabCart')} ({cart.length})
           </button>
           <button
             onClick={() => setActiveSubTab('orders')}
@@ -91,7 +91,7 @@ export const StoreView: React.FC = () => {
                 : 'text-gray-400 hover:text-pestle-text'
             }`}
           >
-            Захиалга
+            {t('store_subtabOrders')}
           </button>
         </div>
       </header>
@@ -107,7 +107,7 @@ export const StoreView: React.FC = () => {
               <div>
                 <h4 className="text-xs font-bold text-pestle-text">Zity Supermarket #04</h4>
                 <p className="text-[10px] text-teal-600 dark:text-teal-400 font-semibold">
-                  📍 150м зайд • Шуурхай хүргэлт 30мин
+                  {t('store_nearestInfo')}
                 </p>
               </div>
             </div>
@@ -116,7 +116,7 @@ export const StoreView: React.FC = () => {
 
           {/* Product Catalog Grid */}
           <div className="space-y-3">
-            <h3 className="text-sm font-bold text-pestle-text">Шинэхэн хүнсний бүтээгдэхүүн</h3>
+            <h3 className="text-sm font-bold text-pestle-text">{t('store_freshProducts')}</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
               {MOCK_INGREDIENTS.map((item) => (
                 <div
@@ -138,13 +138,13 @@ export const StoreView: React.FC = () => {
                         {item.name}
                       </h4>
                       <span className="text-[10px] text-gray-400 font-medium">
-                        Шинэ ургац / Боловсруулсан
+                        {t('store_productTag')}
                       </span>
                     </div>
 
                     <div className="mt-2 flex items-center justify-between">
                       <div>
-                        <span className="text-[9px] text-gray-400 font-bold block">Нэгж үнэ</span>
+                        <span className="text-[9px] text-gray-400 font-bold block">{t('store_unitPrice')}</span>
                         <span className="text-xs font-black text-mango">
                           ₮{(item.pricePerUnit || 3000).toLocaleString()}
                         </span>
@@ -171,12 +171,12 @@ export const StoreView: React.FC = () => {
             <div className="text-center py-16 bg-pestle-card border border-pestle-border rounded-2xl p-6">
               <ShoppingBag size={48} className="mx-auto text-gray-300 mb-3" />
               <h3 className="text-base font-bold text-pestle-text mb-1">{t('cartEmpty')}</h3>
-              <p className="text-xs text-gray-400 mb-4">Дэлгүүрээс орцуудаа сагсанд нэмнэ үү</p>
+              <p className="text-xs text-gray-400 mb-4">{t('store_cartEmptyHint')}</p>
               <button
                 onClick={() => setActiveSubTab('catalog')}
                 className="btn-primary py-2.5 px-6 text-xs"
               >
-                Дэлгүүр хэсэх
+                {t('store_browseStore')}
               </button>
             </div>
           ) : (
@@ -252,7 +252,7 @@ export const StoreView: React.FC = () => {
       {activeSubTab === 'orders' && (
         <div className="space-y-4">
           <h3 className="text-sm font-bold text-pestle-text">
-            Миний захиалгын түүх ({orders.length})
+            {t('store_orderHistory', { n: orders.length })}
           </h3>
           {ordersLoading ? (
             <div className="space-y-3">
@@ -262,11 +262,11 @@ export const StoreView: React.FC = () => {
             </div>
           ) : ordersError ? (
             <div className="text-center py-8 bg-red-500/5 border border-red-500/20 rounded-2xl p-5 space-y-2">
-              <p className="text-xs font-bold text-red-500">Захиалгын түүх ачаалж чадсангүй</p>
-              <p className="text-[11px] text-gray-400">Сервертэй холбогдож чадсангүй. Дараа дахин оролдоно уу.</p>
+              <p className="text-xs font-bold text-red-500">{t('store_ordersLoadError')}</p>
+              <p className="text-[11px] text-gray-400">{t('store_serverError')}</p>
             </div>
           ) : orders.length === 0 ? (
-            <p className="text-xs text-gray-400">Одоогоор захиалга байхгүй байна.</p>
+            <p className="text-xs text-gray-400">{t('store_noOrders')}</p>
           ) : (
             orders.map((order) => (
               <div key={order.id} className="pestle-card p-4 space-y-3">
@@ -276,7 +276,7 @@ export const StoreView: React.FC = () => {
                     <span className="text-[10px] text-gray-400 block">{order.createdAt}</span>
                   </div>
                   <span className="text-[10px] font-bold bg-mint/15 text-mint px-2.5 py-1 rounded-full flex items-center gap-1">
-                    <CheckCircle size={10} /> Төлөгдсөн • Хүргэлтэнд
+                    <CheckCircle size={10} /> {t('store_paidDelivering')}
                   </span>
                 </div>
 

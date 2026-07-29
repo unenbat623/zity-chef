@@ -36,67 +36,67 @@ interface PlanDef {
   ctaClass: string;
 }
 
-const PLAN_DEFS: PlanDef[] = [
+const getPlanDefs = (t: (key: string, params?: Record<string, string | number>) => string): PlanDef[] => [
   {
     id: 'free',
-    name: 'Үнэгүй Багц',
+    name: t('subFree'),
     price: '₮0',
     priceRaw: 0,
-    period: '/ Үнэгүй',
-    tagline: 'Анхан шатны хэрэглээнд',
+    period: t('sub_periodFree'),
+    tagline: t('sub_taglineFree'),
     color: 'text-gray-500',
     bgClass: 'bg-pestle-bg',
     borderClass: 'border-pestle-border',
     icon: <Star size={20} className="text-gray-400" />,
     features: [
-      { icon: <MessageSquare size={13} className="text-gray-400" />, text: 'Өдөрт 5 удаа AI Эгчээс зөвлөгөө авах' },
-      { icon: <Check size={13} className="text-gray-400" />, text: 'Хөргөгчний орцууд бүртгэх & хугацаа хянах' },
-      { icon: <Check size={13} className="text-gray-400" />, text: 'Энгийн жорын санг үзэх' },
+      { icon: <MessageSquare size={13} className="text-gray-400" />, text: t('sub_featFree1') },
+      { icon: <Check size={13} className="text-gray-400" />, text: t('sub_featFree2') },
+      { icon: <Check size={13} className="text-gray-400" />, text: t('sub_featFree3') },
     ],
-    ctaLabel: 'Одоо ашиглаж байна',
+    ctaLabel: t('sub_ctaCurrentFree'),
     ctaClass: '',
   },
   {
     id: 'pro',
-    name: 'Pro Chef Багц',
+    name: t('subPro'),
     price: '₮7,900',
     priceRaw: 7900,
-    period: '/ сар',
-    tagline: 'Тогооч ба хувь хүнд зориулсан',
+    period: t('sub_perMonth'),
+    tagline: t('sub_taglinePro'),
     color: 'text-amber-500',
     bgClass: 'bg-gradient-to-br from-amber-500/8 to-orange-500/10',
     borderClass: 'border-amber-400/60',
     icon: <Crown size={20} className="text-amber-400" />,
-    badge: 'Хамгийн алдартай',
+    badge: t('sub_badgePopular'),
     features: [
-      { icon: <Zap size={13} className="text-mango" />, text: 'Хязгааргүй AI Эгч туслах (24/7)' },
-      { icon: <Camera size={13} className="text-mango" />, text: 'AI Баримт ба Зураг уншигч (OCR)' },
-      { icon: <BarChart3 size={13} className="text-mango" />, text: 'Шим тэжээл, Калори & Илчлэг тооцоолуур' },
-      { icon: <BookOpen size={13} className="text-mango" />, text: 'Алхамчилсан хоол хийх тогооч горим' },
-      { icon: <ShoppingCart size={13} className="text-mango" />, text: 'Дутуу орцыг 1 даралтаар сагслах' },
-      { icon: <Star size={13} className="text-mango" />, text: 'Бүрэн Премиум жорын сан' },
+      { icon: <Zap size={13} className="text-mango" />, text: t('sub_featPro1') },
+      { icon: <Camera size={13} className="text-mango" />, text: t('sub_featPro2') },
+      { icon: <BarChart3 size={13} className="text-mango" />, text: t('sub_featPro3') },
+      { icon: <BookOpen size={13} className="text-mango" />, text: t('sub_featPro4') },
+      { icon: <ShoppingCart size={13} className="text-mango" />, text: t('sub_featPro5') },
+      { icon: <Star size={13} className="text-mango" />, text: t('sub_featPro6') },
     ],
-    ctaLabel: 'Pro Chef-ээр идэвхжүүлэх',
+    ctaLabel: t('sub_ctaActivatePro'),
     ctaClass: 'btn-primary shadow-lg shadow-mango/25',
   },
   {
     id: 'family',
-    name: 'Family Багц',
+    name: t('subFamily'),
     price: '₮14,900',
     priceRaw: 14900,
-    period: '/ сар',
-    tagline: 'Гэр бүлээрээ ашиглахад',
+    period: t('sub_perMonth'),
+    tagline: t('sub_taglineFamily'),
     color: 'text-teal-600 dark:text-teal-400',
     bgClass: 'bg-gradient-to-br from-teal-500/8 to-cyan-500/10',
     borderClass: 'border-teal-400/60',
     icon: <Users size={20} className="text-teal-500" />,
     features: [
-      { icon: <Check size={13} className="text-teal-500" />, text: 'Pro Chef-ийн БҮХ боломж багтсан' },
-      { icon: <Users size={13} className="text-teal-500" />, text: '5 хүртэл гишүүн нэг хөргөгч хамтран удирдах' },
-      { icon: <ShoppingCart size={13} className="text-teal-500" />, text: 'Гэр бүлийн дундын худалдан авалтын сагс' },
-      { icon: <RefreshCcw size={13} className="text-teal-500" />, text: '7 хоногийн нэгдсэн хоолны төлөвлөгөө' },
+      { icon: <Check size={13} className="text-teal-500" />, text: t('sub_featFam1') },
+      { icon: <Users size={13} className="text-teal-500" />, text: t('sub_featFam2') },
+      { icon: <ShoppingCart size={13} className="text-teal-500" />, text: t('sub_featFam3') },
+      { icon: <RefreshCcw size={13} className="text-teal-500" />, text: t('sub_featFam4') },
     ],
-    ctaLabel: 'Family Багц сонгох',
+    ctaLabel: t('sub_ctaSelectFamily'),
     ctaClass: 'bg-teal-600 hover:bg-teal-500 text-white shadow-md shadow-teal-500/20',
   },
 ];
@@ -108,6 +108,7 @@ const PlanCard: React.FC<{
   isCurrent: boolean;
   onSelect: () => void;
 }> = ({ plan, isCurrent, onSelect }) => {
+  const { t } = useApp();
   const isActive = plan.id !== 'free';
 
   return (
@@ -174,7 +175,7 @@ const PlanCard: React.FC<{
             ? 'bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30'
             : 'bg-pestle-bg text-gray-400 border border-pestle-border'
         }`}>
-          ✓ Одоо ашиглаж буй багц
+          ✓ {t('sub_currentPlan')}
         </div>
       ) : (
         isActive && (
@@ -194,7 +195,8 @@ const PlanCard: React.FC<{
 
 // ── Main Modal ─────────────────────────────────────────────────────────────────
 export const SubscriptionModal: React.FC = () => {
-  const { showSubModal, setShowSubModal, subscription, setSubscription, triggerPayment } = useApp();
+  const { showSubModal, setShowSubModal, subscription, setSubscription, triggerPayment, t } = useApp();
+  const PLAN_DEFS = getPlanDefs(t);
 
   if (!showSubModal) return null;
 
@@ -232,14 +234,14 @@ export const SubscriptionModal: React.FC = () => {
               <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-widest text-mango bg-mango/15 px-3 py-1 rounded-full">
                 <Sparkles size={11} /> Zity Premium
               </span>
-              <h2 className="text-xl font-black text-pestle-text">Гишүүнчлэлийн багцууд</h2>
+              <h2 className="text-xl font-black text-pestle-text">{t('sub_membershipPlans')}</h2>
               <p className="text-xs text-gray-400 font-medium">
-                Хэрэгцээндээ тохирсон багцаа сонгоно уу
+                {t('sub_choosePlan')}
               </p>
             </div>
             <button
               onClick={() => setShowSubModal(false)}
-              aria-label="Хаах"
+              aria-label={t('close')}
               className="w-9 h-9 border border-pestle-border rounded-2xl flex items-center justify-center text-gray-400 hover:text-pestle-text hover:border-pestle-text transition-colors mt-1"
             >
               <X size={17} />
@@ -259,7 +261,7 @@ export const SubscriptionModal: React.FC = () => {
 
             {/* Trust Footer */}
             <p className="text-[10px] text-gray-400 text-center font-medium pt-1 pb-2">
-              🔒 Аюулгүй төлбөр · QPay / SocialPay / Карт · Хүссэн үедээ цуцлах боломжтой
+              {t('sub_trustFooter')}
             </p>
           </div>
         </motion.div>

@@ -21,14 +21,14 @@ import { uploadImage } from '../lib/storage';
 
 // ── Theme Gradient Options ───────────────────────────────────────────────────
 const THEME_GRADIENTS = [
-  { label: 'Нил ягаан', value: 'from-violet-600 via-purple-600 to-fuchsia-600', accent: '#8B5CF6' },
-  { label: 'Ягаан', value: 'from-pink-500 via-rose-500 to-red-500', accent: '#EC4899' },
-  { label: 'Цэнхэр', value: 'from-blue-600 via-indigo-600 to-violet-600', accent: '#4F46E5' },
-  { label: 'Ногоон', value: 'from-emerald-500 via-teal-500 to-cyan-500', accent: '#10B981' },
-  { label: 'Улбар шар', value: 'from-amber-500 via-orange-500 to-red-500', accent: '#F59E0B' },
-  { label: 'Нил цэнхэр', value: 'from-cyan-500 via-blue-500 to-indigo-600', accent: '#06B6D4' },
-  { label: 'Чулуун', value: 'from-slate-600 via-gray-600 to-zinc-700', accent: '#475569' },
-  { label: 'Ягаан алт', value: 'from-fuchsia-600 via-pink-500 to-amber-400', accent: '#D946EF' },
+  { labelKey: 'profile_themeViolet', value: 'from-violet-600 via-purple-600 to-fuchsia-600', accent: '#8B5CF6' },
+  { labelKey: 'profile_themePink', value: 'from-pink-500 via-rose-500 to-red-500', accent: '#EC4899' },
+  { labelKey: 'profile_themeBlue', value: 'from-blue-600 via-indigo-600 to-violet-600', accent: '#4F46E5' },
+  { labelKey: 'profile_themeGreen', value: 'from-emerald-500 via-teal-500 to-cyan-500', accent: '#10B981' },
+  { labelKey: 'profile_themeOrange', value: 'from-amber-500 via-orange-500 to-red-500', accent: '#F59E0B' },
+  { labelKey: 'profile_themeCyan', value: 'from-cyan-500 via-blue-500 to-indigo-600', accent: '#06B6D4' },
+  { labelKey: 'profile_themeStone', value: 'from-slate-600 via-gray-600 to-zinc-700', accent: '#475569' },
+  { labelKey: 'profile_themeRoseGold', value: 'from-fuchsia-600 via-pink-500 to-amber-400', accent: '#D946EF' },
 ];
 
 // ── Mock Post Feed Data ──────────────────────────────────────────────────────
@@ -43,7 +43,7 @@ const PROFILE_POSTS = [
 
 // ── Edit Profile Modal ────────────────────────────────────────────────────────
 const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  const { profile, setProfile } = useApp();
+  const { profile, setProfile, t } = useApp();
   const [form, setForm] = useState({ ...profile });
   const [avatarPreview, setAvatarPreview] = useState<string | null>(profile.avatarUrl);
   const [activeSection, setActiveSection] = useState<'info' | 'theme'>('info');
@@ -96,7 +96,7 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         {/* Header */}
         <div className={`bg-gradient-to-r ${selectedTheme.value} p-5 flex items-center justify-between`}>
           <h2 className="text-white font-black text-base flex items-center gap-2">
-            <Edit3 size={18} /> Профайл засах
+            <Edit3 size={18} /> {t('profile_editProfile')}
           </h2>
           <button
             onClick={onClose}
@@ -119,9 +119,9 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               }`}
             >
               {tab === 'info' ? (
-                <><User size={14} /> Мэдээлэл</>
+                <><User size={14} /> {t('profile_tabInfo')}</>
               ) : (
-                <><Palette size={14} /> Загвар</>
+                <><Palette size={14} /> {t('profile_tabTheme')}</>
               )}
             </button>
           ))}
@@ -154,14 +154,14 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   onClick={() => fileRef.current?.click()}
                   className="text-xs font-bold text-violet-600 dark:text-violet-400 hover:underline"
                 >
-                  Зураг солих
+                  {t('profile_changePhoto')}
                 </button>
               </div>
 
               {/* Form Fields */}
               {[
-                { label: 'Нэр', icon: User, key: 'name', placeholder: 'Таны бүтэн нэр' },
-                { label: 'Хэрэглэгчийн нэр', icon: AtSign, key: 'username', placeholder: '@username' },
+                { label: t('profile_nameLabel'), icon: User, key: 'name', placeholder: t('profile_namePlaceholder') },
+                { label: t('profile_usernameLabel'), icon: AtSign, key: 'username', placeholder: '@username' },
               ].map(({ label, icon: Icon, key, placeholder }) => (
                 <div key={key} className="space-y-1.5">
                   <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -179,13 +179,13 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
               <div className="space-y-1.5">
                 <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <FileText size={12} className="text-violet-500" /> Тухайлбал (Bio)
+                  <FileText size={12} className="text-violet-500" /> {t('profile_bioLabel')}
                 </label>
                 <textarea
                   rows={3}
                   value={form.bio}
                   onChange={(e) => setForm((prev) => ({ ...prev, bio: e.target.value }))}
-                  placeholder="Өөрийнхөө тухай товч бичих..."
+                  placeholder={t('profile_bioPlaceholder')}
                   className="w-full bg-pestle-bg border border-pestle-border rounded-xl px-3.5 py-2.5 text-xs font-medium text-pestle-text focus:outline-none focus:border-violet-500 resize-none transition-colors"
                 />
               </div>
@@ -195,7 +195,7 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           {activeSection === 'theme' && (
             <>
               <p className="text-xs font-bold text-gray-400 text-center">
-                Профайлын өнгийг сонгоно уу
+                {t('profile_selectColor')}
               </p>
 
               {/* Live Preview */}
@@ -227,7 +227,7 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   >
                     <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${theme.value} shadow-md`} />
                     <span className="text-[9px] font-bold text-gray-400 group-hover:text-pestle-text truncate w-full text-center">
-                      {theme.label}
+                      {t(theme.labelKey)}
                     </span>
                   </button>
                 ))}
@@ -239,7 +239,7 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         {/* Footer Buttons */}
         <div className="px-5 pb-5 flex gap-3">
           <button onClick={onClose} className="btn-secondary flex-1 py-3 text-xs font-bold">
-            Болих
+            {t('profile_cancel')}
           </button>
           <button
             onClick={handleSave}
@@ -251,7 +251,7 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               <Sparkles size={15} className="animate-spin" />
             ) : (
               <>
-                <Check size={15} /> Хадгалах
+                <Check size={15} /> {t('profile_save')}
               </>
             )}
           </button>
@@ -263,15 +263,15 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
 // ── MAIN PROFILE VIEW ─────────────────────────────────────────────────────────
 export const ProfileView: React.FC = () => {
-  const { profile, setActiveTab } = useApp();
+  const { profile, setActiveTab, t } = useApp();
   const [showEdit, setShowEdit] = useState(false);
   const [activeGrid, setActiveGrid] = useState<'posts' | 'recipes'>('posts');
 
   const stats = [
-    { label: 'Нийтлэл', value: profile.postsCount, icon: Grid3x3 },
-    { label: 'Дагагч', value: profile.followersCount, icon: Users },
-    { label: 'Дагаж буй', value: profile.followingCount, icon: Heart },
-    { label: 'Жор', value: profile.recipesCreated, icon: BookOpen },
+    { label: t('profile_statPosts'), value: profile.postsCount, icon: Grid3x3 },
+    { label: t('profile_statFollowers'), value: profile.followersCount, icon: Users },
+    { label: t('profile_statFollowing'), value: profile.followingCount, icon: Heart },
+    { label: t('profile_statRecipes'), value: profile.recipesCreated, icon: BookOpen },
   ];
 
   const accentStyle = { color: profile.accentColor };
@@ -291,7 +291,7 @@ export const ProfileView: React.FC = () => {
           onClick={() => setShowEdit(true)}
           className="absolute top-4 right-4 bg-white/20 hover:bg-white/35 backdrop-blur-md text-white text-[11px] font-bold px-3.5 py-2 rounded-2xl flex items-center gap-1.5 transition-all border border-white/20 shadow-sm"
         >
-          <Edit3 size={13} /> Засах
+          <Edit3 size={13} /> {t('profile_edit')}
         </button>
 
         {/* Avatar – positioned to overlap the card below */}
@@ -334,7 +334,7 @@ export const ProfileView: React.FC = () => {
             style={{ ...accentStyle, ...accentBgStyle, ...accentBorderStyle }}
           >
             <Edit3 size={13} className="inline mr-1.5 -mt-0.5" />
-            Профайл засах
+            {t('profile_editProfile')}
           </motion.button>
         </div>
 
@@ -369,14 +369,14 @@ export const ProfileView: React.FC = () => {
             className="flex-1 py-2.5 rounded-2xl text-xs font-black text-white flex items-center justify-center gap-1.5 shadow-lg"
             style={{ backgroundColor: profile.accentColor }}
           >
-            <Users size={14} /> Хамтын орчин руу
+            <Users size={14} /> {t('profile_toCommunity')}
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={() => setActiveTab('recipe')}
             className="flex-1 py-2.5 rounded-2xl text-xs font-black border border-pestle-border text-pestle-text hover:border-violet-400 flex items-center justify-center gap-1.5 bg-pestle-card transition-colors"
           >
-            <ChefHat size={14} style={accentStyle} /> Жор харах
+            <ChefHat size={14} style={accentStyle} /> {t('profile_viewRecipes')}
           </motion.button>
         </div>
 
@@ -395,9 +395,9 @@ export const ProfileView: React.FC = () => {
                 style={activeGrid === tab ? { borderColor: profile.accentColor, color: profile.accentColor } : {}}
               >
                 {tab === 'posts' ? (
-                  <><Grid3x3 size={14} /> Нийтлэлүүд</>
+                  <><Grid3x3 size={14} /> {t('profile_tabPosts')}</>
                 ) : (
-                  <><BookOpen size={14} /> Хадгалсан жор</>
+                  <><BookOpen size={14} /> {t('profile_tabSavedRecipes')}</>
                 )}
               </button>
             ))}
@@ -446,16 +446,16 @@ export const ProfileView: React.FC = () => {
                 >
                   <Sparkles size={28} style={accentStyle} />
                 </div>
-                <p className="text-sm font-black text-pestle-text">Хадгалсан жор байхгүй</p>
+                <p className="text-sm font-black text-pestle-text">{t('profile_noSavedRecipes')}</p>
                 <p className="text-xs text-gray-400 font-medium max-w-xs">
-                  Жор хэсгээс жороо хадгалаад энд үзнэ үү.
+                  {t('profile_noSavedRecipesDesc')}
                 </p>
                 <button
                   onClick={() => setActiveTab('recipe')}
                   className="text-xs font-bold px-4 py-2 rounded-xl text-white shadow-md"
                   style={{ backgroundColor: profile.accentColor }}
                 >
-                  Жор хайх
+                  {t('profile_searchRecipes')}
                 </button>
               </motion.div>
             )}
