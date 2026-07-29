@@ -1,13 +1,41 @@
-import express, { type Express } from 'express';
+import express, { type Express, type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import { aiResponseCache, ocrResultCache } from './cache.js';
+import { Ratelimit } from '@upstash/ratelimit';
+import { aiResponseCache, ocrResultCache, redisClient, cacheBackend } from './cache.js';
 import inventoryRouter from './routes/inventory.js';
 import ordersRouter from './routes/orders.js';
 import aiRouter from './routes/ai.js';
 
 const IS_PROD = process.env.NODE_ENV === 'production';
+
+/**
+ * Builds a rate-limit middleware. Uses Upstash Redis (shared across instances)
+ * when configured, otherwise falls back to per-instance in-memory limiting.
+ */
+function makeLimiter(max: number, prefix: string, message?: object) {
+  if (redisClient) {
+    const rl = new Ratelimit({
+      redis: redisClient,
+      limiter: Ratelimit.slidingWindow(max, '60 s'),
+      prefix: `ratelimit:${prefix}`,
+      analytics: false,
+    });
+    return async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const id = req.ip || req.headers['x-forwarded-for']?.toString() || 'anon';
+        const { success } = await rl.limit(id);
+        if (!success) return res.status(429).json(message || { error: 'Too many requests' });
+        return next();
+      } catch {
+        // If Redis is unreachable, fail open rather than blocking all traffic.
+        return next();
+      }
+    };
+  }
+  return rateLimit({ windowMs: 60 * 1000, max, standardHeaders: true, legacyHeaders: false, message });
+}
 
 /**
  * Builds the Express app shared by BOTH deployment targets:
@@ -56,26 +84,15 @@ export function createApp(): Express {
 
   app.use(express.json({ limit: '10mb' }));
 
-  // ── Rate limiting (per-instance; move to Redis-backed store in Phase 1) ──
-  const generalLimiter = rateLimit({
-    windowMs: 60 * 1000,
-    max: 250,
-    standardHeaders: true,
-    legacyHeaders: false,
-  });
-  const aiLimiter = rateLimit({
-    windowMs: 60 * 1000,
-    max: 30,
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: {
+  // ── Rate limiting (Redis-backed when configured, else per-instance) ──────
+  app.use('/api/', makeLimiter(250, 'general'));
+  app.use(
+    '/api/ai/',
+    makeLimiter(30, 'ai', {
       error: 'Хэт олон AI хүсэлт илгээгдлээ. 1 минут хүлээгээд дахин оролдоно уу.',
       errorEn: 'Too many AI requests. Please wait 1 minute before retrying.',
-    },
-  });
-
-  app.use('/api/', generalLimiter);
-  app.use('/api/ai/', aiLimiter);
+    })
+  );
 
   // ── Routes ──────────────────────────────────────────────────────────────
   app.use('/api/inventory', inventoryRouter);
@@ -94,6 +111,7 @@ export function createApp(): Express {
       environment: IS_PROD ? 'production' : 'development',
       uptime: Math.floor(process.uptime()),
       cache: {
+        backend: cacheBackend,
         ai: aiStats,
         ocr: ocrStats,
         totalCacheHits: totalSavedCalls,

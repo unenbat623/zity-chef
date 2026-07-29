@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { reportError } from '../lib/errorReporting';
 
 interface Props {
   children: ReactNode;
@@ -21,9 +22,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    // eslint-disable-next-line no-console
-    console.error('[Zity Chef] Uncaught error:', error, info.componentStack);
-    // Phase 1: forward to Sentry / error tracking here.
+    reportError(error, { componentStack: info.componentStack });
   }
 
   handleReload = () => {

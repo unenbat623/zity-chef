@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getSisterAdvice, getServerHealth } from '../services/geminiService';
-import { MOCK_RECIPES } from '../constants';
+import { MOCK_RECIPES } from '../data/recipes';
 
 export const DesktopWidgetPanel: React.FC = () => {
   const {

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { MessageCircle, X, ChevronRight, Sparkles, Send } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getSisterAdvice } from '../services/geminiService';
-import { MOCK_RECIPES } from '../constants';
+import { MOCK_RECIPES } from '../data/recipes';
 
 export const FloatingAssistant: React.FC = () => {
   const { lang, inventory, setActiveCookingRecipe, setActiveTab, t } = useApp();

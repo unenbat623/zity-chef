@@ -17,7 +17,8 @@ import {
   Check,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { WEEK_DAYS, MOCK_RECIPES } from '../constants';
+import { WEEK_DAYS } from '../constants';
+import { MOCK_RECIPES } from '../data/recipes';
 import type { Recipe } from '../types';
 
 // Meal time slots

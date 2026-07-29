@@ -28,7 +28,7 @@ router.post('/chat', async (req, res) => {
 
   const cacheKey = makeContextKey(message, inventoryContext, lang);
 
-  const cached = aiResponseCache.get(cacheKey);
+  const cached = await aiResponseCache.get(cacheKey);
   if (cached) {
     return res.json({ text: cached, fromCache: true });
   }
@@ -71,7 +71,7 @@ router.post('/chat', async (req, res) => {
 
   try {
     const text = await geminiCall;
-    aiResponseCache.set(cacheKey, text, 10 * 60 * 1000);
+    await aiResponseCache.set(cacheKey, text, 10 * 60 * 1000);
     return res.json({ text, fromCache: false });
   } finally {
     inflight.delete(cacheKey);
@@ -87,7 +87,7 @@ router.post('/ocr', async (req, res) => {
   }
 
   const imageHash = crypto.createHash('md5').update(base64Image.slice(0, 1000)).digest('hex');
-  const cached = ocrResultCache.get(imageHash);
+  const cached = await ocrResultCache.get(imageHash);
   if (cached) {
     return res.json({ items: JSON.parse(cached), fromCache: true });
   }
@@ -107,7 +107,7 @@ router.post('/ocr', async (req, res) => {
 
     const raw = (response.text || '[]').replace(/```json|```/g, '').trim();
     const items = JSON.parse(raw);
-    ocrResultCache.set(imageHash, JSON.stringify(items), 60 * 60 * 1000);
+    await ocrResultCache.set(imageHash, JSON.stringify(items), 60 * 60 * 1000);
     return res.json({ items, fromCache: false });
   } catch {
     const fallback = [

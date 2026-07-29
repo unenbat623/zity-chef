@@ -6,9 +6,7 @@ import { ToastProvider } from './components/Toast';
 import { HeaderNav } from './components/HeaderNav';
 import { BottomNav } from './components/BottomNav';
 import { SidebarNav } from './components/SidebarNav';
-import { DesktopWidgetPanel } from './components/DesktopWidgetPanel';
 import { FridgeView } from './components/FridgeView';
-import { FloatingAssistant } from './components/FloatingAssistant';
 import { PaymentModal } from './components/PaymentModal';
 import { SubscriptionModal } from './components/SubscriptionModal';
 import { ReceiptScannerModal } from './components/ReceiptScannerModal';
@@ -39,6 +37,15 @@ const HelpView = lazy(() =>
 );
 const NotFoundView = lazy(() =>
   import('./components/NotFoundView').then((m) => ({ default: m.NotFoundView }))
+);
+
+// Peripheral AI widgets — lazy so their (heavy) recipe data stays out of the
+// initial bundle. Rendered without a visible fallback.
+const FloatingAssistant = lazy(() =>
+  import('./components/FloatingAssistant').then((m) => ({ default: m.FloatingAssistant }))
+);
+const DesktopWidgetPanel = lazy(() =>
+  import('./components/DesktopWidgetPanel').then((m) => ({ default: m.DesktopWidgetPanel }))
 );
 
 const ViewFallback: React.FC = () => (
@@ -93,7 +100,9 @@ const AppContent: React.FC = () => {
 
         {/* Mobile floating AI assistant (hidden on xl — right panel shows instead) */}
         <div className="xl:hidden">
-          <FloatingAssistant />
+          <Suspense fallback={null}>
+            <FloatingAssistant />
+          </Suspense>
         </div>
 
         {/* Mobile bottom nav */}
@@ -101,7 +110,9 @@ const AppContent: React.FC = () => {
       </div>
 
       {/* Desktop Right Widget Panel — hidden below xl */}
-      <DesktopWidgetPanel />
+      <Suspense fallback={null}>
+        <DesktopWidgetPanel />
+      </Suspense>
 
       {/* Global modals */}
       <PaymentModal />

@@ -19,7 +19,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { MOCK_RECIPES } from '../constants';
+import { MOCK_RECIPES } from '../data/recipes';
 import { Recipe, RecipeCategory } from '../types';
 import { SmartImage } from './SmartImage';
 

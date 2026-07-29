@@ -21,7 +21,7 @@ import {
   Tag,
 } from 'lucide-react';
 import { SmartImage } from './SmartImage';
-import { MOCK_RECIPES } from '../constants';
+import { MOCK_RECIPES } from '../data/recipes';
 import { useApp } from '../context/AppContext';
 
 // ── Types & Mock Data ──────────────────────────────────────────────────────────
