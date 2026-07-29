@@ -36,3 +36,20 @@ export async function uploadImage(file: File, folder = 'avatars'): Promise<strin
     return null;
   }
 }
+
+/**
+ * Uploads a base64 data-URL (e.g. from a FileReader preview) to Storage and
+ * returns its public URL, or null if Storage isn't available / upload fails.
+ */
+export async function uploadDataUrl(dataUrl: string, folder = 'community'): Promise<string | null> {
+  if (!supabase || !dataUrl.startsWith('data:')) return null;
+  try {
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    const ext = (blob.type.split('/')[1] || 'jpg').split('+')[0];
+    const file = new File([blob], `upload.${ext}`, { type: blob.type });
+    return await uploadImage(file, folder);
+  } catch {
+    return null;
+  }
+}

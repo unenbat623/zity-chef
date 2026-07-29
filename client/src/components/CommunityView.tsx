@@ -19,6 +19,7 @@ import { MOCK_RECIPES } from '../data/recipes';
 import { useApp } from '../context/AppContext';
 import { useCommunity } from '../hooks/useCommunity';
 import { useDirectMessages } from '../hooks/useDirectMessages';
+import { uploadDataUrl } from '../lib/storage';
 
 // ── Types & Mock Data ──────────────────────────────────────────────────────────
 interface StoryItem {
@@ -1105,19 +1106,29 @@ export const CommunityView: React.FC = () => {
     persistComment(postId, text, profile.name || 'Би');
   };
 
-  const handleNewPost = (post: any) => {
-    setPosts((prev) => [post, ...prev]);
+  const handleNewPost = async (post: any) => {
+    setPosts((prev) => [post, ...prev]); // instant local preview (base64)
+    let imageUrl: string | null =
+      typeof post.image === 'string' && post.image.startsWith('http') ? post.image : null;
+    if (typeof post.image === 'string' && post.image.startsWith('data:')) {
+      imageUrl = await uploadDataUrl(post.image, 'community');
+    }
     persistPost({
       caption: post.caption || '',
-      imageUrl: typeof post.image === 'string' && post.image.startsWith('http') ? post.image : null,
+      imageUrl,
       authorName: profile.name || 'Zity Chef',
       authorAvatar: profile.avatarUrl || '',
     });
   };
 
-  const handleAddStory = (newStory: StoryItem) => {
+  const handleAddStory = async (newStory: StoryItem) => {
+    let imageUrl: string | null =
+      newStory.img && newStory.img.startsWith('http') ? newStory.img : null;
+    if (newStory.img && newStory.img.startsWith('data:')) {
+      imageUrl = await uploadDataUrl(newStory.img, 'stories');
+    }
     persistStory({
-      imageUrl: newStory.img && newStory.img.startsWith('http') ? newStory.img : null,
+      imageUrl,
       caption: newStory.caption ?? null,
       sticker: newStory.sticker ?? null,
       authorName: profile.name || 'Zity Chef',

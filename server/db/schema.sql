@@ -250,3 +250,22 @@ GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, se
 ALTER DEFAULT PRIVILEGES IN SCHEMA public
   GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO authenticated, service_role;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO anon;
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- Storage policies — allow authenticated users to upload to the public
+-- "uploads" bucket (avatars, community/story photos). Public read.
+-- ════════════════════════════════════════════════════════════════════════════
+DO $$ BEGIN
+  CREATE POLICY "uploads_insert" ON storage.objects
+    FOR INSERT TO authenticated WITH CHECK (bucket_id = 'uploads');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "uploads_update" ON storage.objects
+    FOR UPDATE TO authenticated USING (bucket_id = 'uploads');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "uploads_read" ON storage.objects
+    FOR SELECT USING (bucket_id = 'uploads');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
