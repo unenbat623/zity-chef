@@ -1031,7 +1031,7 @@ const PostCard: React.FC<{
 // ── MAIN COMMUNITY VIEW ────────────────────────────────────────────────────────
 export const CommunityView: React.FC = () => {
   const { profile, t } = useApp();
-  const { feedPosts, persistLike, persistComment, persistPost, serverStoryGroups, persistStory } =
+  const { feedPosts, feedLoading, persistLike, persistComment, persistPost, serverStoryGroups, persistStory } =
     useCommunity();
 
   // Build own story group from profile
@@ -1240,6 +1240,28 @@ export const CommunityView: React.FC = () => {
 
       {/* INSTAGRAM FEED POSTS */}
       <div className="space-y-6">
+        {feedLoading && posts.length === 0 && (
+          <>
+            {[0, 1].map((i) => (
+              <div key={`feed-skeleton-${i}`} className="pestle-card p-0 overflow-hidden animate-pulse">
+                <div className="flex items-center gap-3 p-4">
+                  <div className="w-10 h-10 rounded-full bg-pestle-bg" />
+                  <div className="h-3 w-24 bg-pestle-bg rounded" />
+                </div>
+                <div className="h-64 w-full bg-pestle-bg" />
+                <div className="p-4 space-y-2">
+                  <div className="h-3 w-1/2 bg-pestle-bg rounded" />
+                  <div className="h-3 w-3/4 bg-pestle-bg rounded" />
+                </div>
+              </div>
+            ))}
+          </>
+        )}
+        {!feedLoading && posts.length === 0 && (
+          <div className="pestle-card p-8 text-center">
+            <p className="text-sm font-semibold text-gray-400">{t('community_emptyFeed')}</p>
+          </div>
+        )}
         {posts.map((post) => (
           <PostCard
             key={post.id}

@@ -496,6 +496,8 @@ export const translations = {
     fridge_retry: 'Дахин ачаалах',
     fridge_edit: 'Засах',
     fridge_noItems: 'Материал олдсонгүй',
+    store_emptyCatalog: 'Бүтээгдэхүүн олдсонгүй',
+    community_emptyFeed: 'Одоогоор нийтлэл алга. Анхны нийтлэлээ хийгээрэй!',
   },
   en: {
     appName: 'Zity Chef',
@@ -994,5 +996,7 @@ export const translations = {
     fridge_retry: 'Retry',
     fridge_edit: 'Edit',
     fridge_noItems: 'No ingredients found',
+    store_emptyCatalog: 'No products found',
+    community_emptyFeed: 'No posts yet. Share the first one!',
   },
 };

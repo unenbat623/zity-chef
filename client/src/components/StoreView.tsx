@@ -39,7 +39,7 @@ export const StoreView: React.FC = () => {
     lang,
     t,
   } = useApp();
-  const { products } = useStoreProducts();
+  const { products, loading } = useStoreProducts();
   // Real DB catalog when available; fall back to the bundled mock list.
   const catalog: CatalogItem[] = products.length ? products : (MOCK_INGREDIENTS as CatalogItem[]);
   const nameOf = (item: CatalogItem) => (lang === 'en' && item.nameEn ? item.nameEn : item.name);
@@ -133,6 +133,29 @@ export const StoreView: React.FC = () => {
           {/* Product Catalog Grid */}
           <div className="space-y-3">
             <h3 className="text-sm font-bold text-pestle-text">{t('store_freshProducts')}</h3>
+            {loading && products.length === 0 ? (
+              /* Loading skeleton grid */
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="pestle-card overflow-hidden animate-pulse">
+                    <div className="h-32 w-full bg-pestle-bg" />
+                    <div className="p-3 space-y-2">
+                      <div className="h-3 w-2/3 bg-pestle-bg rounded" />
+                      <div className="h-3 w-1/3 bg-pestle-bg rounded" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : !loading && catalog.length === 0 ? (
+              /* Empty catalog state */
+              <div className="pestle-card text-center py-16 px-6">
+                <Store size={48} className="mx-auto text-gray-300 mb-3" />
+                <h4 className="text-base font-bold text-pestle-text mb-1">
+                  {t('store_freshProducts')}
+                </h4>
+                <p className="text-xs text-gray-400">{t('store_emptyCatalog')}</p>
+              </div>
+            ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
               {catalog.map((item) => {
                 const displayName = nameOf(item);
@@ -180,6 +203,7 @@ export const StoreView: React.FC = () => {
                 );
               })}
             </div>
+            )}
           </div>
         </div>
       )}

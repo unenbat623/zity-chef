@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { Ratelimit } from '@upstash/ratelimit';
 import { aiResponseCache, ocrResultCache, redisClient, cacheBackend } from './cache.js';
+import { isSupabaseConfigured, supabasePublic } from './supabase.js';
 import inventoryRouter from './routes/inventory.js';
 import ordersRouter from './routes/orders.js';
 import aiRouter from './routes/ai.js';
@@ -127,6 +128,29 @@ export function createApp(): Express {
       },
       timestamp: new Date().toISOString(),
     });
+  });
+
+  // Readiness probe — verifies the DB is reachable (for orchestrators / LBs).
+  app.get('/api/ready', async (_req, res) => {
+    if (!isSupabaseConfigured || !supabasePublic) {
+      return res.json({ ready: true, db: 'not-configured' });
+    }
+    try {
+      const { error } = await supabasePublic.from('store_products').select('id').limit(1);
+      return res.status(error ? 503 : 200).json({ ready: !error, db: error ? 'error' : 'ok' });
+    } catch {
+      return res.status(503).json({ ready: false, db: 'error' });
+    }
+  });
+
+  // 404 for unknown API routes (must come after all /api routers).
+  app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));
+
+  // Central error handler — consistent JSON, never leaks stack traces in prod.
+  app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+    console.error('[Unhandled error]', err);
+    const message = err instanceof Error ? err.message : 'Internal server error';
+    res.status(500).json({ error: IS_PROD ? 'Internal server error' : message });
   });
 
   return app;
