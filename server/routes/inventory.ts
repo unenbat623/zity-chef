@@ -26,7 +26,9 @@ function rowToIngredient(r: Record<string, unknown>): Ingredient {
     category: r.category as Ingredient['category'],
     quantity: Number(r.quantity ?? 1),
     unit: (r.unit as Ingredient['unit']) || 'ш',
-    expiryDays: r.expiry_days != null ? Number(r.expiry_days) : 7,
+    expiryDays: r.expiry_date
+      ? Math.max(0, Math.ceil((new Date(String(r.expiry_date)).getTime() - Date.now()) / 86400000))
+      : 7,
     pricePerUnit: r.price_per_unit != null ? Number(r.price_per_unit) : undefined,
   };
 }

@@ -272,7 +272,7 @@ export const MOCK_RECIPES: Recipe[] = [
     id: 'green-smoothie-bowl',
     title: 'Шпинат ба Бууцайтай Ногоон Смузи Боул',
     titleEn: 'Green Spinach & Mango Smoothie Bowl',
-    image: 'https://images.unsplash.com/photo-1626078436896-1c2105151515?auto=format&fit=crop&w=800&q=80',
+    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80',
     time: '8 мин',
     difficulty: 'Easy',
     cuisine: 'Healthy',
@@ -289,7 +289,7 @@ export const MOCK_RECIPES: Recipe[] = [
         titleEn: 'Blend Smoothie',
         description: 'Шпинат, хөлдөөсөн банан, киви ба кокосын усыг блендерт өтгөн болтол блендердэнэ.',
         descriptionEn: 'Blend spinach, frozen banana, kiwi, and coconut water until smooth and thick.',
-        image: 'https://images.unsplash.com/photo-1626078436896-1c2105151515?auto=format&fit=crop&w=800&q=80',
+        image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80',
         sisterTip: 'Мөсний оронд хөлдөөсөн банан хэрэглэвэл илүү крем шиг зөөлөн болно.',
         sisterTipEn: 'Use frozen banana instead of ice for a creamier texture.'
       }
