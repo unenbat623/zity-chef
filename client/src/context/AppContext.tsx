@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { Ingredient, SubscriptionTier, CartItem, Order, Language, Recipe, UserProfile } from '../types';
 import { translations } from '../lib/i18n';
 import { useInventory } from '../hooks/useInventory';
@@ -53,6 +53,14 @@ interface AppContextType {
   t: (key: keyof (typeof translations)['mn'], params?: Record<string, string | number>) => string;
 }
 
+const VALID_TABS = ['fridge', 'calendar', 'cooking', 'store', 'recipe', 'community', 'profile', 'help'];
+
+function getTabFromUrl(): string {
+  if (typeof window === 'undefined') return 'fridge';
+  const tab = new URLSearchParams(window.location.search).get('tab');
+  return tab && VALID_TABS.includes(tab) ? tab : 'fridge';
+}
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -85,8 +93,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [activeTab, setActiveTab] = useState<string>('fridge');
+  const [activeTab, setActiveTabState] = useState<string>(getTabFromUrl);
   const [activeCookingRecipe, setActiveCookingRecipe] = useState<Recipe | null>(null);
+
+  // Keep the active tab in the URL so deep links (?tab=recipe), the browser back
+  // button, and the PWA manifest shortcuts all work.
+  const setActiveTab = useCallback((tab: string) => {
+    setActiveTabState(tab);
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', tab);
+    window.history.pushState({ tab }, '', url);
+  }, []);
+
+  useEffect(() => {
+    const onPop = () => setActiveTabState(getTabFromUrl());
+    window.addEventListener('popstate', onPop);
+    // Ensure the initial entry carries the current tab (for a clean first Back).
+    const url = new URL(window.location.href);
+    if (!url.searchParams.get('tab')) {
+      url.searchParams.set('tab', activeTab);
+      window.history.replaceState({ tab: activeTab }, '', url);
+    }
+    return () => window.removeEventListener('popstate', onPop);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const DEFAULT_PROFILE: UserProfile = {
     name: 'Таны Нэр',
@@ -106,10 +136,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved ? { ...DEFAULT_PROFILE, ...JSON.parse(saved) } : DEFAULT_PROFILE;
   });
 
-  const setProfile = (p: UserProfile) => {
+  const setProfile = useCallback((p: UserProfile) => {
     setProfileState(p);
     localStorage.setItem('zity_profile', JSON.stringify(p));
-  };
+  }, []);
 
   const [showSubModal, setShowSubModal] = useState<boolean>(false);
   const [showScanModal, setShowScanModal] = useState<boolean>(false);
@@ -151,13 +181,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('zity_cart', JSON.stringify(cart));
   }, [cart]);
 
-  const toggleDarkMode = () => setIsDark((prev) => !prev);
+  const toggleDarkMode = useCallback(() => setIsDark((prev) => !prev), []);
 
-  const setSubscription = (tier: SubscriptionTier) => {
+  const setSubscription = useCallback((tier: SubscriptionTier) => {
     setSubscriptionState(tier);
-  };
+  }, []);
 
-  const addToCart = (item: CartItem) => {
+  const addToCart = useCallback((item: CartItem) => {
     setCart((prev) => {
       const existing = prev.find((i) => i.name === item.name);
       if (existing) {
@@ -173,106 +203,140 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return [...prev, item];
     });
-  };
+  }, []);
 
-  const removeFromCart = (id: string) => {
+  const removeFromCart = useCallback((id: string) => {
     setCart((prev) => prev.filter((i) => i.id !== id));
-  };
+  }, []);
 
-  const clearCart = () => setCart([]);
+  const clearCart = useCallback(() => setCart([]), []);
 
   const totalCartAmount = cart.reduce((sum, item) => sum + item.totalPrice, 0);
 
-  const handleCreateOrder = (
-    address: string,
-    paymentMethod: 'qpay' | 'socialpay' | 'card'
-  ): Order => {
-    const newOrder: Order = {
-      id: `ZITY-${Math.floor(100000 + Math.random() * 900000)}`,
-      items: [...cart],
-      totalAmount: totalCartAmount,
-      status: 'paid',
-      paymentMethod,
-      createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      address,
-    };
+  const handleCreateOrder = useCallback(
+    (address: string, paymentMethod: 'qpay' | 'socialpay' | 'card'): Order => {
+      const newOrder: Order = {
+        id: `ZITY-${Math.floor(100000 + Math.random() * 900000)}`,
+        items: [...cart],
+        totalAmount: totalCartAmount,
+        status: 'paid',
+        paymentMethod,
+        createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        address,
+      };
 
-    createOrderMutation({
-      items: cart,
-      totalAmount: totalCartAmount,
-      deliveryAddress: address,
-      paymentMethod,
-    });
-
-    clearCart();
-    return newOrder;
-  };
-
-  const triggerPayment = (amount: number, title: string, onSuccess?: () => void) => {
-    setPaymentModalState({ amount, title, onSuccess });
-  };
-
-  const closePaymentModal = () => {
-    setPaymentModalState(null);
-  };
-
-  const t = (
-    key: keyof (typeof translations)['mn'],
-    params?: Record<string, string | number>
-  ): string => {
-    let str = translations[lang][key] || translations['mn'][key] || key;
-    if (params) {
-      Object.entries(params).forEach(([k, v]) => {
-        str = str.replace(`{${k}}`, String(v));
+      createOrderMutation({
+        items: cart,
+        totalAmount: totalCartAmount,
+        deliveryAddress: address,
+        paymentMethod,
       });
-    }
-    return str;
-  };
 
-  return (
-    <AppContext.Provider
-      value={{
-        lang,
-        setLang,
-        isDark,
-        toggleDarkMode,
-        inventory: inventory || [],
-        inventoryLoading,
-        inventoryError,
-        refetchInventory: () => {
-          refetchInventory();
-        },
-        addIngredient,
-        updateIngredient,
-        removeIngredient,
-        subscription,
-        setSubscription,
-        cart,
-        addToCart,
-        removeFromCart,
-        clearCart,
-        totalCartAmount,
-        orders: (orders as unknown as Order[]) || [],
-        createOrder: handleCreateOrder,
-        activeTab,
-        setActiveTab,
-        activeCookingRecipe,
-        setActiveCookingRecipe,
-        profile,
-        setProfile,
-        showSubModal,
-        setShowSubModal,
-        showScanModal,
-        setShowScanModal,
-        paymentModalState,
-        triggerPayment,
-        closePaymentModal,
-        t,
-      }}
-    >
-      {children}
-    </AppContext.Provider>
+      clearCart();
+      return newOrder;
+    },
+    [cart, totalCartAmount, createOrderMutation, clearCart]
   );
+
+  const triggerPayment = useCallback(
+    (amount: number, title: string, onSuccess?: () => void) => {
+      setPaymentModalState({ amount, title, onSuccess });
+    },
+    []
+  );
+
+  const closePaymentModal = useCallback(() => {
+    setPaymentModalState(null);
+  }, []);
+
+  const t = useCallback(
+    (key: keyof (typeof translations)['mn'], params?: Record<string, string | number>): string => {
+      let str = translations[lang][key] || translations['mn'][key] || key;
+      if (params) {
+        Object.entries(params).forEach(([k, v]) => {
+          str = str.replace(`{${k}}`, String(v));
+        });
+      }
+      return str;
+    },
+    [lang]
+  );
+
+  const handleRefetchInventory = useCallback(() => {
+    refetchInventory();
+  }, [refetchInventory]);
+
+  const value = useMemo<AppContextType>(
+    () => ({
+      lang,
+      setLang,
+      isDark,
+      toggleDarkMode,
+      inventory: inventory || [],
+      inventoryLoading,
+      inventoryError,
+      refetchInventory: handleRefetchInventory,
+      addIngredient,
+      updateIngredient,
+      removeIngredient,
+      subscription,
+      setSubscription,
+      cart,
+      addToCart,
+      removeFromCart,
+      clearCart,
+      totalCartAmount,
+      orders: (orders as unknown as Order[]) || [],
+      createOrder: handleCreateOrder,
+      activeTab,
+      setActiveTab,
+      activeCookingRecipe,
+      setActiveCookingRecipe,
+      profile,
+      setProfile,
+      showSubModal,
+      setShowSubModal,
+      showScanModal,
+      setShowScanModal,
+      paymentModalState,
+      triggerPayment,
+      closePaymentModal,
+      t,
+    }),
+    [
+      lang,
+      isDark,
+      toggleDarkMode,
+      inventory,
+      inventoryLoading,
+      inventoryError,
+      handleRefetchInventory,
+      addIngredient,
+      updateIngredient,
+      removeIngredient,
+      subscription,
+      setSubscription,
+      cart,
+      addToCart,
+      removeFromCart,
+      clearCart,
+      totalCartAmount,
+      orders,
+      handleCreateOrder,
+      activeTab,
+      activeCookingRecipe,
+      profile,
+      setProfile,
+      showSubModal,
+      showScanModal,
+      paymentModalState,
+      triggerPayment,
+      closePaymentModal,
+      t,
+    ]
+  );
+
+  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 
 export const useApp = () => {

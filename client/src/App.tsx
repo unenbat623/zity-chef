@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AppProvider, useApp } from './context/AppContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -8,18 +8,46 @@ import { BottomNav } from './components/BottomNav';
 import { SidebarNav } from './components/SidebarNav';
 import { DesktopWidgetPanel } from './components/DesktopWidgetPanel';
 import { FridgeView } from './components/FridgeView';
-import { CalendarView } from './components/CalendarView';
-import { StoreView } from './components/StoreView';
-import { CookingModeView } from './components/CookingModeView';
-import { RecipeView } from './components/RecipeView';
-import { CommunityView } from './components/CommunityView';
-import { ProfileView } from './components/ProfileView';
 import { FloatingAssistant } from './components/FloatingAssistant';
 import { PaymentModal } from './components/PaymentModal';
 import { SubscriptionModal } from './components/SubscriptionModal';
 import { ReceiptScannerModal } from './components/ReceiptScannerModal';
-import { HelpView } from './components/HelpView';
-import { NotFoundView } from './components/NotFoundView';
+
+// ── Route-level code splitting ────────────────────────────────────────────────
+// FridgeView (the default tab) stays eager for an instant first paint; the rest
+// load on demand so the initial bundle no longer ships every heavy view.
+const CalendarView = lazy(() =>
+  import('./components/CalendarView').then((m) => ({ default: m.CalendarView }))
+);
+const StoreView = lazy(() =>
+  import('./components/StoreView').then((m) => ({ default: m.StoreView }))
+);
+const CookingModeView = lazy(() =>
+  import('./components/CookingModeView').then((m) => ({ default: m.CookingModeView }))
+);
+const RecipeView = lazy(() =>
+  import('./components/RecipeView').then((m) => ({ default: m.RecipeView }))
+);
+const CommunityView = lazy(() =>
+  import('./components/CommunityView').then((m) => ({ default: m.CommunityView }))
+);
+const ProfileView = lazy(() =>
+  import('./components/ProfileView').then((m) => ({ default: m.ProfileView }))
+);
+const HelpView = lazy(() =>
+  import('./components/HelpView').then((m) => ({ default: m.HelpView }))
+);
+const NotFoundView = lazy(() =>
+  import('./components/NotFoundView').then((m) => ({ default: m.NotFoundView }))
+);
+
+const ViewFallback: React.FC = () => (
+  <div className="flex items-center justify-center py-24">
+    <div className="w-8 h-8 rounded-xl bg-mango/80 text-white font-black flex items-center justify-center animate-pulse">
+      Z
+    </div>
+  </div>
+);
 
 const AppContent: React.FC = () => {
   const { activeTab, activeCookingRecipe } = useApp();
@@ -48,15 +76,17 @@ const AppContent: React.FC = () => {
               exit={{ opacity: 0, x: -12 }}
               transition={{ type: 'spring', stiffness: 380, damping: 34 }}
             >
-              {activeTab === 'fridge' && <FridgeView />}
-              {activeTab === 'calendar' && <CalendarView />}
-              {activeTab === 'cooking' && <CookingModeView recipe={activeCookingRecipe} />}
-              {activeTab === 'store' && <StoreView />}
-              {activeTab === 'recipe' && <RecipeView />}
-              {activeTab === 'community' && <CommunityView />}
-              {activeTab === 'profile' && <ProfileView />}
-              {activeTab === 'help' && <HelpView />}
-              {is404 && <NotFoundView />}
+              <Suspense fallback={<ViewFallback />}>
+                {activeTab === 'fridge' && <FridgeView />}
+                {activeTab === 'calendar' && <CalendarView />}
+                {activeTab === 'cooking' && <CookingModeView recipe={activeCookingRecipe} />}
+                {activeTab === 'store' && <StoreView />}
+                {activeTab === 'recipe' && <RecipeView />}
+                {activeTab === 'community' && <CommunityView />}
+                {activeTab === 'profile' && <ProfileView />}
+                {activeTab === 'help' && <HelpView />}
+                {is404 && <NotFoundView />}
+              </Suspense>
             </motion.div>
           </AnimatePresence>
         </main>

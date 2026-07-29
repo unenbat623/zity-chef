@@ -14,12 +14,6 @@ interface State {
  * the entire SPA. Shows a friendly recovery screen and lets the user reload.
  */
 export class ErrorBoundary extends Component<Props, State> {
-  // NOTE: this project ships without @types/react, so `Component` resolves to
-  // `any` and inherited members aren't visible to tsc. Declare the ones we use.
-  // (Installing @types/react + @types/react-dom is the recommended Phase 1 fix.)
-  declare props: Props;
-  declare setState: (state: Partial<State>) => void;
-
   state: State = { hasError: false };
 
   static getDerivedStateFromError(error: Error): State {

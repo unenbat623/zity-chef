@@ -446,7 +446,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   {otpValues.map((val, idx) => (
                     <input
                       key={idx}
-                      ref={(el) => (otpInputRefs.current[idx] = el)}
+                      ref={(el) => {
+                        otpInputRefs.current[idx] = el;
+                      }}
                       type="text"
                       maxLength={1}
                       value={val}
