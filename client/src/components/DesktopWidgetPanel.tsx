@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getSisterAdvice, getServerHealth } from '../services/geminiService';
-import { MOCK_RECIPES } from '../data/recipes';
+import { useRecipes } from '../hooks/useRecipes';
 
 export const DesktopWidgetPanel: React.FC = () => {
   const {
@@ -24,6 +24,7 @@ export const DesktopWidgetPanel: React.FC = () => {
     setActiveTab,
     t,
   } = useApp();
+  const { recipes } = useRecipes();
   const [healthData, setHealthData] = useState<any>(null);
   const [inputVal, setInputVal] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
@@ -55,7 +56,7 @@ export const DesktopWidgetPanel: React.FC = () => {
       const recipeId = actionMatch[1];
       const clean = reply.replace(/\[ACTION: .*?\]/, '').trim();
       setChatLog((prev) => [...prev, { role: 'assistant', text: clean }]);
-      const target = MOCK_RECIPES.find((r) => r.id === recipeId) || MOCK_RECIPES[0];
+      const target = recipes.find((r) => r.id === recipeId) || recipes[0];
       setActiveCookingRecipe(target);
       setActiveTab('cooking');
     } else {

@@ -36,11 +36,14 @@ interface PlanDef {
   ctaClass: string;
 }
 
-const getPlanDefs = (t: (key: string, params?: Record<string, string | number>) => string): PlanDef[] => [
+const getPlanDefs = (
+  t: (key: string, params?: Record<string, string | number>) => string,
+  formatPrice: (amount: number) => string
+): PlanDef[] => [
   {
     id: 'free',
     name: t('subFree'),
-    price: '₮0',
+    price: formatPrice(0),
     priceRaw: 0,
     period: t('sub_periodFree'),
     tagline: t('sub_taglineFree'),
@@ -59,7 +62,7 @@ const getPlanDefs = (t: (key: string, params?: Record<string, string | number>) 
   {
     id: 'pro',
     name: t('subPro'),
-    price: '₮7,900',
+    price: formatPrice(7900),
     priceRaw: 7900,
     period: t('sub_perMonth'),
     tagline: t('sub_taglinePro'),
@@ -82,7 +85,7 @@ const getPlanDefs = (t: (key: string, params?: Record<string, string | number>) 
   {
     id: 'family',
     name: t('subFamily'),
-    price: '₮14,900',
+    price: formatPrice(14900),
     priceRaw: 14900,
     period: t('sub_perMonth'),
     tagline: t('sub_taglineFamily'),
@@ -195,8 +198,8 @@ const PlanCard: React.FC<{
 
 // ── Main Modal ─────────────────────────────────────────────────────────────────
 export const SubscriptionModal: React.FC = () => {
-  const { showSubModal, setShowSubModal, subscription, setSubscription, triggerPayment, t } = useApp();
-  const PLAN_DEFS = getPlanDefs(t);
+  const { showSubModal, setShowSubModal, subscription, setSubscription, triggerPayment, formatPrice, t } = useApp();
+  const PLAN_DEFS = getPlanDefs(t, formatPrice);
 
   if (!showSubModal) return null;
 

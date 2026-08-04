@@ -18,6 +18,8 @@ import {
   Square,
   Award,
   Layers,
+  Mic,
+  MicOff,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useToast } from './Toast';
@@ -33,8 +35,10 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
   const [timerSeconds, setTimerSeconds] = useState<number>(0);
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
 
-  // Voice narration state
+  // Voice narration & Hands-free listener state
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
+  const [isListeningVoiceCommands, setIsListeningVoiceCommands] = useState<boolean>(false);
+  const [lastVoiceCommand, setLastVoiceCommand] = useState<string | null>(null);
 
   // Ingredient check off for current step
   const [checkedIngredients, setCheckedIngredients] = useState<Record<string, boolean>>({});
@@ -147,6 +151,80 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
     }
   };
 
+  const toggleHandsFree = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toastWarning('Дуут удирдлага дэмжигдээгүй', 'Таны хөтөч Web Speech Recognition API дэмжихгүй байна.');
+      return;
+    }
+
+    if (isListeningVoiceCommands) {
+      setIsListeningVoiceCommands(false);
+      setLastVoiceCommand(null);
+      toastSuccess('Hands-Free зогслоо', 'Дуут удирдлагын микрофон унтраалаа.');
+    } else {
+      setIsListeningVoiceCommands(true);
+      toastSuccess('Hands-Free Идэвхжлээ 🎙️', '"Дараах", "Өмнөх", "Эхлэх", "Зогсоох", "Унших" гэж хэлээрэй!');
+    }
+  };
+
+  // Continuous speech recognition listener
+  useEffect(() => {
+    if (!isListeningVoiceCommands) return;
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    let recognition: any;
+    try {
+      recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = false;
+      recognition.lang = lang === 'mn' ? 'mn-MN' : 'en-US';
+
+      recognition.onresult = (event: any) => {
+        const lastResult = event.results[event.results.length - 1];
+        if (lastResult && lastResult.isFinal) {
+          const transcript = lastResult[0].transcript.toLowerCase().trim();
+          console.log('[Voice Command Heard]:', transcript);
+          setLastVoiceCommand(transcript);
+
+          if (transcript.includes('дараах') || transcript.includes('дараагийнх') || transcript.includes('next')) {
+            handleNext();
+          } else if (transcript.includes('өмнөх') || transcript.includes('буцах') || transcript.includes('back')) {
+            handlePrev();
+          } else if (transcript.includes('эхлэх') || transcript.includes('ажиллуул') || transcript.includes('start')) {
+            setIsTimerRunning(true);
+          } else if (transcript.includes('зогсоох') || transcript.includes('паус') || transcript.includes('pause')) {
+            setIsTimerRunning(false);
+          } else if (transcript.includes('унших') || transcript.includes('соносох') || transcript.includes('read')) {
+            toggleVoiceGuide();
+          }
+        }
+      };
+
+      recognition.onerror = () => {
+        // Restart on error if still enabled
+      };
+
+      recognition.onend = () => {
+        if (isListeningVoiceCommands) {
+          try { recognition.start(); } catch { /* ignore */ }
+        }
+      };
+
+      recognition.start();
+    } catch (err) {
+      console.error('[Speech Error]', err);
+    }
+
+    return () => {
+      if (recognition) {
+        recognition.onend = null;
+        recognition.stop();
+      }
+    };
+  }, [isListeningVoiceCommands, currentStep, lang]);
+
   const formatTimer = (totalSec: number) => {
     const mins = Math.floor(totalSec / 60);
     const secs = totalSec % 60;
@@ -188,6 +266,22 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
         </div>
 
         <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+          {/* Hands-Free Voice Control Button */}
+          <button
+            onClick={toggleHandsFree}
+            className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all cursor-pointer ${
+              isListeningVoiceCommands
+                ? 'bg-rose-500 text-white border-rose-500 animate-pulse shadow-md shadow-rose-500/30'
+                : 'bg-pestle-bg border-pestle-border text-pestle-text hover:border-mango'
+            }`}
+            title="Дуут удирдлага (Hands-Free)"
+          >
+            {isListeningVoiceCommands ? <Mic size={16} /> : <MicOff size={16} />}
+            <span className="hidden sm:inline">
+              {isListeningVoiceCommands ? 'Hands-Free 🎙️' : 'Hands-Free'}
+            </span>
+          </button>
+
           <button
             onClick={toggleVoiceGuide}
             className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all cursor-pointer ${
@@ -207,6 +301,28 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
           </div>
         </div>
       </header>
+
+      {/* Hands-Free Live Voice Indicator Bar */}
+      {isListeningVoiceCommands && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-rose-500/15 via-red-500/10 to-amber-500/15 border border-rose-500/30 p-3 rounded-2xl flex items-center justify-between shadow-xs"
+        >
+          <div className="flex items-center gap-2 text-xs font-black text-rose-500">
+            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
+            <span>Hands-Free Удирдлага Идэвхтэй 🎙️</span>
+            {lastVoiceCommand && (
+              <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">
+                • Сүүлд сонссон: "{lastVoiceCommand}"
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] font-bold text-gray-400 bg-pestle-card px-2.5 py-1 rounded-xl border border-pestle-border">
+            Тушаалууд: "Дараах", "Өмнөх", "Эхлэх", "Зогсоох", "Унших"
+          </span>
+        </motion.div>
+      )}
 
       {isCompleted ? (
         <motion.div

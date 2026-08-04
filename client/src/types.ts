@@ -2,11 +2,15 @@ import type { ReactNode } from 'react';
 
 export type Category = '🥦 Ногоо' | '🥩 Мах' | '🥛 Сүү, өндөг' | '🧂 Амтлагч' | '🍎 Жимс';
 
-export type Language = 'mn' | 'en';
+export type Language = 'mn' | 'en' | 'ja' | 'ko' | 'zh' | 'es';
+
+export type Currency = 'MNT' | 'USD' | 'EUR' | 'JPY' | 'KRW';
+
+export type UnitSystem = 'metric' | 'imperial';
 
 export type SubscriptionTier = 'free' | 'pro' | 'family';
 
-export type PaymentMethod = 'qpay' | 'socialpay' | 'card';
+export type PaymentMethod = 'qpay' | 'socialpay' | 'card' | 'stripe' | 'paypal' | 'applepay';
 
 export interface NutritionalInfo {
   calories: number; // kcal

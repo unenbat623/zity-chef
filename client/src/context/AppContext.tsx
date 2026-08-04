@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { Ingredient, SubscriptionTier, CartItem, Order, Language, Recipe, UserProfile } from '../types';
+import { Ingredient, SubscriptionTier, CartItem, Order, Language, Recipe, UserProfile, Currency, UnitSystem } from '../types';
 import { translations } from '../lib/i18n';
+import { formatCurrency } from '../lib/currency';
 import { useInventory } from '../hooks/useInventory';
 import { useOrders } from '../hooks/useOrders';
 
@@ -13,6 +14,11 @@ interface PendingPayment {
 interface AppContextType {
   lang: Language;
   setLang: (lang: Language) => void;
+  currency: Currency;
+  setCurrency: (c: Currency) => void;
+  unitSystem: UnitSystem;
+  setUnitSystem: (u: UnitSystem) => void;
+  formatPrice: (amountInMNT: number) => string;
   isDark: boolean;
   toggleDarkMode: () => void;
   inventory: Ingredient[];
@@ -38,9 +44,11 @@ interface AppContextType {
   activeCookingRecipe: Recipe | null;
   setActiveCookingRecipe: (recipe: Recipe | null) => void;
 
-  // User profile
+  // User profile & saved recipes
   profile: UserProfile;
   setProfile: (p: UserProfile) => void;
+  savedRecipeIds: string[];
+  toggleSaveRecipe: (recipeId: string) => void;
 
   // Modals state
   showSubModal: boolean;
@@ -68,6 +76,14 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [lang, setLang] = useState<Language>(() => {
     return (localStorage.getItem('zity_lang') as Language) || 'mn';
+  });
+
+  const [currency, setCurrency] = useState<Currency>(() => {
+    return (localStorage.getItem('zity_currency') as Currency) || 'MNT';
+  });
+
+  const [unitSystem, setUnitSystem] = useState<UnitSystem>(() => {
+    return (localStorage.getItem('zity_unit_system') as UnitSystem) || 'metric';
   });
 
   const [isDark, setIsDark] = useState<boolean>(() => {
@@ -148,6 +164,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('zity_profile', JSON.stringify(p));
   }, []);
 
+  const [savedRecipeIds, setSavedRecipeIds] = useState<string[]>(() => {
+    const saved = localStorage.getItem('zity_saved_recipes');
+    return saved ? JSON.parse(saved) : ['r1', 'r3'];
+  });
+
+  const toggleSaveRecipe = useCallback((recipeId: string) => {
+    setSavedRecipeIds((prev) => {
+      const next = prev.includes(recipeId) ? prev.filter((id) => id !== recipeId) : [...prev, recipeId];
+      localStorage.setItem('zity_saved_recipes', JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
   const [showSubModal, setShowSubModal] = useState<boolean>(false);
   const [showScanModal, setShowScanModal] = useState<boolean>(false);
   const [paymentModalState, setPaymentModalState] = useState<PendingPayment | null>(null);
@@ -155,6 +184,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     localStorage.setItem('zity_lang', lang);
   }, [lang]);
+
+  useEffect(() => {
+    localStorage.setItem('zity_currency', currency);
+  }, [currency]);
+
+  useEffect(() => {
+    localStorage.setItem('zity_unit_system', unitSystem);
+  }, [unitSystem]);
+
+  const formatPrice = useCallback((amountInMNT: number) => {
+    return formatCurrency(amountInMNT, currency);
+  }, [currency]);
 
   useEffect(() => {
     localStorage.setItem('zity_theme', isDark ? 'dark' : 'light');
@@ -279,6 +320,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     () => ({
       lang,
       setLang,
+      currency,
+      setCurrency,
+      unitSystem,
+      setUnitSystem,
+      formatPrice,
       isDark,
       toggleDarkMode,
       inventory: inventory || [],
@@ -305,6 +351,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setActiveCookingRecipe,
       profile,
       setProfile,
+      savedRecipeIds,
+      toggleSaveRecipe,
       showSubModal,
       setShowSubModal,
       showScanModal,
@@ -316,6 +364,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }),
     [
       lang,
+      currency,
+      unitSystem,
+      formatPrice,
       isDark,
       toggleDarkMode,
       inventory,
@@ -340,6 +391,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       activeCookingRecipe,
       profile,
       setProfile,
+      savedRecipeIds,
+      toggleSaveRecipe,
       showSubModal,
       showScanModal,
       paymentModalState,

@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { MOCK_RECIPES as RECIPES } from '../data/recipes';
 import {
   Camera,
   Edit3,
@@ -15,9 +16,14 @@ import {
   FileText,
   Sparkles,
   Grid3x3,
+  Clock,
+  Play,
+  Bookmark,
+  Calculator,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { uploadImage } from '../lib/storage';
+import { FoodCostCalculatorModal } from './FoodCostCalculatorModal';
 
 // ── Theme Gradient Options ───────────────────────────────────────────────────
 const THEME_GRADIENTS = [
@@ -263,9 +269,12 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
 // ── MAIN PROFILE VIEW ─────────────────────────────────────────────────────────
 export const ProfileView: React.FC = () => {
-  const { profile, setActiveTab, t } = useApp();
+  const { profile, setActiveTab, savedRecipeIds, toggleSaveRecipe, setActiveCookingRecipe, t } = useApp();
   const [showEdit, setShowEdit] = useState(false);
+  const [showCostCalculator, setShowCostCalculator] = useState(false);
   const [activeGrid, setActiveGrid] = useState<'posts' | 'recipes'>('posts');
+
+  const savedRecipesList = RECIPES.filter((r) => savedRecipeIds.includes(r.id));
 
   const stats = [
     { label: t('profile_statPosts'), value: profile.postsCount, icon: Grid3x3 },
@@ -362,11 +371,11 @@ export const ProfileView: React.FC = () => {
         </div>
 
         {/* Quick Action Buttons */}
-        <div className="flex gap-2.5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={() => setActiveTab('community')}
-            className="flex-1 py-2.5 rounded-2xl text-xs font-black text-white flex items-center justify-center gap-1.5 shadow-lg"
+            className="py-2.5 rounded-2xl text-xs font-black text-white flex items-center justify-center gap-1.5 shadow-lg"
             style={{ backgroundColor: profile.accentColor }}
           >
             <Users size={14} /> {t('profile_toCommunity')}
@@ -374,9 +383,16 @@ export const ProfileView: React.FC = () => {
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={() => setActiveTab('recipe')}
-            className="flex-1 py-2.5 rounded-2xl text-xs font-black border border-pestle-border text-pestle-text hover:border-violet-400 flex items-center justify-center gap-1.5 bg-pestle-card transition-colors"
+            className="py-2.5 rounded-2xl text-xs font-black border border-pestle-border text-pestle-text hover:border-violet-400 flex items-center justify-center gap-1.5 bg-pestle-card transition-colors"
           >
             <ChefHat size={14} style={accentStyle} /> {t('profile_viewRecipes')}
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => setShowCostCalculator(true)}
+            className="py-2.5 rounded-2xl text-xs font-black border border-amber-500/30 text-amber-500 hover:bg-amber-500/10 flex items-center justify-center gap-1.5 bg-pestle-card transition-colors shadow-xs"
+          >
+            <Calculator size={14} /> Хоолны Өртөг 🧮
           </motion.button>
         </div>
 
@@ -438,25 +454,74 @@ export const ProfileView: React.FC = () => {
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
-                className="flex flex-col items-center justify-center py-12 space-y-3 text-center"
               >
-                <div
-                  className="w-16 h-16 rounded-3xl flex items-center justify-center shadow-lg"
-                  style={{ background: profile.accentColor + '22' }}
-                >
-                  <Sparkles size={28} style={accentStyle} />
-                </div>
-                <p className="text-sm font-black text-pestle-text">{t('profile_noSavedRecipes')}</p>
-                <p className="text-xs text-gray-400 font-medium max-w-xs">
-                  {t('profile_noSavedRecipesDesc')}
-                </p>
-                <button
-                  onClick={() => setActiveTab('recipe')}
-                  className="text-xs font-bold px-4 py-2 rounded-xl text-white shadow-md"
-                  style={{ backgroundColor: profile.accentColor }}
-                >
-                  {t('profile_searchRecipes')}
-                </button>
+                {savedRecipesList.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    {savedRecipesList.map((r) => (
+                      <div
+                        key={r.id}
+                        className="pestle-card border border-pestle-border rounded-2xl overflow-hidden p-3 flex gap-3 hover:shadow-md transition-shadow group relative"
+                      >
+                        <img
+                          src={r.image}
+                          alt={r.title}
+                          className="w-20 h-20 rounded-xl object-cover shrink-0 group-hover:scale-105 transition-transform"
+                        />
+                        <div className="flex-1 min-w-0 flex flex-col justify-between">
+                          <div>
+                            <div className="flex justify-between items-start gap-1">
+                              <h4 className="text-xs font-black text-pestle-text truncate">{r.title}</h4>
+                              <button
+                                onClick={() => toggleSaveRecipe(r.id)}
+                                className="text-mango hover:scale-110 transition-transform p-0.5"
+                                title="Remove bookmark"
+                              >
+                                <Bookmark size={15} className="fill-mango" />
+                              </button>
+                            </div>
+                            <p className="text-[10px] text-gray-400 font-medium line-clamp-1 mt-0.5">
+                              {r.tags ? r.tags.join(' • ') : r.category}
+                            </p>
+                          </div>
+                          <div className="flex justify-between items-center mt-2">
+                            <span className="text-[10px] font-bold text-gray-400 flex items-center gap-1">
+                              <Clock size={11} /> {r.time}
+                            </span>
+                            <button
+                              onClick={() => {
+                                setActiveCookingRecipe(r);
+                                setActiveTab('cooking');
+                              }}
+                              className="text-[10px] font-black px-2.5 py-1 rounded-lg text-white bg-mango flex items-center gap-1 hover:opacity-90 transition-opacity shadow-xs"
+                            >
+                              <Play size={10} className="fill-white" /> {t('recipe_startCooking')}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 space-y-3 text-center">
+                    <div
+                      className="w-16 h-16 rounded-3xl flex items-center justify-center shadow-lg"
+                      style={{ background: profile.accentColor + '22' }}
+                    >
+                      <Sparkles size={28} style={accentStyle} />
+                    </div>
+                    <p className="text-sm font-black text-pestle-text">{t('profile_noSavedRecipes')}</p>
+                    <p className="text-xs text-gray-400 font-medium max-w-xs">
+                      {t('profile_noSavedRecipesDesc')}
+                    </p>
+                    <button
+                      onClick={() => setActiveTab('recipe')}
+                      className="text-xs font-bold px-4 py-2 rounded-xl text-white shadow-md"
+                      style={{ backgroundColor: profile.accentColor }}
+                    >
+                      {t('profile_searchRecipes')}
+                    </button>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -466,6 +531,12 @@ export const ProfileView: React.FC = () => {
       {/* Edit Modal */}
       <AnimatePresence>
         {showEdit && <EditProfileModal onClose={() => setShowEdit(false)} />}
+        {showCostCalculator && (
+          <FoodCostCalculatorModal
+            isOpen={showCostCalculator}
+            onClose={() => setShowCostCalculator(false)}
+          />
+        )}
       </AnimatePresence>
     </div>
   );

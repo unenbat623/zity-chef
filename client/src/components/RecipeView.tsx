@@ -14,9 +14,10 @@ import {
   ChefHat,
   ShoppingBag,
   RotateCcw,
+  Bookmark,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { MOCK_RECIPES } from '../data/recipes';
+import { useRecipes } from '../hooks/useRecipes';
 import { Recipe, RecipeCategory } from '../types';
 import { SmartImage } from './SmartImage';
 
@@ -33,8 +34,10 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
   recipe,
   onClose,
 }) => {
-  const { lang, subscription, setShowSubModal, setActiveCookingRecipe, setActiveTab, inventory, addToCart, t } =
+  const { lang, subscription, setShowSubModal, setActiveCookingRecipe, setActiveTab, inventory, addToCart, savedRecipeIds, toggleSaveRecipe, t } =
     useApp();
+
+  const isSaved = savedRecipeIds.includes(recipe.id);
 
   const handleStartCooking = () => {
     if (recipe.isPremium && subscription === 'free') {
@@ -101,11 +104,25 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
           <ChevronLeft size={24} />
         </button>
 
-        {recipe.isPremium && (
-          <div className="absolute top-6 right-6 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs font-black px-3.5 py-1.5 rounded-full flex items-center gap-1.5 uppercase tracking-widest shadow-lg animate-pulse">
-            <Sparkles size={14} /> PRO VIP
-          </div>
-        )}
+        <div className="absolute top-6 right-6 flex items-center gap-2">
+          <button
+            onClick={() => toggleSaveRecipe(recipe.id)}
+            className={`w-11 h-11 backdrop-blur-md rounded-full flex items-center justify-center shadow-xl transition-all ${
+              isSaved
+                ? 'bg-mango text-white'
+                : 'bg-black/60 text-white hover:bg-black/80'
+            }`}
+            title={isSaved ? 'Remove from saved' : 'Save recipe'}
+          >
+            <Bookmark size={20} className={isSaved ? 'fill-white' : ''} />
+          </button>
+
+          {recipe.isPremium && (
+            <div className="bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs font-black px-3.5 py-1.5 rounded-full flex items-center gap-1.5 uppercase tracking-widest shadow-lg">
+              <Sparkles size={14} /> PRO VIP
+            </div>
+          )}
+        </div>
 
         <div className="absolute bottom-6 left-6 right-6 text-white space-y-2">
           <div className="flex items-center gap-2 flex-wrap">
@@ -290,7 +307,8 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
 };
 
 export const RecipeView: React.FC = () => {
-  const { lang, inventory, t } = useApp();
+  const { lang, inventory, savedRecipeIds, toggleSaveRecipe, t } = useApp();
+  const { recipes, isLoading: recipesLoading } = useRecipes();
   const [search, setSearch] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<RecipeCategory | 'all'>('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
@@ -316,7 +334,7 @@ export const RecipeView: React.FC = () => {
   const recipesWithMatch = useMemo(() => {
     const inventoryNames = inventory.map((item) => item.name.toLowerCase());
 
-    return MOCK_RECIPES.map((recipe) => {
+    return recipes.map((recipe) => {
       const recipeIngredients = lang === 'mn' ? recipe.ingredients : recipe.ingredientsEn || recipe.ingredients;
       let matchedCount = 0;
 
@@ -417,7 +435,7 @@ export const RecipeView: React.FC = () => {
           <h2 className="text-2xl sm:text-3xl font-black text-pestle-text tracking-tight flex items-center gap-2">
             <span>{t('tabRecipe')}</span>
             <span className="text-xs bg-mango/15 text-mango px-2.5 py-1 rounded-full font-bold">
-              {t('recipe_recipeCount', { n: MOCK_RECIPES.length })}
+              {t('recipe_recipeCount', { n: recipes.length })}
             </span>
           </h2>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">
@@ -680,12 +698,27 @@ export const RecipeView: React.FC = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
 
                   {/* Top Badges Row */}
-                  <div className="absolute top-3 left-3 right-3 flex justify-between items-center pointer-events-none">
+                  <div className="absolute top-3 left-3 right-3 flex justify-between items-center z-10">
                     <span className="text-[10px] font-black text-white bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full uppercase tracking-wider border border-white/20">
                       {recipe.category || recipe.cuisine || 'Global'}
                     </span>
 
                     <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleSaveRecipe(recipe.id);
+                        }}
+                        className={`w-7 h-7 rounded-full backdrop-blur-md flex items-center justify-center transition-transform hover:scale-110 ${
+                          savedRecipeIds.includes(recipe.id)
+                            ? 'bg-mango text-white'
+                            : 'bg-black/60 text-white hover:bg-black/80'
+                        }`}
+                        title={savedRecipeIds.includes(recipe.id) ? 'Remove bookmark' : 'Save recipe'}
+                      >
+                        <Bookmark size={13} className={savedRecipeIds.includes(recipe.id) ? 'fill-white' : ''} />
+                      </button>
+
                       {recipe.isPremium && (
                         <span className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[9px] font-black px-2.5 py-0.5 rounded-full flex items-center gap-1 uppercase tracking-widest shadow-md">
                           <Lock size={10} /> PRO

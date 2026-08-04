@@ -3,10 +3,11 @@ import { motion, AnimatePresence } from 'motion/react';
 import { MessageCircle, X, ChevronRight, Sparkles, Send } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getSisterAdvice } from '../services/geminiService';
-import { MOCK_RECIPES } from '../data/recipes';
+import { useRecipes } from '../hooks/useRecipes';
 
 export const FloatingAssistant: React.FC = () => {
   const { lang, inventory, setActiveCookingRecipe, setActiveTab, t } = useApp();
+  const { recipes } = useRecipes();
   const [showBubble, setShowBubble] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; text: string }[]>([
@@ -37,7 +38,7 @@ export const FloatingAssistant: React.FC = () => {
       const cleanResponse = response.replace(/\[ACTION: .*?\]/, '').trim();
       setMessages((prev) => [...prev, { role: 'assistant', text: cleanResponse }]);
 
-      const targetRecipe = MOCK_RECIPES.find((r) => r.id === recipeId) || MOCK_RECIPES[0];
+      const targetRecipe = recipes.find((r) => r.id === recipeId) || recipes[0];
       setTimeout(() => {
         setActiveCookingRecipe(targetRecipe);
         setActiveTab('cooking');

@@ -15,11 +15,11 @@ import {
   Share2,
 } from 'lucide-react';
 import { SmartImage } from './SmartImage';
-import { MOCK_RECIPES } from '../data/recipes';
 import { useApp } from '../context/AppContext';
 import { useCommunity } from '../hooks/useCommunity';
 import { useDirectMessages } from '../hooks/useDirectMessages';
 import { uploadDataUrl } from '../lib/storage';
+import { useRecipes } from '../hooks/useRecipes';
 
 // ── Types & Mock Data ──────────────────────────────────────────────────────────
 interface StoryItem {
@@ -114,7 +114,7 @@ const INITIAL_POSTS = [
     user: { name: 'Болд-Эрдэнэ', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bold' },
     image: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800&q=80',
     caption: 'Маш амттай Карбонара Паста хийлээ! 🍝 Бүх гэр бүл минь дуртай болчихлоо. Zity Chef-ийн заавраар хийсэн чинь үнэхээр амархан байна!',
-    recipe: MOCK_RECIPES[4] || null,
+    recipe: null,
     likes: 42,
     liked: false,
     saved: false,
@@ -129,7 +129,7 @@ const INITIAL_POSTS = [
     user: { name: 'Сарнай', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarnai' },
     image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80',
     caption: 'Өглөөний хоол: Авокадо тост + гахайн өндөг 🥑 Эрүүл, хурдан, амттай!',
-    recipe: MOCK_RECIPES[0] || null,
+    recipe: null,
     likes: 89,
     liked: true,
     saved: true,
@@ -141,7 +141,7 @@ const INITIAL_POSTS = [
     user: { name: 'Зоригоо', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Zorigo' },
     image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=800&q=80',
     caption: 'Уламжлалт Нүүдэлчний Цүйван хийлээ! 🍜 Гурилаа өөрөө хайрч хэрчсэн чинь хөвсгөр зөөлөн болов.',
-    recipe: MOCK_RECIPES[1] || null,
+    recipe: null,
     likes: 156,
     liked: true,
     saved: false,
@@ -674,6 +674,7 @@ const CreatePostModal: React.FC<{ onClose: () => void; onPost: (p: any) => void 
   onPost,
 }) => {
   const { t } = useApp();
+  const { recipes } = useRecipes();
   const [caption, setCaption] = useState('');
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<any | null>(null);
@@ -782,7 +783,7 @@ const CreatePostModal: React.FC<{ onClose: () => void; onPost: (p: any) => void 
 
         {tab === 'recipe' && (
           <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto no-scrollbar">
-            {MOCK_RECIPES.map((r) => (
+            {recipes.map((r) => (
               <button
                 key={r.id}
                 onClick={() => setSelectedRecipe(r)}

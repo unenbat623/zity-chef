@@ -17,8 +17,10 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { WEEK_DAYS } from '../constants';
-import { MOCK_RECIPES } from '../data/recipes';
 import type { Recipe } from '../types';
+import { MacroProgressWidget } from './MacroProgressWidget';
+import { useRecipes } from '../hooks/useRecipes';
+import { MOCK_RECIPES } from '../data/recipes';
 
 // Meal time slots
 type MealType = 'breakfast' | 'lunch' | 'dinner';
@@ -35,35 +37,50 @@ interface DaySchedule {
 
 export const CalendarView: React.FC = () => {
   const { lang, inventory, cart, addToCart, setActiveCookingRecipe, setActiveTab, t } = useApp();
+  const { recipes } = useRecipes();
   const [selectedDayId, setSelectedDayId] = useState<string>(WEEK_DAYS[0].day);
   const [selectedMealType, setSelectedMealType] = useState<MealType>('lunch');
   const [isRegenerating, setIsRegenerating] = useState<boolean>(false);
   const [addedToast, setAddedToast] = useState<string | null>(null);
-
-  // Map 7 days to 3 distinct meals each from MOCK_RECIPES
   const [schedule, setSchedule] = useState<DaySchedule[]>(() => {
-    const b = MOCK_RECIPES.filter((r) => r.category === 'Өглөөний цай');
-    const l = MOCK_RECIPES.filter((r) => r.category === 'Үндсэн хоол' || r.category === 'Салат ба Хөнгөн зууш');
-    const d = MOCK_RECIPES.filter((r) => r.category === 'Шөл ба Бүлээн хоол' || r.category === 'Үндсэн хоол');
-
+    const pool = MOCK_RECIPES;
+    const b = pool.filter((r) => r.category === 'Өглөөний цай');
+    const l = pool.filter((r) => r.category === 'Үндсэн хоол' || r.category === 'Салат ба Хөнгөн зууш');
+    const d = pool.filter((r) => r.category === 'Шөл ба Бүлээн хоол' || r.category === 'Үндсэн хоол');
     return WEEK_DAYS.map((w, idx) => ({
-      dayId: w.day,
-      dayLabel: w.day,
-      dateStr: w.date,
-      breakfast: b[idx % b.length] || MOCK_RECIPES[3],
-      lunch: l[idx % l.length] || MOCK_RECIPES[0],
-      dinner: d[(idx + 2) % d.length] || MOCK_RECIPES[1],
+      dayId: w.day, dayLabel: w.day, dateStr: w.date,
+      breakfast: b[idx % b.length] || pool[3] || pool[0],
+      lunch: l[idx % l.length] || pool[0],
+      dinner: d[(idx + 2) % d.length] || pool[1] || pool[0],
       targetCalories: 2000 + (idx % 3) * 100,
     }));
   });
+
+  // Re-hydrate schedule from real API recipes once they load
+  React.useEffect(() => {
+    if (!recipes || recipes.length === 0) return;
+    const b = recipes.filter((r) => r.category === 'Өглөөний цай');
+    const l = recipes.filter((r) => r.category === 'Үндсэн хоол' || r.category === 'Салат ба Хөнгөн зууш');
+    const d = recipes.filter((r) => r.category === 'Шөл ба Бүлээн хоол' || r.category === 'Үндсэн хоол');
+    setSchedule(
+      WEEK_DAYS.map((w, idx) => ({
+        dayId: w.day, dayLabel: w.day, dateStr: w.date,
+        breakfast: b[idx % b.length] || recipes[3] || recipes[0],
+        lunch: l[idx % l.length] || recipes[0],
+        dinner: d[(idx + 2) % d.length] || recipes[1] || recipes[0],
+        targetCalories: 2000 + (idx % 3) * 100,
+      }))
+    );
+  }, [recipes]);
 
   // Current active day schedule
   const activeDaySchedule = useMemo(() => {
     return schedule.find((s) => s.dayId === selectedDayId) || schedule[0];
   }, [schedule, selectedDayId]);
 
-  // Current active recipe based on meal type
-  const activeRecipe: Recipe = useMemo(() => {
+  // Current active recipe based on meal type — guard against empty schedule
+  const activeRecipe: Recipe | null = useMemo(() => {
+    if (!activeDaySchedule) return null;
     if (selectedMealType === 'breakfast') return activeDaySchedule.breakfast;
     if (selectedMealType === 'lunch') return activeDaySchedule.lunch;
     return activeDaySchedule.dinner;
@@ -72,43 +89,35 @@ export const CalendarView: React.FC = () => {
   // Dynamic calculation of ingredients available vs missing
   const ingredientStatus = useMemo(() => {
     const fridgeNames = inventory.map((i) => i.name.toLowerCase());
-
     const available: string[] = [];
     const missing: { name: string; estimatedPrice: number; quantityStr: string }[] = [];
+    if (!activeRecipe) return { available, missing, matchPct: 100 };
 
     activeRecipe.ingredients.forEach((ing) => {
       const lower = ing.toLowerCase();
       const hasItem = fridgeNames.some((f) => lower.includes(f) || f.includes(lower.split(' ')[0]));
-
       if (hasItem) {
         available.push(ing);
       } else {
-        // Price estimation based on ingredient type
         let estPrice = 4500;
         if (lower.includes('мах') || lower.includes('сэлмон') || lower.includes('загас')) estPrice = 14500;
         else if (lower.includes('бяслаг') || lower.includes('авокадо') || lower.includes('уураг')) estPrice = 8500;
         else if (lower.includes('тос') || lower.includes('соус') || lower.includes('амтлагч')) estPrice = 3200;
-
-        missing.push({
-          name: ing,
-          estimatedPrice: estPrice,
-          quantityStr: '1 порц',
-        });
+        missing.push({ name: ing, estimatedPrice: estPrice, quantityStr: '1 порц' });
       }
     });
 
     const totalCount = activeRecipe.ingredients.length;
     const matchPct = totalCount > 0 ? Math.round((available.length / totalCount) * 100) : 100;
-
     return { available, missing, matchPct };
   }, [activeRecipe, inventory]);
 
   // Total daily nutrition for all 3 meals
   const dailyNutrition = useMemo(() => {
+    if (!activeDaySchedule) return { totalCals: 0, totalProtein: 0, totalCarbs: 0, totalFat: 0 };
     const b = activeDaySchedule.breakfast.nutrition;
     const l = activeDaySchedule.lunch.nutrition;
     const d = activeDaySchedule.dinner.nutrition;
-
     const totalCals = b.calories + l.calories + d.calories;
     const totalProtein = b.protein + l.protein + d.protein;
     const totalCarbs = b.carbs + l.carbs + d.carbs;
@@ -138,15 +147,15 @@ export const CalendarView: React.FC = () => {
   };
 
   // Re-plan the week by picking new recipes for each day.
-  // (Genuine inventory-aware AI planning is a Phase 2 server endpoint.)
   const handleRegeneratePlan = () => {
     setIsRegenerating(true);
     setTimeout(() => {
+      const pool = recipes.length > 0 ? recipes : MOCK_RECIPES;
       setSchedule((prev) =>
         prev.map((s) => {
-          const randB = MOCK_RECIPES[Math.floor(Math.random() * MOCK_RECIPES.length)];
-          const randL = MOCK_RECIPES[Math.floor(Math.random() * MOCK_RECIPES.length)];
-          const randD = MOCK_RECIPES[Math.floor(Math.random() * MOCK_RECIPES.length)];
+          const randB = pool[Math.floor(Math.random() * pool.length)];
+          const randL = pool[Math.floor(Math.random() * pool.length)];
+          const randD = pool[Math.floor(Math.random() * pool.length)];
           return {
             ...s,
             breakfast: randB,
@@ -163,6 +172,13 @@ export const CalendarView: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-4xl mx-auto pb-24">
+      {!activeRecipe && (
+        <div className="flex items-center justify-center h-48">
+          <div className="w-8 h-8 rounded-xl bg-mango/80 text-white font-black flex items-center justify-center animate-pulse">Z</div>
+        </div>
+      )}
+      {activeRecipe && (<>
+
       {/* Toast Notification */}
       <AnimatePresence>
         {addedToast && (
@@ -272,6 +288,9 @@ export const CalendarView: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Interactive Macro Nutrient Progress Tracker */}
+      <MacroProgressWidget />
 
       {/* ── MEAL TIME SLOTS (Өглөө, Өдөр, Орой) ──────────────────────────────── */}
       <div className="space-y-4">
@@ -459,6 +478,7 @@ export const CalendarView: React.FC = () => {
           </button>
         </div>
       </motion.div>
+      </>)}
     </div>
   );
 };

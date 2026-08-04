@@ -16,9 +16,9 @@ import { PaymentMethod } from '../types';
 import { createQpayInvoice, checkQpayPayment, type QpayInvoice } from '../services/qpayService';
 
 export const PaymentModal: React.FC = () => {
-  const { paymentModalState, closePaymentModal, t } = useApp();
+  const { paymentModalState, closePaymentModal, formatPrice, t } = useApp();
   const { toastSuccess } = useToast();
-  const [method, setMethod] = useState<PaymentMethod>('qpay');
+  const [method, setMethod] = useState<PaymentMethod>('card');
   const [selectedBank, setSelectedBank] = useState<string>('khanbank');
   const [timeLeft, setTimeLeft] = useState<number>(300); // 5 minutes
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
@@ -165,7 +165,7 @@ export const PaymentModal: React.FC = () => {
                 <div className="bg-pestle-bg p-4 rounded-2xl border border-pestle-border/60 flex justify-between items-center">
                   <div>
                     <span className="text-xs text-gray-400 font-medium">{t('payAmount')}</span>
-                    <div className="text-2xl font-black text-mango">₮{amount.toLocaleString()}</div>
+                    <div className="text-2xl font-black text-mango">{formatPrice(amount)}</div>
                   </div>
                   <div className="text-right">
                     <span className="text-[10px] text-gray-400 font-medium">
@@ -178,36 +178,46 @@ export const PaymentModal: React.FC = () => {
                 </div>
 
                 {/* Tabs for Payment Method */}
-                <div className="flex bg-pestle-bg p-1 rounded-xl border border-pestle-border text-xs font-bold">
+                <div className="grid grid-cols-4 bg-pestle-bg p-1 rounded-xl border border-pestle-border text-[10px] font-extrabold gap-1">
+                  <button
+                    onClick={() => setMethod('card')}
+                    className={`py-2 rounded-lg transition-all ${
+                      method === 'card' || method === 'stripe'
+                        ? 'bg-mango text-white shadow-sm'
+                        : 'text-gray-400 hover:text-pestle-text'
+                    }`}
+                  >
+                    💳 Card / Stripe
+                  </button>
+                  <button
+                    onClick={() => setMethod('applepay')}
+                    className={`py-2 rounded-lg transition-all ${
+                      method === 'applepay'
+                        ? 'bg-black text-white shadow-sm'
+                        : 'text-gray-400 hover:text-pestle-text'
+                    }`}
+                  >
+                    🍎 Apple Pay
+                  </button>
+                  <button
+                    onClick={() => setMethod('paypal')}
+                    className={`py-2 rounded-lg transition-all ${
+                      method === 'paypal'
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'text-gray-400 hover:text-pestle-text'
+                    }`}
+                  >
+                    🅿️ PayPal
+                  </button>
                   <button
                     onClick={() => setMethod('qpay')}
-                    className={`flex-1 py-2 rounded-lg transition-all ${
+                    className={`py-2 rounded-lg transition-all ${
                       method === 'qpay'
                         ? 'bg-mango text-white shadow-sm'
                         : 'text-gray-400 hover:text-pestle-text'
                     }`}
                   >
-                    QPay QR
-                  </button>
-                  <button
-                    onClick={() => setMethod('socialpay')}
-                    className={`flex-1 py-2 rounded-lg transition-all ${
-                      method === 'socialpay'
-                        ? 'bg-mango text-white shadow-sm'
-                        : 'text-gray-400 hover:text-pestle-text'
-                    }`}
-                  >
-                    SocialPay
-                  </button>
-                  <button
-                    onClick={() => setMethod('card')}
-                    className={`flex-1 py-2 rounded-lg transition-all ${
-                      method === 'card'
-                        ? 'bg-mango text-white shadow-sm'
-                        : 'text-gray-400 hover:text-pestle-text'
-                    }`}
-                  >
-                    Card
+                    🇲🇳 QPay QR
                   </button>
                 </div>
 
@@ -299,6 +309,26 @@ export const PaymentModal: React.FC = () => {
                   </div>
                 )}
 
+                {method === 'applepay' && (
+                  <div className="p-6 text-center bg-black/10 dark:bg-white/10 border border-pestle-border rounded-2xl">
+                    <div className="w-12 h-12 bg-black text-white rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold shadow-md">
+                      
+                    </div>
+                    <h4 className="font-bold text-sm text-pestle-text mb-1">Apple Pay</h4>
+                    <p className="text-xs text-gray-500">Double-click side button to pay with Touch/FaceID.</p>
+                  </div>
+                )}
+
+                {method === 'paypal' && (
+                  <div className="p-6 text-center bg-blue-500/10 border border-blue-500/20 rounded-2xl">
+                    <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold shadow-md">
+                      P
+                    </div>
+                    <h4 className="font-bold text-sm text-pestle-text mb-1">PayPal Global Checkout</h4>
+                    <p className="text-xs text-gray-500">You will be redirected to PayPal to complete your purchase safely.</p>
+                  </div>
+                )}
+
                 {/* Payment Action Button */}
                 <button
                   onClick={handlePay}
@@ -314,7 +344,7 @@ export const PaymentModal: React.FC = () => {
                     <>
                       <ShieldCheck size={18} />
                       <span>
-                        {t('confirmPay')} (₮{amount.toLocaleString()})
+                        {t('confirmPay')} ({formatPrice(amount)})
                       </span>
                     </>
                   )}

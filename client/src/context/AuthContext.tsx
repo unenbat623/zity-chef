@@ -143,9 +143,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (blocked) return blocked;
         const { error } = await supabase!.auth.signInWithOAuth({
           provider: 'google',
-          options: { redirectTo: window.location.origin },
+          options: {
+            redirectTo: window.location.origin,
+            queryParams: { access_type: 'offline', prompt: 'consent' },
+          },
         });
-        return error ? { ok: false, error: toMessage(error) } : { ok: true };
+        // signInWithOAuth redirects the browser — error only if the call itself failed.
+        return error
+          ? { ok: false, error: 'Google нэвтрэх тохиргоо хийгдээгүй байна. .env-д credentials нэмнэ үү.' }
+          : { ok: true };
       },
 
       async sendPhoneOtp(phone) {

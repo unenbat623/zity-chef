@@ -4,9 +4,10 @@ import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { Sparkles, Sun, Moon, User } from 'lucide-react';
 import { AuthModal } from './AuthModal';
+import { NotificationCenter } from './NotificationCenter';
 
 export const HeaderNav: React.FC = () => {
-  const { lang, setLang, isDark, toggleDarkMode, subscription, setShowSubModal, profile, setProfile, t } =
+  const { lang, setLang, currency, setCurrency, unitSystem, setUnitSystem, isDark, toggleDarkMode, subscription, setShowSubModal, profile, setProfile, t } =
     useApp();
   const { user: authUser, isAnonymous } = useAuth();
 
@@ -25,17 +26,22 @@ export const HeaderNav: React.FC = () => {
       }
     : null;
 
-  // When a real user signs in, seed the local profile once from their identity.
+  // When a real user signs in, seed the local profile from their identity.
   useEffect(() => {
     if (isLoggedIn && user) {
+      const emailUsername = authUser?.email ? `@${authUser.email.split('@')[0]}` : profile.username;
+      const gName = (authUser?.user_metadata?.full_name as string) || (authUser?.user_metadata?.name as string) || user.name;
+      const gAvatar = (authUser?.user_metadata?.avatar_url as string) || (authUser?.user_metadata?.picture as string) || user.avatarUrl;
+
       setProfile({
         ...profile,
-        name: profile.name && profile.name !== t('header_defaultName') ? profile.name : user.name,
-        avatarUrl: profile.avatarUrl || user.avatarUrl || null,
+        name: gName || profile.name,
+        username: emailUsername,
+        avatarUrl: gAvatar || profile.avatarUrl,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoggedIn]);
+  }, [isLoggedIn, authUser?.id]);
 
   return (
     <>
@@ -64,6 +70,9 @@ export const HeaderNav: React.FC = () => {
 
         {/* Action Controls */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Real-time Notification Center */}
+          <NotificationCenter />
+
           {/* User Profile / Auth trigger button */}
           <button
             onClick={() => setShowAuthModal(true)}
@@ -100,31 +109,34 @@ export const HeaderNav: React.FC = () => {
             </button>
           )}
 
+          {/* Global Currency Selector */}
+          <select
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value as any)}
+            className="h-8 bg-pestle-card border border-pestle-border hover:border-mango/60 rounded-xl px-1.5 text-[11px] font-black text-pestle-text shadow-xs cursor-pointer focus:outline-none"
+            title={t('global_currency')}
+          >
+            <option value="MNT">🇲🇳 MNT ₮</option>
+            <option value="USD">🇺🇸 USD $</option>
+            <option value="EUR">🇪🇺 EUR €</option>
+            <option value="JPY">🇯🇵 JPY ¥</option>
+            <option value="KRW">🇰🇷 KRW ₩</option>
+          </select>
+
           {/* Animated Language Switcher */}
-          <motion.button
-            whileHover={{ scale: 1.06 }}
-            whileTap={{ scale: 0.92 }}
-            onClick={() => setLang(lang === 'mn' ? 'en' : 'mn')}
-            className="relative h-8 px-2 sm:px-2.5 bg-pestle-card border border-pestle-border hover:border-mango/60 rounded-xl flex items-center justify-center gap-1 text-xs font-bold text-pestle-text shadow-xs transition-all shrink-0 cursor-pointer overflow-hidden group"
+          <select
+            value={lang}
+            onChange={(e) => setLang(e.target.value as any)}
+            className="h-8 bg-pestle-card border border-pestle-border hover:border-mango/60 rounded-xl px-1.5 text-[11px] font-black text-pestle-text shadow-xs cursor-pointer focus:outline-none"
             title={t('header_switchLang')}
           >
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.span
-                key={lang}
-                initial={{ y: -10, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 10, opacity: 0 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-                className="text-sm sm:text-base leading-none select-none flex items-center gap-1"
-              >
-                <span>{lang === 'mn' ? '🇲🇳' : '🇺🇸'}</span>
-                <span className="text-[9px] sm:text-[10px] font-black tracking-wider text-gray-500 uppercase group-hover:text-mango transition-colors">
-                  {lang === 'mn' ? 'MN' : 'EN'}
-                </span>
-              </motion.span>
-            </AnimatePresence>
-          </motion.button>
-
+            <option value="mn">🇲🇳 MN</option>
+            <option value="en">🇬🇧 EN</option>
+            <option value="ja">🇯🇵 JA</option>
+            <option value="ko">🇰🇷 KO</option>
+            <option value="zh">🇨🇳 ZH</option>
+            <option value="es">🇪🇸 ES</option>
+          </select>
           {/* Animated Dark Mode Toggle */}
           <motion.button
             whileHover={{ scale: 1.08 }}

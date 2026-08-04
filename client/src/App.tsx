@@ -10,6 +10,7 @@ import { FridgeView } from './components/FridgeView';
 import { PaymentModal } from './components/PaymentModal';
 import { SubscriptionModal } from './components/SubscriptionModal';
 import { ReceiptScannerModal } from './components/ReceiptScannerModal';
+import { CookieBanner } from './components/CookieBanner';
 
 // ── Route-level code splitting ────────────────────────────────────────────────
 // FridgeView (the default tab) stays eager for an instant first paint; the rest
@@ -118,6 +119,7 @@ const AppContent: React.FC = () => {
       <PaymentModal />
       <SubscriptionModal />
       <ReceiptScannerModal />
+      <CookieBanner />
     </div>
   );
 };
