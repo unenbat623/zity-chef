@@ -68,6 +68,19 @@ function cleanAuthTokensFromUrl(): void {
   window.history.replaceState({}, document.title, url.toString());
 }
 
+function getAuthTokensFromUrl(): { access_token: string; refresh_token: string } | null {
+  if (typeof window === 'undefined') return null;
+
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  const queryParams = new URLSearchParams(window.location.search);
+  const accessToken = hashParams.get('access_token') || queryParams.get('access_token');
+  const refreshToken = hashParams.get('refresh_token') || queryParams.get('refresh_token');
+
+  return accessToken && refreshToken
+    ? { access_token: accessToken, refresh_token: refreshToken }
+    : null;
+}
+
 function getUserDisplayName(user: User): string | null {
   const meta = user.user_metadata ?? {};
   return (
@@ -121,9 +134,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     let active = true;
 
-    // 1️⃣ Resolve the current session; if none, sign in anonymously so that
-    //    every device gets a real, isolated user id (fixes the shared-guest bug).
-    supabase.auth.getSession().then(async ({ data }) => {
+    // 1️⃣ Resolve the current session. Some OAuth returns arrive as URL
+    //    fragments; explicitly set the session before falling back to anon.
+    (async () => {
+      const urlTokens = getAuthTokensFromUrl();
+      if (urlTokens) {
+        const { data: urlSession, error } = await supabase.auth.setSession(urlTokens);
+        if (!active) return;
+        cleanAuthTokensFromUrl();
+        if (!error && urlSession.session) {
+          await ensureChefProfile(urlSession.session.user);
+          setSession(urlSession.session);
+          queryClient.invalidateQueries();
+          setLoading(false);
+          return;
+        }
+        // eslint-disable-next-line no-console
+        console.warn('[Zity Chef] OAuth URL session failed:', error?.message);
+      }
+
+      // If none, sign in anonymously so that every device gets a real, isolated
+      // user id (fixes the shared-guest bug).
+      const { data } = await supabase.auth.getSession();
       if (!active) return;
       if (data.session) {
         await ensureChefProfile(data.session.user);
@@ -141,7 +173,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(anon?.session ?? null);
         setLoading(false);
       }
-    });
+    })();
 
     // 2️⃣ Keep session in sync across tabs, token refreshes, sign-in/out.
     const { data: sub } = supabase.auth.onAuthStateChange((event, next) => {
