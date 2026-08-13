@@ -12,7 +12,7 @@ const INGREDIENT_IMAGE_MAP: Record<string, string> = {
   лууван:
     'https://images.unsplash.com/photo-1447175008436-054170c2e979?w=400&q=75&auto=format&fit=crop',
   'үхрийн мах':
-    'https://images.unsplash.com/photo-1546964124-0cce460c74f2?w=400&q=75&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&q=75&auto=format&fit=crop',
   'гахайн мах':
     'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=400&q=75&auto=format&fit=crop',
   'тахианы мах':
@@ -45,7 +45,7 @@ const INGREDIENT_IMAGE_MAP: Record<string, string> = {
   // English names
   carrot:
     'https://images.unsplash.com/photo-1447175008436-054170c2e979?w=400&q=75&auto=format&fit=crop',
-  beef: 'https://images.unsplash.com/photo-1546964124-0cce460c74f2?w=400&q=75&auto=format&fit=crop',
+  beef: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&q=75&auto=format&fit=crop',
   pork: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=400&q=75&auto=format&fit=crop',
   chicken:
     'https://images.unsplash.com/photo-1604503468506-a8da13d11d36?w=400&q=75&auto=format&fit=crop',

@@ -6,6 +6,9 @@ import { defineConfig } from 'vite';
 export default defineConfig(() => {
   return {
     root: './client',
+    // .env lives at the project root, but Vite's root is ./client — point the
+    // env loader back at the project root so VITE_* vars are picked up.
+    envDir: __dirname,
     plugins: [react(), tailwindcss()],
 
     // ── Dev proxy: frontend on :3000 → backend on :3002 ─────────────────

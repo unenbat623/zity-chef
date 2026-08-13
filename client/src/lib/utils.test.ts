@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { formatQuantity } from './utils';
 
 function formatCurrency(amount: number): string {
   return `₮${amount.toLocaleString('mn-MN')}`;
@@ -23,5 +24,12 @@ describe('Enterprise Utility Tests', () => {
     const days = calculateExpiryDays(futureDate.toISOString());
     expect(days).toBeGreaterThanOrEqual(4);
     expect(days).toBeLessThanOrEqual(5);
+  });
+
+  it('should format ingredient quantities in metric and imperial systems', () => {
+    expect(formatQuantity(1500, 'гр')).toBe('1.5 кг');
+    expect(formatQuantity(500, 'гр', 'imperial')).toBe('1.1 lb');
+    expect(formatQuantity(1, 'л', 'imperial')).toBe('33.8 fl oz');
+    expect(formatQuantity(3, 'ш', 'imperial')).toBe('3 pcs');
   });
 });

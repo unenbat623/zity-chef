@@ -18,6 +18,8 @@ import {
   Square,
   Award,
   Layers,
+  Mic,
+  MicOff,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useToast } from './Toast';
@@ -33,8 +35,10 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
   const [timerSeconds, setTimerSeconds] = useState<number>(0);
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
 
-  // Voice narration state
+  // Voice narration & Hands-free listener state
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
+  const [isListeningVoiceCommands, setIsListeningVoiceCommands] = useState<boolean>(false);
+  const [lastVoiceCommand, setLastVoiceCommand] = useState<string | null>(null);
 
   // Ingredient check off for current step
   const [checkedIngredients, setCheckedIngredients] = useState<Record<string, boolean>>({});
@@ -63,7 +67,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
     } else if (timerSeconds === 0 && isTimerRunning) {
       setIsTimerRunning(false);
       // Toast the user that the timer is done
-      toastSuccess('Цаг хугацаа дууслаа! ⏰', 'Дараагийн алхам руу шилжихэд бэлэн.');
+      toastSuccess(t('cooking_timerDoneTitle'), t('cooking_timerDoneDesc'));
       // Play alert tone if browser supports
       try {
         const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -93,7 +97,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
           onClick={() => setActiveTab('recipe')}
           className="btn-primary py-3 px-6 text-xs font-bold shadow-md shadow-mango/20 cursor-pointer"
         >
-          Жор хэсэг рүү шилжих
+          {t('cooking_goToRecipes')}
         </button>
       </div>
     );
@@ -119,8 +123,8 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
   const toggleVoiceGuide = () => {
     if (!('speechSynthesis' in window)) {
       toastWarning(
-        'Дуут заавар дэмжигдэхгүй байна',
-        'Таны хөтөч Speech Synthesis API-г дэмжихгүй байна.'
+        t('cooking_voiceUnsupportedTitle'),
+        t('cooking_voiceUnsupportedDesc')
       );
       return;
     }
@@ -129,9 +133,9 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
     } else {
-      const textToRead = `${currentStep + 1}-р алхам. ${
+      const textToRead = `${t('cooking_stepWord', { n: currentStep + 1 })}. ${
         lang === 'mn' ? step.title : step.titleEn || step.title
-      }. ${lang === 'mn' ? step.description : step.descriptionEn || step.description}. Эгчийн зөвлөгөө: ${
+      }. ${lang === 'mn' ? step.description : step.descriptionEn || step.description}. ${t('sisterTip')} ${
         lang === 'mn' ? step.sisterTip : step.sisterTipEn || step.sisterTip
       }`;
 
@@ -146,6 +150,80 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
       setIsSpeaking(true);
     }
   };
+
+  const toggleHandsFree = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toastWarning(t('cooking_handsFreeUnsupportedTitle'), t('cooking_handsFreeUnsupportedDesc'));
+      return;
+    }
+
+    if (isListeningVoiceCommands) {
+      setIsListeningVoiceCommands(false);
+      setLastVoiceCommand(null);
+      toastSuccess(t('cooking_handsFreeStoppedTitle'), t('cooking_handsFreeStoppedDesc'));
+    } else {
+      setIsListeningVoiceCommands(true);
+      toastSuccess(t('cooking_handsFreeStartedTitle'), t('cooking_handsFreeStartedDesc'));
+    }
+  };
+
+  // Continuous speech recognition listener
+  useEffect(() => {
+    if (!isListeningVoiceCommands) return;
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    let recognition: any;
+    try {
+      recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = false;
+      recognition.lang = lang === 'mn' ? 'mn-MN' : 'en-US';
+
+      recognition.onresult = (event: any) => {
+        const lastResult = event.results[event.results.length - 1];
+        if (lastResult && lastResult.isFinal) {
+          const transcript = lastResult[0].transcript.toLowerCase().trim();
+          console.log('[Voice Command Heard]:', transcript);
+          setLastVoiceCommand(transcript);
+
+          if (transcript.includes('дараах') || transcript.includes('дараагийнх') || transcript.includes('next')) {
+            handleNext();
+          } else if (transcript.includes('өмнөх') || transcript.includes('буцах') || transcript.includes('back')) {
+            handlePrev();
+          } else if (transcript.includes('эхлэх') || transcript.includes('ажиллуул') || transcript.includes('start')) {
+            setIsTimerRunning(true);
+          } else if (transcript.includes('зогсоох') || transcript.includes('паус') || transcript.includes('pause')) {
+            setIsTimerRunning(false);
+          } else if (transcript.includes('унших') || transcript.includes('соносох') || transcript.includes('read')) {
+            toggleVoiceGuide();
+          }
+        }
+      };
+
+      recognition.onerror = () => {
+        // Restart on error if still enabled
+      };
+
+      recognition.onend = () => {
+        if (isListeningVoiceCommands) {
+          try { recognition.start(); } catch { /* ignore */ }
+        }
+      };
+
+      recognition.start();
+    } catch (err) {
+      console.error('[Speech Error]', err);
+    }
+
+    return () => {
+      if (recognition) {
+        recognition.onend = null;
+        recognition.stop();
+      }
+    };
+  }, [isListeningVoiceCommands, currentStep, lang]);
 
   const formatTimer = (totalSec: number) => {
     const mins = Math.floor(totalSec / 60);
@@ -168,10 +246,10 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
           <button
             onClick={() => setActiveTab('recipe')}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-extrabold bg-pestle-bg border border-pestle-border text-pestle-text hover:border-mango hover:text-mango transition-all cursor-pointer shadow-xs shrink-0"
-            title="Жор цэс рүү буцах"
+            title={t('cooking_backToRecipesTitle')}
           >
             <ChevronLeft size={18} />
-            <span>Жор руу буцах</span>
+            <span>{t('cooking_backToRecipes')}</span>
           </button>
 
           <div>
@@ -180,7 +258,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
                 {recipe.cuisine || 'International'}
               </span>
               <span className="text-[10px] font-bold text-gray-400">
-                • {recipe.difficulty} • {steps.length} Алхамтай
+                • {recipe.difficulty} • {t('cooking_stepsCount', { n: steps.length })}
               </span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-pestle-text mt-1">{recipe.title}</h2>
@@ -188,6 +266,22 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
         </div>
 
         <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+          {/* Hands-Free Voice Control Button */}
+          <button
+            onClick={toggleHandsFree}
+            className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all cursor-pointer ${
+              isListeningVoiceCommands
+                ? 'bg-rose-500 text-white border-rose-500 animate-pulse shadow-md shadow-rose-500/30'
+                : 'bg-pestle-bg border-pestle-border text-pestle-text hover:border-mango'
+            }`}
+            title={t('cooking_handsFreeTitle')}
+          >
+            {isListeningVoiceCommands ? <Mic size={16} /> : <MicOff size={16} />}
+            <span className="hidden sm:inline">
+              {isListeningVoiceCommands ? t('cooking_handsFreeListening') : t('cooking_handsFree')}
+            </span>
+          </button>
+
           <button
             onClick={toggleVoiceGuide}
             className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all cursor-pointer ${
@@ -195,10 +289,10 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
                 ? 'bg-mango text-white border-mango animate-pulse'
                 : 'bg-pestle-bg border-pestle-border text-pestle-text hover:border-mango'
             }`}
-            title="Дуут зааварчлах"
+            title={t('cooking_voiceGuideTitle')}
           >
             {isSpeaking ? <Volume2 size={16} /> : <VolumeX size={16} />}
-            <span className="hidden sm:inline">{isSpeaking ? 'Уншиж байна...' : 'Дуут заавар'}</span>
+            <span className="hidden sm:inline">{isSpeaking ? t('cooking_reading') : t('cooking_voiceGuide')}</span>
           </button>
 
           <div className="flex items-center gap-1.5 bg-pestle-bg border border-pestle-border px-3 py-2 rounded-xl text-xs font-bold text-pestle-text">
@@ -207,6 +301,28 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
           </div>
         </div>
       </header>
+
+      {/* Hands-Free Live Voice Indicator Bar */}
+      {isListeningVoiceCommands && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-rose-500/15 via-red-500/10 to-amber-500/15 border border-rose-500/30 p-3 rounded-2xl flex items-center justify-between shadow-xs"
+        >
+          <div className="flex items-center gap-2 text-xs font-black text-rose-500">
+            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
+            <span>{t('cooking_handsFreeActive')}</span>
+            {lastVoiceCommand && (
+              <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">
+                • {t('cooking_lastHeard')}: "{lastVoiceCommand}"
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] font-bold text-gray-400 bg-pestle-card px-2.5 py-1 rounded-xl border border-pestle-border">
+            {t('cooking_voiceCommands')}
+          </span>
+        </motion.div>
+      )}
 
       {isCompleted ? (
         <motion.div
@@ -218,9 +334,9 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
             <Award size={54} />
           </div>
           <div className="space-y-2">
-            <h3 className="text-3xl font-black text-pestle-text">Амжилттай бэлэн боллоо! 🎉</h3>
+            <h3 className="text-3xl font-black text-pestle-text">{t('cooking_completedTitle')}</h3>
             <p className="text-sm text-gray-400 max-w-[320px] mx-auto leading-relaxed font-medium">
-              Сайхан хооллоорой! Та masterclass түвшний хоолыг амжилттай хийж дуусгалаа. ✨
+              {t('cooking_completedDesc')}
             </p>
           </div>
           <div className="pt-2 flex flex-wrap justify-center gap-3">
@@ -231,7 +347,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
               }}
               className="btn-secondary py-3 px-5 text-xs font-bold cursor-pointer"
             >
-              Дахин эхнээс нь үзэх
+              {t('cooking_restart')}
             </button>
             <button
               onClick={() => {
@@ -242,7 +358,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
               className="btn-primary py-3.5 px-7 text-xs font-bold shadow-lg shadow-mango/20 cursor-pointer flex items-center gap-1.5"
             >
               <ChevronLeft size={16} />
-              <span>Жор руу буцах</span>
+              <span>{t('cooking_backToRecipes')}</span>
             </button>
             <button
               onClick={() => {
@@ -252,7 +368,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
               }}
               className="btn-secondary py-3 px-5 text-xs font-bold cursor-pointer"
             >
-              Хөргөгч рүү буцах
+              {t('cooking_backToFridge')}
             </button>
           </div>
         </motion.div>
@@ -263,10 +379,10 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
             <div className="flex justify-between items-center text-xs font-bold px-1">
               <span className="text-pestle-text flex items-center gap-1.5">
                 <Layers size={15} className="text-mango" />
-                <span>Алхам {currentStep + 1} / {steps.length}</span>
+                <span>{t('cooking_stepOf', { current: currentStep + 1, total: steps.length })}</span>
               </span>
               <span className="text-mango font-black">
-                {Math.round(((currentStep + 1) / steps.length) * 100)}% Гүйцэтгэл
+                {t('cooking_percentComplete', { n: Math.round(((currentStep + 1) / steps.length) * 100) })}
               </span>
             </div>
 
@@ -321,7 +437,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
                 <div className="absolute bottom-3 left-4 right-4 flex justify-between items-end text-white">
                   <div>
                     <span className="text-[10px] font-black uppercase tracking-widest bg-mango px-2.5 py-0.5 rounded-full text-white shadow-md">
-                      Алхам {currentStep + 1}
+                      {t('step')} {currentStep + 1}
                     </span>
                     <h3 className="text-lg sm:text-2xl font-black text-white mt-1 drop-shadow-md">
                       {lang === 'mn' ? step.title : step.titleEn || step.title}
@@ -353,7 +469,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
                       <div className="bg-pestle-bg border border-pestle-border/80 p-3.5 rounded-2xl space-y-2">
                         <span className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
                           <Utensils size={14} className="text-mango" />
-                          <span>Энэ алхамд орох орцууд:</span>
+                          <span>{t('cooking_stepIngredients')}</span>
                         </span>
                         <div className="space-y-1.5">
                           {step.stepIngredients.map((item, i) => {
@@ -386,7 +502,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
                       <div className="bg-pestle-bg border border-pestle-border/80 p-3.5 rounded-2xl space-y-2">
                         <span className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
                           <Wrench size={14} className="text-amber-500" />
-                          <span>Ашиглах багаж:</span>
+                          <span>{t('cooking_toolsNeeded')}</span>
                         </span>
                         <div className="flex flex-wrap gap-1.5 pt-1">
                           {step.toolsNeeded.map((tool, i) => (
@@ -413,7 +529,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
                     </div>
                     <div>
                       <span className="text-[10px] font-black uppercase tracking-wider text-mango">
-                        Алхмын Цаг Хэмжигч
+                        {t('cooking_stepTimer')}
                       </span>
                       <h4 className="text-2xl font-black text-pestle-text font-mono">
                         {formatTimer(timerSeconds)}
@@ -427,7 +543,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
                       className="btn-primary p-3 rounded-xl shadow-md shadow-mango/20 cursor-pointer flex items-center gap-1.5 text-xs font-bold"
                     >
                       {isTimerRunning ? <Pause size={16} /> : <Play size={16} />}
-                      <span>{isTimerRunning ? 'Зогсоох' : 'Эхлүүлэх'}</span>
+                      <span>{isTimerRunning ? t('cooking_pause') : t('cooking_start')}</span>
                     </button>
                     <button
                       onClick={() => {
@@ -435,7 +551,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
                         setTimerSeconds(step.timerMinutes! * 60);
                       }}
                       className="bg-pestle-bg border border-pestle-border p-3 rounded-xl text-pestle-text hover:border-mango transition-all cursor-pointer"
-                      title="Шинэчлэх"
+                      title={t('cooking_reset')}
                     >
                       <RotateCcw size={16} />
                     </button>

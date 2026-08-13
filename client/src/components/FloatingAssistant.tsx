@@ -3,10 +3,11 @@ import { motion, AnimatePresence } from 'motion/react';
 import { MessageCircle, X, ChevronRight, Sparkles, Send } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getSisterAdvice } from '../services/geminiService';
-import { MOCK_RECIPES } from '../constants';
+import { useRecipes } from '../hooks/useRecipes';
 
 export const FloatingAssistant: React.FC = () => {
   const { lang, inventory, setActiveCookingRecipe, setActiveTab, t } = useApp();
+  const { recipes } = useRecipes();
   const [showBubble, setShowBubble] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; text: string }[]>([
@@ -37,7 +38,7 @@ export const FloatingAssistant: React.FC = () => {
       const cleanResponse = response.replace(/\[ACTION: .*?\]/, '').trim();
       setMessages((prev) => [...prev, { role: 'assistant', text: cleanResponse }]);
 
-      const targetRecipe = MOCK_RECIPES.find((r) => r.id === recipeId) || MOCK_RECIPES[0];
+      const targetRecipe = recipes.find((r) => r.id === recipeId) || recipes[0];
       setTimeout(() => {
         setActiveCookingRecipe(targetRecipe);
         setActiveTab('cooking');
@@ -69,9 +70,7 @@ export const FloatingAssistant: React.FC = () => {
                 <X size={10} />
               </button>
               <p className="text-[11px] font-semibold leading-tight text-pestle-text">
-                {lang === 'mn'
-                  ? 'Сайн уу! Zity Тогоочоос зөвлөгөө авах уу? ✨'
-                  : 'Hello! Need chef tips today? ✨'}
+                {t('assistant_greetingBubble')}
               </p>
               <div className="absolute -bottom-1 right-4 w-2.5 h-2.5 bg-pestle-card border-r border-b border-pestle-border rotate-45" />
             </motion.div>
@@ -95,7 +94,7 @@ export const FloatingAssistant: React.FC = () => {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom,0px))] md:bottom-24 right-3 left-3 sm:left-auto sm:right-6 sm:w-84 bg-pestle-card border border-pestle-border rounded-[28px] shadow-2xl z-[150] overflow-hidden flex flex-col h-[420px] max-h-[68vh]"
+            className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom,0px))] md:bottom-24 right-3 left-3 sm:left-auto sm:right-6 sm:w-80 bg-pestle-card border border-pestle-border rounded-[28px] shadow-2xl z-[150] overflow-hidden flex flex-col h-[420px] max-h-[68vh]"
           >
             {/* Header */}
             <div className="bg-gradient-to-r from-mango to-amber-500 p-3.5 text-white flex items-center justify-between shrink-0 shadow-sm">
@@ -139,7 +138,7 @@ export const FloatingAssistant: React.FC = () => {
               {isLoading && (
                 <div className="bg-pestle-card border border-pestle-border p-3 rounded-2xl rounded-tl-none self-start shadow-xs flex gap-1.5 items-center">
                   <span className="w-1.5 h-1.5 bg-mango rounded-full animate-ping" />
-                  <span className="text-[11px] font-bold text-gray-400">Zity Тогооч бодож байна...</span>
+                  <span className="text-[11px] font-bold text-gray-400">{t('assistant_thinking')}</span>
                 </div>
               )}
             </div>
@@ -151,6 +150,7 @@ export const FloatingAssistant: React.FC = () => {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                aria-label={t('placeholderMsg')}
                 placeholder={t('placeholderMsg')}
                 className="flex-1 bg-pestle-bg border border-pestle-border rounded-xl px-3.5 py-2 text-xs font-medium focus:outline-none focus:border-mango transition-colors text-pestle-text"
               />

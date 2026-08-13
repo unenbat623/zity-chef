@@ -22,148 +22,48 @@ import { useApp } from '../context/AppContext';
 
 interface FAQ {
   id: string;
-  question: string;
-  answer: string;
+  questionKey: string;
+  answerKey: string;
   category: string;
 }
 
 const FAQ_CATEGORIES = [
-  { id: 'all', label: 'Бүгд', icon: HelpCircle },
-  { id: 'fridge', label: 'Хөргөгч', icon: Refrigerator },
-  { id: 'cooking', label: 'Хоол хийх', icon: Flame },
-  { id: 'store', label: 'Захиалга', icon: ShoppingCart },
-  { id: 'account', label: 'Бүртгэл', icon: User },
-  { id: 'subscription', label: 'Сунгалт', icon: CreditCard },
-  { id: 'ai', label: 'AI Туслагч', icon: Sparkles },
+  { id: 'all', labelKey: 'help_catAll', icon: HelpCircle },
+  { id: 'fridge', labelKey: 'help_catFridge', icon: Refrigerator },
+  { id: 'cooking', labelKey: 'help_catCooking', icon: Flame },
+  { id: 'store', labelKey: 'help_catStore', icon: ShoppingCart },
+  { id: 'account', labelKey: 'help_catAccount', icon: User },
+  { id: 'subscription', labelKey: 'help_catSubscription', icon: CreditCard },
+  { id: 'ai', labelKey: 'help_catAi', icon: Sparkles },
 ];
 
 const FAQS: FAQ[] = [
   // Fridge
-  {
-    id: 'f1',
-    category: 'fridge',
-    question: 'Хөргөгчдөө орц яаж нэмэх вэ?',
-    answer: 'Хөргөгч хэсэгт орж "Баримт уншуулах / AI Сканнер" товч дарна. Камераа орцын баримт луу чиглүүлж OCR технологиор автоматаар таниулах боломжтой. Эсвэл гар оруулалтаар "+" товч дарж нэмнэ. Орцны нэр, хэмжээ, дуусах хугацааг оруулна уу.',
-  },
-  {
-    id: 'f2',
-    category: 'fridge',
-    question: 'Муудах дөхсөн орцын анхааруулга яаж ажилладаг вэ?',
-    answer: 'Орцны дуусах хугацаа 3 хоног эсвэл түүнээс бага үлдсэн үед систем автоматаар улаан анхааруулга харуулна. Зүүн доод буланд "Муудах дөхсөн" бэж мөн гарч ирнэ. Эдгээр орцыг аль болох эрт хэрэглэхийг зөвлөж байна.',
-  },
-  {
-    id: 'f3',
-    category: 'fridge',
-    question: 'Орцоо ангиллаар шүүж харах боломжтой юу?',
-    answer: 'Тийм! Хөргөгч хэсгийн дээд хэсэгт "Бүгд", "Ногоо", "Мах", "Сүү, өндөг", "Амтлагч", "Жимс" гэх ангиллын товчнууд байдаг. Хүссэн ангиллаа дарж шүүлт хэрэглэнэ.',
-  },
-  {
-    id: 'f4',
-    category: 'fridge',
-    question: 'Орцны зургийг яаж оруулах вэ?',
-    answer: 'Орц нэмэх эсвэл засах үед "Зураг оруулах" хэсэгт товчийг дарж баримт/зургийн санаас сонгоно. Зурагтай орц харахад илүү таньдаг болж хоолны жорыг илүү нарийн тааруулдаг.',
-  },
+  { id: 'f1', category: 'fridge', questionKey: 'help_faqF1Q', answerKey: 'help_faqF1A' },
+  { id: 'f2', category: 'fridge', questionKey: 'help_faqF2Q', answerKey: 'help_faqF2A' },
+  { id: 'f3', category: 'fridge', questionKey: 'help_faqF3Q', answerKey: 'help_faqF3A' },
+  { id: 'f4', category: 'fridge', questionKey: 'help_faqF4Q', answerKey: 'help_faqF4A' },
   // Cooking
-  {
-    id: 'c1',
-    category: 'cooking',
-    question: 'Хоол хийх горим яаж эхлүүлэх вэ?',
-    answer: 'Жор хэсгээс хүссэн жораа сонгоод "Хоол хийх горим эхлэх" товч дарна. Эсвэл Хоол хийх табд орж аль хэдийн сонгосон жораа харна. Алхам бүр нарийн заавар, цаг хэмжигч, орцын жагсаалттайгаар харуулагдана.',
-  },
-  {
-    id: 'c2',
-    category: 'cooking',
-    question: 'Алхамын цаг хэмжигч яаж ашиглах вэ?',
-    answer: 'Тухайн алхамд цаг хэмжигч байвал "Эхлүүлэх" товч дарна. Цаг тоолох эхэлнэ. "Зогсоох" товчоор зогсоож, "Шинэчлэх" товчоор дахин эхлүүлнэ. Хугацаа дуусхад дуут дохио болон дэлгэцийн мэдэгдэл гарна.',
-  },
-  {
-    id: 'c3',
-    category: 'cooking',
-    question: 'Дуут зааварчлах функц хэрхэн ажилладаг вэ?',
-    answer: 'Хоол хийх горимд "🔊 Дуут заавар" товч дарахад алхамын гарчиг, тайлбар, Эгчийн зөвлөгөөг дуут уншиж өгнө. Гараа бохирдсон үед дэлгэцэнд хүрэлгүй заавар сонсох боломжтой. Дахин дарвал зогсоно.',
-  },
-  {
-    id: 'c4',
-    category: 'cooking',
-    question: 'Орцын жагсаалтаас чеклист яаж тэмдэглэх вэ?',
-    answer: 'Хоол хийх горимын алхам бүрт тухайн алхамд шаардлагатай орцын жагсаалт харагдана. Орц бэлэн болсны дараа орцны нэр дээр дарвал чеклист тэмдэглэгдэж эмх цэгц харуулна.',
-  },
+  { id: 'c1', category: 'cooking', questionKey: 'help_faqC1Q', answerKey: 'help_faqC1A' },
+  { id: 'c2', category: 'cooking', questionKey: 'help_faqC2Q', answerKey: 'help_faqC2A' },
+  { id: 'c3', category: 'cooking', questionKey: 'help_faqC3Q', answerKey: 'help_faqC3A' },
+  { id: 'c4', category: 'cooking', questionKey: 'help_faqC4Q', answerKey: 'help_faqC4A' },
   // Store
-  {
-    id: 's1',
-    category: 'store',
-    question: 'QPay-ээр яаж төлөх вэ?',
-    answer: 'Дэлгүүр хэсэгт хүссэн бүтээгдэхүүнээ сагсанд нэмэнэ. Сагсны дүн харуулдаг хэсгийн "QPay-ээр захиалах" товч дарна. QR код гарч ирэх бөгөөд банкны апп-аараа сканнердаж төлнө. Төлбөр амжилттай болмогц захиалга баталгаажна.',
-  },
-  {
-    id: 's2',
-    category: 'store',
-    question: 'Хаяг хэрхэн оруулах вэ?',
-    answer: 'Захиалах үед хүргэлтийн хаягаа оруулна. Хаягийг хожим солих боломжтой. Дараагийн захиалгад хадгалагдсан хаягийг ашиглах эсвэл шинэ хаяг нэмэх боломжтой.',
-  },
-  {
-    id: 's3',
-    category: 'store',
-    question: 'Хүргэлт хэдий хугацаанд ирэх вэ?',
-    answer: 'Ихэвчлэн захиалга өгснөөс хойш 30-90 минутын дотор хүргэгдэнэ. Захиалгын статус "Хүлээгдэж буй" → "Төлөгдсөн" → "Хүргэгдэж байна" → "Гүйцэтгэгдсэн" гэж шинэчлэгдэнэ.',
-  },
+  { id: 's1', category: 'store', questionKey: 'help_faqS1Q', answerKey: 'help_faqS1A' },
+  { id: 's2', category: 'store', questionKey: 'help_faqS2Q', answerKey: 'help_faqS2A' },
+  { id: 's3', category: 'store', questionKey: 'help_faqS3Q', answerKey: 'help_faqS3A' },
   // Account
-  {
-    id: 'a1',
-    category: 'account',
-    question: 'Профайлын зургаа яаж солих вэ?',
-    answer: 'Профайл хэсэгт орж "Зураг өөрчлөх" товч дарна. Төхөөрөмжийн зургийн санаас сонгоно. Зураг автоматаар тойрог хэлбэрт тайрагдаж хадгалагдана.',
-  },
-  {
-    id: 'a2',
-    category: 'account',
-    question: 'Загвар (Theme) болон өнгийг яаж солих вэ?',
-    answer: 'Профайл хэсгийн "Загвар & Өнгөний тохиргоо" хэсэгт 8 өнгийн сонголт байдаг: Нил ягаан, Ягаан, Цэнхэр, Ногоон, Улбар шар, Нил цэнхэр, Чулуун, Ягаан алт. Сонгосон өнгө тухайн мөчид аппликейшний бүх хэсэгт тарж, лого, товчнуур, идэвхтэй цэс болон бусад элементүүдийг бүгдийг нэгэн зэрэг солино.',
-  },
-  {
-    id: 'a3',
-    category: 'account',
-    question: 'Хэлийг яаж солих вэ?',
-    answer: 'Дээд цэсний баруун талд байх хэл солих товч дарвал Монгол / English хооронд солигдоно. Сонгосон хэл хадгалагдаж дараагийн нэвтрэлтэд ч ижил хэлтэй нээгдэнэ.',
-  },
+  { id: 'a1', category: 'account', questionKey: 'help_faqA1Q', answerKey: 'help_faqA1A' },
+  { id: 'a2', category: 'account', questionKey: 'help_faqA2Q', answerKey: 'help_faqA2A' },
+  { id: 'a3', category: 'account', questionKey: 'help_faqA3Q', answerKey: 'help_faqA3A' },
   // Subscription
-  {
-    id: 'sub1',
-    category: 'subscription',
-    question: 'PRO болон FREE TIER-ийн ялгаа юу вэ?',
-    answer: 'FREE TIER: Хөргөгч удирдлага, Дэлгүүр, Жор үзэх. PRO TIER (₮7,900/сар): AI жор зохиол, OCR баримт сканнер, AI дахин төлөвлөлт, Хязгааргүй жор, Ойролцоо орц олж нэмэх. FAMILY TIER (₮15,900/сар): PRO бүх функц + 5 гишүүний нэгдсэн хөргөгч.',
-  },
-  {
-    id: 'sub2',
-    category: 'subscription',
-    question: 'Сунгалтаа яаж цуцлах вэ?',
-    answer: 'Профайл хэсэгт орж "Миний сунгалт & Эрхийн төлөв" хэсэгт очно. Тэндэс "Сунгалт удирдах" эсвэл "Цуцлах" сонголт хийж болно. Цуцалсаны дараа тухайн сарын эцсийг хүртэл PRO функц ажиллана.',
-  },
-  {
-    id: 'sub3',
-    category: 'subscription',
-    question: 'Төлбөрийн баримт авах боломжтой юу?',
-    answer: 'Тийм! Захиалга амжилттай болмогц бүртгэлтэй и-мэйл рүү автоматаар баримт илгээгдэнэ. Профайл → Сунгалтын түүхэд өнгөрсөн баримтуудыг татаж авах боломжтой.',
-  },
+  { id: 'sub1', category: 'subscription', questionKey: 'help_faqSub1Q', answerKey: 'help_faqSub1A' },
+  { id: 'sub2', category: 'subscription', questionKey: 'help_faqSub2Q', answerKey: 'help_faqSub2A' },
+  { id: 'sub3', category: 'subscription', questionKey: 'help_faqSub3Q', answerKey: 'help_faqSub3A' },
   // AI
-  {
-    id: 'ai1',
-    category: 'ai',
-    question: 'AI Эгч ямар асуултанд хариулах вэ?',
-    answer: 'AI Эгч хоол хийх заавар, орцын орлуулах, хоолны тооцоо, хадгалалтын зөвлөгөө, хоолны эрүүл мэндийн мэдээлэл гэх мэт хоол хийхтэй холбоотой бүх асуудалд тусална. "Хөргөгчид байгаа орцоороо ямар хоол хийж болох вэ?" гэх мэт асуулт тавьж болно.',
-  },
-  {
-    id: 'ai2',
-    category: 'ai',
-    question: 'AI жор зохиол яаж ажилладаг вэ?',
-    answer: 'PRO хэрэглэгчид Жор хэсгээс "AI жор зохиол" товч дарна. Хөргөгчид байгаа орцуудаа, хоолны ангилал болон хоолны уран чадварыг зааж өгвөл AI нарийн тусгай жор үүсгэж өгнө.',
-  },
-  {
-    id: 'ai3',
-    category: 'ai',
-    question: 'AI-д зургаар орц таниулж болох уу?',
-    answer: 'Тийм! PRO хэрэглэгчид хөргөгч дэлгэцэнд "AI Сканнер" товч дарж камераар дэлгүүрийн баримт эсвэл орцны зургийг авахад AI автоматаар таних болно. OCR технологи Монгол ба Англи хэлний текст хоёуланг дэмждэг.',
-  },
+  { id: 'ai1', category: 'ai', questionKey: 'help_faqAi1Q', answerKey: 'help_faqAi1A' },
+  { id: 'ai2', category: 'ai', questionKey: 'help_faqAi2Q', answerKey: 'help_faqAi2A' },
+  { id: 'ai3', category: 'ai', questionKey: 'help_faqAi3Q', answerKey: 'help_faqAi3A' },
 ];
 
 const FaqItem: React.FC<{ faq: FAQ; isOpen: boolean; onToggle: () => void }> = ({
@@ -171,6 +71,7 @@ const FaqItem: React.FC<{ faq: FAQ; isOpen: boolean; onToggle: () => void }> = (
   isOpen,
   onToggle,
 }) => {
+  const { t } = useApp();
   return (
     <div
       className={`border rounded-2xl overflow-hidden transition-all duration-200 ${
@@ -182,7 +83,7 @@ const FaqItem: React.FC<{ faq: FAQ; isOpen: boolean; onToggle: () => void }> = (
         className="w-full flex items-center justify-between p-4 text-left bg-pestle-card hover:bg-pestle-bg transition-colors cursor-pointer gap-3"
       >
         <span className={`text-sm font-bold leading-snug ${isOpen ? 'text-mango' : 'text-pestle-text'}`}>
-          {faq.question}
+          {t(faq.questionKey)}
         </span>
         <div className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors ${isOpen ? 'bg-mango text-white' : 'bg-pestle-bg border border-pestle-border text-gray-400'}`}>
           {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -203,7 +104,7 @@ const FaqItem: React.FC<{ faq: FAQ; isOpen: boolean; onToggle: () => void }> = (
               <div className="flex gap-2.5 pt-3">
                 <CheckCircle2 size={16} className="text-mint shrink-0 mt-0.5" />
                 <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed font-medium">
-                  {faq.answer}
+                  {t(faq.answerKey)}
                 </p>
               </div>
             </div>
@@ -215,7 +116,7 @@ const FaqItem: React.FC<{ faq: FAQ; isOpen: boolean; onToggle: () => void }> = (
 };
 
 export const HelpView: React.FC = () => {
-  const { setActiveTab } = useApp();
+  const { setActiveTab, t } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [openFaqId, setOpenFaqId] = useState<string | null>(null);
@@ -225,11 +126,11 @@ export const HelpView: React.FC = () => {
       const matchesCategory = activeCategory === 'all' || faq.category === activeCategory;
       const matchesSearch =
         !searchQuery ||
-        faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        faq.answer.toLowerCase().includes(searchQuery.toLowerCase());
+        t(faq.questionKey).toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t(faq.answerKey).toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     });
-  }, [searchQuery, activeCategory]);
+  }, [searchQuery, activeCategory, t]);
 
   return (
     <div className="p-4 sm:p-6 max-w-3xl mx-auto space-y-8 pb-10">
@@ -239,13 +140,13 @@ export const HelpView: React.FC = () => {
         <div className="relative space-y-2">
           <div className="flex items-center gap-2 text-mango">
             <HelpCircle size={22} />
-            <span className="text-xs font-extrabold uppercase tracking-widest">Тусламжийн Төв</span>
+            <span className="text-xs font-extrabold uppercase tracking-widest">{t('help_center')}</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-pestle-text leading-tight">
-            Ямар тусламж хэрэгтэй вэ?
+            {t('help_heading')}
           </h1>
           <p className="text-sm text-gray-500 font-medium max-w-md">
-            Zity Chef-ийн бүх функц, асуудал шийдэх заавар, дэлгэрэнгүй мэдээллийг энд олно.
+            {t('help_subtitle')}
           </p>
         </div>
 
@@ -254,7 +155,7 @@ export const HelpView: React.FC = () => {
           <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Асуулт хайх... (жн: QPay, жор, AI, хөргөгч...)"
+            placeholder={t('help_searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-pestle-card border border-pestle-border rounded-2xl pl-10 pr-4 py-3.5 text-sm font-medium text-pestle-text focus:outline-none focus:border-mango transition-all shadow-sm placeholder:text-gray-400"
@@ -278,7 +179,7 @@ export const HelpView: React.FC = () => {
               }`}
             >
               <Icon size={13} />
-              <span>{cat.label}</span>
+              <span>{t(cat.labelKey)}</span>
             </button>
           );
         })}
@@ -289,7 +190,7 @@ export const HelpView: React.FC = () => {
         {filteredFaqs.length > 0 ? (
           <>
             <p className="text-xs font-bold text-gray-400 px-1">
-              {filteredFaqs.length} асуулт олдлоо
+              {t('help_resultsCount', { n: filteredFaqs.length })}
             </p>
             {filteredFaqs.map((faq) => (
               <FaqItem
@@ -306,16 +207,16 @@ export const HelpView: React.FC = () => {
               <Search size={28} />
             </div>
             <div>
-              <h3 className="text-base font-black text-pestle-text">Хайлтын үр дүн олдсонгүй</h3>
+              <h3 className="text-base font-black text-pestle-text">{t('help_noResultsTitle')}</h3>
               <p className="text-xs text-gray-400 mt-1">
-                "{searchQuery}" гэдэг асуулт манай FAQ-д байхгүй байна.
+                {t('help_noResultsDesc', { n: searchQuery })}
               </p>
             </div>
             <button
               onClick={() => { setSearchQuery(''); setActiveCategory('all'); }}
               className="btn-secondary text-xs px-4 py-2"
             >
-              Хайлтыг арилгах
+              {t('help_clearSearch')}
             </button>
           </div>
         )}
@@ -325,16 +226,16 @@ export const HelpView: React.FC = () => {
       <div>
         <h2 className="text-base font-black text-pestle-text mb-3 flex items-center gap-2">
           <Lightbulb size={18} className="text-mango" />
-          Хурдан холбоос
+          {t('help_quickLinks')}
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {[
-            { label: 'Хөргөгч удирдах', tab: 'fridge', icon: Refrigerator, color: 'bg-green-500/10 text-green-600 border-green-500/20' },
-            { label: 'Жор үзэх', tab: 'recipe', icon: BookOpen, color: 'bg-blue-500/10 text-blue-600 border-blue-500/20' },
-            { label: 'Хоол хийх горим', tab: 'cooking', icon: Flame, color: 'bg-orange-500/10 text-orange-600 border-orange-500/20' },
-            { label: 'Дэлгүүр & Захиалга', tab: 'store', icon: ShoppingCart, color: 'bg-purple-500/10 text-purple-600 border-purple-500/20' },
-            { label: 'Профайл тохиргоо', tab: 'profile', icon: User, color: 'bg-pink-500/10 text-pink-600 border-pink-500/20' },
-            { label: 'PRO болох', tab: 'profile', icon: Sparkles, color: 'bg-amber-500/10 text-amber-600 border-amber-500/20' },
+            { label: t('help_linkFridge'), tab: 'fridge', icon: Refrigerator, color: 'bg-green-500/10 text-green-600 border-green-500/20' },
+            { label: t('help_linkRecipe'), tab: 'recipe', icon: BookOpen, color: 'bg-blue-500/10 text-blue-600 border-blue-500/20' },
+            { label: t('help_linkCooking'), tab: 'cooking', icon: Flame, color: 'bg-orange-500/10 text-orange-600 border-orange-500/20' },
+            { label: t('help_linkStore'), tab: 'store', icon: ShoppingCart, color: 'bg-purple-500/10 text-purple-600 border-purple-500/20' },
+            { label: t('help_linkProfile'), tab: 'profile', icon: User, color: 'bg-pink-500/10 text-pink-600 border-pink-500/20' },
+            { label: t('help_linkPro'), tab: 'profile', icon: Sparkles, color: 'bg-amber-500/10 text-amber-600 border-amber-500/20' },
           ].map((link) => {
             const Icon = link.icon;
             return (
@@ -360,8 +261,8 @@ export const HelpView: React.FC = () => {
             <MessageCircle size={22} />
           </div>
           <div>
-            <h3 className="font-black text-sm text-pestle-text">Хариулт олдсонгүй юу?</h3>
-            <p className="text-xs text-gray-400 font-medium">AI Эгч эсвэл манай баг тусалъя</p>
+            <h3 className="font-black text-sm text-pestle-text">{t('help_ctaTitle')}</h3>
+            <p className="text-xs text-gray-400 font-medium">{t('help_ctaSubtitle')}</p>
           </div>
         </div>
 
@@ -371,14 +272,14 @@ export const HelpView: React.FC = () => {
             className="flex items-center justify-center gap-2 bg-mango text-white py-3 px-4 rounded-xl text-xs font-bold shadow-md shadow-mango/20 hover:bg-mango/90 transition-all cursor-pointer"
           >
             <Sparkles size={15} />
-            <span>AI Эгчээс асуух</span>
+            <span>{t('help_askAi')}</span>
           </button>
           <a
             href="mailto:support@zitychef.mn"
             className="flex items-center justify-center gap-2 bg-pestle-bg border border-pestle-border py-3 px-4 rounded-xl text-xs font-bold text-pestle-text hover:border-mango transition-all cursor-pointer"
           >
             <Mail size={15} className="text-mango" />
-            <span>И-мэйлээр холбогдох</span>
+            <span>{t('help_emailContact')}</span>
             <ExternalLink size={11} className="text-gray-400" />
           </a>
         </div>

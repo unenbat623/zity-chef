@@ -1,12 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
-  --color-mango: var(--color-accent, #8B5CF6);
-  --color-mint: #2EC4B6;
-  --color-pestle-bg: #F8FAFC;
+  --color-mango: var(--color-accent, #10B981);
+  --color-mint: #10B981;
+  --color-pestle-bg: #F8FAFB;
   --color-pestle-card: #FFFFFF;
   --color-pestle-text: #0F172A;
   --color-pestle-border: #E2E8F0;
@@ -15,9 +14,9 @@
 }
 
 :root {
-  --color-accent: #8B5CF6;
-  --color-accent-shadow: rgba(139, 92, 246, 0.35);
-  --color-accent-light: rgba(139, 92, 246, 0.12);
+  --color-accent: #10B981;
+  --color-accent-shadow: rgba(16, 185, 129, 0.32);
+  --color-accent-light: rgba(16, 185, 129, 0.12);
 }
 
 @layer base {
@@ -56,8 +55,8 @@
 }
 
 .dark {
-  --color-pestle-bg: #090D16;
-  --color-pestle-card: #131B2E;
+  --color-pestle-bg: #0B0F17;
+  --color-pestle-card: #131A26;
   --color-pestle-text: #F1F5F9;
   --color-pestle-border: #1E293B;
 }
@@ -87,12 +86,12 @@
 }
 
 .btn-primary {
-  background-color: var(--color-accent, #8B5CF6) !important;
+  background-color: var(--color-accent, #10B981) !important;
   color: #FFFFFF !important;
   font-weight: 700;
   padding: 0.875rem 1.5rem;
   border-radius: 0.75rem;
-  box-shadow: 0 4px 14px var(--color-accent-shadow, rgba(139, 92, 246, 0.3));
+  box-shadow: 0 4px 14px var(--color-accent-shadow, rgba(16, 185, 129, 0.3));
   transition: all 0.2s ease-in-out;
   cursor: pointer;
   user-select: none;
@@ -101,7 +100,7 @@
 .btn-primary:hover {
   filter: brightness(1.08);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px var(--color-accent-shadow, rgba(139, 92, 246, 0.4));
+  box-shadow: 0 6px 20px var(--color-accent-shadow, rgba(16, 185, 129, 0.4));
 }
 
 .btn-secondary {
@@ -157,19 +156,13 @@ button {
   transition-timing-function: ease-in-out;
 }
 
-/* Focus ring for form inputs — premium look */
+/* Focus ring for form inputs — uses the (theme-aware) accent color */
 input:focus,
 select:focus,
 textarea:focus {
   outline: none;
-  box-shadow: 0 0 0 2.5px rgba(255, 159, 28, 0.35);
-  border-color: #FF9F1C !important;
-}
-
-/* Interactive button lift + glow on hover */
-.btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(255, 159, 28, 0.35);
+  box-shadow: 0 0 0 2.5px var(--color-accent-shadow, rgba(16, 185, 129, 0.35));
+  border-color: var(--color-accent, #10B981) !important;
 }
 
 .btn-primary:active {

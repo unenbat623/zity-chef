@@ -1,50 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { Sparkles, Sun, Moon, User } from 'lucide-react';
-import { AuthModal, UserProfile } from './AuthModal';
+import { AuthModal } from './AuthModal';
+import { NotificationCenter } from './NotificationCenter';
 
 export const HeaderNav: React.FC = () => {
-  const {
-    lang,
-    setLang,
-    isDark,
-    toggleDarkMode,
-    subscription,
-    setShowSubModal,
-    profile,
-    setProfile,
-    t,
-  } = useApp();
+  const { lang, setLang, currency, setCurrency, unitSystem, setUnitSystem, isDark, toggleDarkMode, subscription, setShowSubModal, profile, setProfile, t } =
+    useApp();
+  const { user: authUser, isAnonymous } = useAuth();
 
-  const [user, setUser] = useState<UserProfile | null>(() => {
-    const saved = localStorage.getItem('zity_user');
-    return saved
-      ? JSON.parse(saved)
-      : {
-          name: profile.name,
-          email: 'user@zity.mn',
-          avatarUrl: profile.avatarUrl || '',
-          isVerified: true,
-        };
-  });
   const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
 
-  const handleLoginSuccess = (loggedInUser: UserProfile) => {
-    setUser(loggedInUser);
-    localStorage.setItem('zity_user', JSON.stringify(loggedInUser));
-    setProfile({
-      ...profile,
-      name: loggedInUser.name,
-      avatarUrl: loggedInUser.avatarUrl,
-    });
-  };
+  // Display info for the header avatar/name, derived from the real session.
+  const isLoggedIn = Boolean(authUser && !isAnonymous);
+  const user = isLoggedIn
+    ? {
+        name:
+          (authUser!.user_metadata?.full_name as string) ||
+          authUser!.email?.split('@')[0] ||
+          profile.name,
+        email: authUser!.email || authUser!.phone || '',
+        avatarUrl: (authUser!.user_metadata?.avatar_url as string) || '',
+      }
+    : null;
 
-  const handleLogout = () => {
-    setUser(null);
-    localStorage.removeItem('zity_user');
-    setShowAuthModal(false);
-  };
+  // When a real user signs in, seed the local profile from their identity.
+  useEffect(() => {
+    if (isLoggedIn && user) {
+      const emailUsername = authUser?.email ? `@${authUser.email.split('@')[0]}` : profile.username;
+      const gName = (authUser?.user_metadata?.full_name as string) || (authUser?.user_metadata?.name as string) || user.name;
+      const gAvatar = (authUser?.user_metadata?.avatar_url as string) || (authUser?.user_metadata?.picture as string) || user.avatarUrl;
+
+      setProfile({
+        ...profile,
+        name: gName || profile.name,
+        username: emailUsername,
+        avatarUrl: gAvatar || profile.avatarUrl,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoggedIn, authUser?.id]);
 
   return (
     <>
@@ -66,18 +63,21 @@ export const HeaderNav: React.FC = () => {
               )}
             </h1>
             <p className="hidden sm:block text-[10px] sm:text-[11px] text-gray-400 font-medium truncate leading-none">
-              Smart AI Culinary Assistant
+              {t('brand_subtitle')}
             </p>
           </div>
         </div>
 
         {/* Action Controls */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Real-time Notification Center */}
+          <NotificationCenter />
+
           {/* User Profile / Auth trigger button */}
           <button
             onClick={() => setShowAuthModal(true)}
             className="flex items-center gap-1.5 bg-pestle-card border border-pestle-border p-1 sm:px-3 sm:py-1.5 rounded-xl text-xs font-bold text-pestle-text hover:border-mango transition-all active:scale-95 shadow-xs cursor-pointer"
-            title="User Profile & Account"
+            title={t('header_profileTitle')}
           >
             <div
               className={`w-6 h-6 rounded-lg overflow-hidden flex items-center justify-center bg-gradient-to-br ${profile.coverGradient} shrink-0`}
@@ -93,7 +93,7 @@ export const HeaderNav: React.FC = () => {
               )}
             </div>
             <span className="hidden md:inline text-xs font-bold text-pestle-text truncate max-w-[80px]">
-              {profile.name || user?.name || 'Таны Нэр'}
+              {profile.name || user?.name || t('header_defaultName')}
             </span>
           </button>
 
@@ -104,36 +104,45 @@ export const HeaderNav: React.FC = () => {
               className="text-[10px] font-extrabold bg-mango/15 text-mango border border-mango/30 px-2 py-1.5 sm:px-3 rounded-xl hover:bg-mango hover:text-white transition-all flex items-center gap-1 active:scale-95 whitespace-nowrap shadow-xs"
             >
               <Sparkles size={11} />
-              <span className="hidden xs:inline">{t('upgradeBtn')}</span>
-              <span className="xs:hidden">PRO</span>
+              <span className="hidden sm:inline">{t('upgradeBtn')}</span>
+              <span className="sm:hidden">PRO</span>
             </button>
           )}
 
-          {/* Animated Language Switcher */}
-          <motion.button
-            whileHover={{ scale: 1.06 }}
-            whileTap={{ scale: 0.92 }}
-            onClick={() => setLang(lang === 'mn' ? 'en' : 'mn')}
-            className="relative h-8 px-2 sm:px-2.5 bg-pestle-card border border-pestle-border hover:border-mango/60 rounded-xl flex items-center justify-center gap-1 text-xs font-bold text-pestle-text shadow-xs transition-all shrink-0 cursor-pointer overflow-hidden group"
-            title="Switch Language / Хэл солих"
+          {/* Global Currency Selector */}
+          <select
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value as any)}
+            className="hidden sm:block h-8 bg-pestle-card border border-pestle-border hover:border-mango/60 rounded-xl px-1.5 text-[11px] font-black text-pestle-text shadow-xs cursor-pointer focus:outline-none"
+            title={t('global_currency')}
           >
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.span
-                key={lang}
-                initial={{ y: -10, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 10, opacity: 0 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-                className="text-sm sm:text-base leading-none select-none flex items-center gap-1"
-              >
-                <span>{lang === 'mn' ? '🇲🇳' : '🇺🇸'}</span>
-                <span className="text-[9px] sm:text-[10px] font-black tracking-wider text-gray-500 uppercase group-hover:text-mango transition-colors">
-                  {lang === 'mn' ? 'MN' : 'EN'}
-                </span>
-              </motion.span>
-            </AnimatePresence>
-          </motion.button>
+            <option value="MNT">🇲🇳 MNT ₮</option>
+            <option value="USD">🇺🇸 USD $</option>
+            <option value="EUR">🇪🇺 EUR €</option>
+            <option value="JPY">🇯🇵 JPY ¥</option>
+            <option value="KRW">🇰🇷 KRW ₩</option>
+          </select>
 
+          <select
+            value={unitSystem}
+            onChange={(e) => setUnitSystem(e.target.value as any)}
+            className="hidden lg:block h-8 max-w-[142px] bg-pestle-card border border-pestle-border hover:border-mango/60 rounded-xl px-1.5 text-[11px] font-black text-pestle-text shadow-xs cursor-pointer focus:outline-none"
+            title={t('global_unitSystem')}
+          >
+            <option value="metric">{t('global_metric')}</option>
+            <option value="imperial">{t('global_imperial')}</option>
+          </select>
+
+          {/* Animated Language Switcher */}
+          <select
+            value={lang}
+            onChange={(e) => setLang(e.target.value as any)}
+            className="h-8 max-w-[70px] sm:max-w-none bg-pestle-card border border-pestle-border hover:border-mango/60 rounded-xl px-1.5 text-[11px] font-black text-pestle-text shadow-xs cursor-pointer focus:outline-none"
+            title={t('header_switchLang')}
+          >
+            <option value="mn">🇲🇳 MN</option>
+            <option value="en">🇬🇧 EN</option>
+          </select>
           {/* Animated Dark Mode Toggle */}
           <motion.button
             whileHover={{ scale: 1.08 }}
@@ -144,7 +153,7 @@ export const HeaderNav: React.FC = () => {
                 ? 'bg-slate-900 border-slate-700 hover:border-amber-400/60'
                 : 'bg-amber-500/10 border-amber-500/30 hover:border-mango'
             }`}
-            title="Toggle Dark / Light Theme"
+            title={t('header_toggleTheme')}
           >
             <AnimatePresence mode="wait" initial={false}>
               {isDark ? (
@@ -174,13 +183,7 @@ export const HeaderNav: React.FC = () => {
       </header>
 
       {/* Auth & Profile Modal */}
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        user={user}
-        onLoginSuccess={handleLoginSuccess}
-        onLogout={handleLogout}
-      />
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </>
   );
 };

@@ -20,7 +20,7 @@ import { SmartImage } from './SmartImage';
 import { getIngredientImageUrl } from '../lib/imageService';
 
 export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  const { addIngredient, setShowScanModal, t } = useApp();
+  const { addIngredient, setShowScanModal, unitSystem, t } = useApp();
   const [selectedCategory, setSelectedCategory] = useState<Category | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedIngredient, setSelectedIngredient] = useState<Ingredient | null>(null);
@@ -102,17 +102,17 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
           <div>
             <h2 className="text-xl font-extrabold text-pestle-text">
               {isCustomMode
-                ? 'Шинэ материал нэмэх'
+                ? t('picker_addNewIngredient')
                 : selectedIngredient
-                  ? 'Хэмжээ тохируулах'
-                  : 'Хөргөгчинд материал нэмэх'}
+                  ? t('picker_adjustQuantity')
+                  : t('picker_addIngredientToFridge')}
             </h2>
             <p className="text-xs text-gray-400 font-medium mt-0.5">
               {isCustomMode
-                ? 'Зураг, нэр болон төрлийг оруулна уу'
+                ? t('picker_enterImageNameType')
                 : selectedIngredient
                   ? selectedIngredient.name
-                  : 'Жагсаалтаас сонгох эсвэл хайх'}
+                  : t('picker_selectOrSearch')}
             </p>
           </div>
           <button
@@ -138,7 +138,7 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Материал хайх..."
+                    placeholder={t('picker_searchPlaceholder')}
                     className="w-full bg-pestle-bg border border-pestle-border rounded-xl py-2.5 pl-10 pr-4 text-xs font-medium text-pestle-text focus:outline-none focus:border-mango"
                   />
                 </div>
@@ -147,7 +147,7 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                   className="bg-mango text-white border border-mango/30 px-3.5 py-2.5 rounded-xl text-xs font-bold hover:bg-mango/90 transition-colors flex items-center gap-1.5 whitespace-nowrap shadow-md shadow-mango/20"
                 >
                   <Plus size={16} />
-                  <span>Гараар нэмэх</span>
+                  <span>{t('picker_addManually')}</span>
                 </button>
               </div>
 
@@ -161,7 +161,7 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                       : 'bg-pestle-bg border border-pestle-border text-gray-400 hover:text-pestle-text'
                   }`}
                 >
-                  Бүгд
+                  {t('picker_all')}
                 </button>
                 {CATEGORIES.map((cat) => (
                   <button
@@ -219,7 +219,7 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                   className="w-full bg-pestle-bg border border-pestle-border py-3 rounded-2xl flex items-center justify-center gap-2 text-xs font-bold text-pestle-text hover:border-mango transition-colors"
                 >
                   <Scan size={16} className="text-mango" />
-                  <span>Баримт уншуулах / AI Сканнер</span>
+                  <span>{t('scanReceipt')}</span>
                 </button>
               </div>
             </>
@@ -231,9 +231,9 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
               {/* 📸 IMAGE UPLOAD DROPZONE / PREVIEW */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-pestle-text flex items-center justify-between">
-                  <span>Материиалын Зураг (Заавал биш)</span>
+                  <span>{t('picker_ingredientImageOptional')}</span>
                   <span className="text-[10px] text-mango font-medium">
-                    Камераар дарах / Файл сонгох
+                    {t('picker_takePhotoOrSelectFile')}
                   </span>
                 </label>
 
@@ -257,7 +257,7 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
-                        <Camera size={16} /> Солих
+                        <Camera size={16} /> {t('picker_change')}
                       </div>
                     </>
                   ) : (
@@ -266,10 +266,10 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                         <Upload size={20} />
                       </div>
                       <span className="text-xs font-bold text-pestle-text block">
-                        Зураг оруулах бол товшино уу
+                        {t('picker_tapToUploadImage')}
                       </span>
                       <span className="text-[10px] text-gray-400 font-medium block">
-                        (Оруулахгүй бол нэрэнд тохирох зураг автоматаар очно)
+                        {t('picker_autoImageNote')}
                       </span>
                     </div>
                   )}
@@ -277,20 +277,20 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-pestle-text">Материалын нэр</label>
+                <label className="text-xs font-bold text-pestle-text">{t('picker_ingredientName')}</label>
                 <input
                   type="text"
                   required
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
-                  placeholder="ж: Алим, Шинэ сүү, Хонь мах..."
+                  placeholder={t('picker_ingredientNamePlaceholder')}
                   className="w-full bg-pestle-bg border border-pestle-border rounded-xl px-4 py-3 text-xs font-medium text-pestle-text focus:outline-none focus:border-mango"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-pestle-text">Ангилал</label>
+                  <label className="text-xs font-bold text-pestle-text">{t('picker_category')}</label>
                   <select
                     value={customCategory}
                     onChange={(e) => setCustomCategory(e.target.value as Category)}
@@ -306,7 +306,7 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-pestle-text">
-                    Хадгалах хугацаа (хоног)
+                    {t('picker_expiryDays')}
                   </label>
                   <input
                     type="number"
@@ -322,7 +322,7 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
               {/* Quantity Picker */}
               <div className="space-y-2 pt-2">
                 <div className="flex justify-between items-center">
-                  <label className="text-xs font-bold text-pestle-text">Хэмжээ ба Нэгж</label>
+                  <label className="text-xs font-bold text-pestle-text">{t('picker_quantityAndUnit')}</label>
                   <div className="flex bg-pestle-bg p-1 rounded-xl border border-pestle-border text-xs font-bold">
                     {(['гр', 'л', 'ш'] as const).map((u) => (
                       <button
@@ -333,7 +333,7 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                           unit === u ? 'bg-mango text-white' : 'text-gray-400'
                         }`}
                       >
-                        {u}
+                        {u === 'гр' ? t('picker_unitGram') : u === 'л' ? t('picker_unitLiter') : t('picker_unitPiece')}
                       </button>
                     ))}
                   </div>
@@ -343,6 +343,7 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                   <button
                     type="button"
                     onClick={() => setQuantity(Math.max(1, quantity - (unit === 'гр' ? 100 : 1)))}
+                    aria-label={t('picker_decreaseQuantity')}
                     className="w-10 h-10 rounded-xl bg-pestle-bg border border-pestle-border flex items-center justify-center text-pestle-text"
                   >
                     <Minus size={16} />
@@ -356,6 +357,7 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                   <button
                     type="button"
                     onClick={() => setQuantity(quantity + (unit === 'гр' ? 100 : 1))}
+                    aria-label={t('picker_increaseQuantity')}
                     className="w-10 h-10 rounded-xl bg-pestle-bg border border-pestle-border flex items-center justify-center text-pestle-text"
                   >
                     <Plus size={16} />
@@ -369,13 +371,13 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                   onClick={() => setIsCustomMode(false)}
                   className="btn-secondary flex-1 py-3 text-xs"
                 >
-                  Буцах
+                  {t('picker_back')}
                 </button>
                 <button
                   type="submit"
                   className="btn-primary flex-1 py-3 text-xs shadow-md shadow-mango/20"
                 >
-                  Хөргөгчинд нэмэх
+                  {t('picker_addToFridge')}
                 </button>
               </div>
             </form>
@@ -402,14 +404,15 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
 
               <div className="w-full space-y-3 bg-pestle-bg p-4 rounded-2xl border border-pestle-border">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-gray-400">Нэмэх хэмжээ</span>
+                  <span className="text-xs font-bold text-gray-400">{t('picker_amountToAdd')}</span>
                   <span className="text-lg font-black text-mango">
-                    {formatQuantity(quantity, unit)}
+                    {formatQuantity(quantity, unit, unitSystem)}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <button
+                    aria-label={t('picker_decreaseQuantity')}
                     onClick={() => setQuantity(Math.max(1, quantity - (unit === 'гр' ? 50 : 1)))}
                     className="w-10 h-10 rounded-xl bg-pestle-card border border-pestle-border flex items-center justify-center text-pestle-text"
                   >
@@ -425,6 +428,7 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                     className="flex-1 h-2 bg-gray-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-mango"
                   />
                   <button
+                    aria-label={t('picker_increaseQuantity')}
                     onClick={() => setQuantity(quantity + (unit === 'гр' ? 50 : 1))}
                     className="w-10 h-10 rounded-xl bg-pestle-card border border-pestle-border flex items-center justify-center text-pestle-text"
                   >
@@ -438,13 +442,13 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                   onClick={() => setSelectedIngredient(null)}
                   className="btn-secondary flex-1 py-3 text-xs"
                 >
-                  Буцах
+                  {t('picker_back')}
                 </button>
                 <button
                   onClick={handleConfirmAdd}
                   className="btn-primary flex-1 py-3 text-xs shadow-lg shadow-mango/20"
                 >
-                  Хөргөгчинд нэмэх
+                  {t('picker_addToFridge')}
                 </button>
               </div>
             </div>

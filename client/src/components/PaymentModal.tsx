@@ -13,30 +13,61 @@ import { useApp } from '../context/AppContext';
 import { useToast } from './Toast';
 import { MOCK_BANK_APPS } from '../constants';
 import { PaymentMethod } from '../types';
+import { createQpayInvoice, checkQpayPayment, type QpayInvoice } from '../services/qpayService';
 
 export const PaymentModal: React.FC = () => {
-  const { paymentModalState, closePaymentModal, t } = useApp();
+  const { paymentModalState, closePaymentModal, formatPrice, t } = useApp();
   const { toastSuccess } = useToast();
-  const [method, setMethod] = useState<PaymentMethod>('qpay');
+  const [method, setMethod] = useState<PaymentMethod>('card');
   const [selectedBank, setSelectedBank] = useState<string>('khanbank');
   const [timeLeft, setTimeLeft] = useState<number>(300); // 5 minutes
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
+  const [invoice, setInvoice] = useState<QpayInvoice | null>(null);
 
   useEffect(() => {
     if (!paymentModalState) {
       setIsSuccess(false);
       setIsProcessing(false);
       setTimeLeft(300);
+      setInvoice(null);
       return;
     }
 
+    setMethod(paymentModalState.preferredMethod || 'card');
     const timer = setInterval(() => {
       setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
 
     return () => clearInterval(timer);
   }, [paymentModalState]);
+
+  // Create a QPay invoice when the QPay tab is active (real or simulated).
+  useEffect(() => {
+    if (!paymentModalState || method !== 'qpay') return;
+    let active = true;
+    setInvoice(null);
+    createQpayInvoice(paymentModalState.amount, paymentModalState.title).then((inv) => {
+      if (active) setInvoice(inv);
+    });
+    return () => {
+      active = false;
+    };
+  }, [paymentModalState, method]);
+
+  // Poll for payment completion once an invoice exists.
+  useEffect(() => {
+    if (!invoice || isSuccess || !paymentModalState) return;
+    const id = setInterval(async () => {
+      const paid = await checkQpayPayment(invoice.invoiceId);
+      if (paid) {
+        clearInterval(id);
+        handleSuccess();
+      }
+    }, 3000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invoice, isSuccess]);
 
   if (!paymentModalState) return null;
 
@@ -48,20 +79,40 @@ export const PaymentModal: React.FC = () => {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const handleSimulatePayment = () => {
-    setIsProcessing(true);
+  function orderPaymentMethod(): 'qpay' | 'socialpay' | 'card' {
+    if (method === 'qpay' || method === 'socialpay') return method;
+    return 'card';
+  }
+
+  function handleSuccess() {
+    setIsProcessing(false);
+    setIsSuccess(true);
+    toastSuccess(
+      t('pay_successToastTitle'),
+      t('pay_successToastBody', { n: amount.toLocaleString() })
+    );
     setTimeout(() => {
+      if (onSuccess) onSuccess(orderPaymentMethod());
+      closePaymentModal();
+    }, 1800);
+  }
+
+  const handlePay = async () => {
+    if (method === 'qpay' && invoice) {
+      setIsProcessing(true);
+      const paid = await checkQpayPayment(invoice.invoiceId);
       setIsProcessing(false);
-      setIsSuccess(true);
-      toastSuccess(
-        'Төлбөр амжилттай бүртгэжлээлаа! 💳',
-        `₮${amount.toLocaleString()} гүйцэтгэлийг баталгаажууллаа.`
-      );
-      setTimeout(() => {
-        if (onSuccess) onSuccess();
-        closePaymentModal();
-      }, 1800);
-    }, 1500);
+      if (paid) handleSuccess();
+      else
+        toastSuccess(
+          t('pay_pendingToastTitle'),
+          t('pay_pendingToastBody')
+        );
+      return;
+    }
+    // SocialPay / Card — simulated confirmation.
+    setIsProcessing(true);
+    setTimeout(() => handleSuccess(), 1500);
   };
 
   return (
@@ -88,12 +139,13 @@ export const PaymentModal: React.FC = () => {
             </div>
             <div>
               <span className="text-[10px] font-extrabold uppercase tracking-widest bg-white/20 px-2 py-0.5 rounded-full">
-                Secure QPay Checkout
+                {t('pay_secureCheckout')}
               </span>
               <h2 className="text-xl font-bold mt-1">{title}</h2>
             </div>
             <button
               onClick={closePaymentModal}
+              aria-label={t('close')}
               className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
             >
               <X size={18} />
@@ -111,7 +163,7 @@ export const PaymentModal: React.FC = () => {
                   <CheckCircle2 size={40} />
                 </div>
                 <h3 className="text-xl font-bold text-pestle-text mb-2">{t('paymentSuccess')}</h3>
-                <p className="text-xs text-gray-400">Гүйцэтгэлийг баталгаажууллаа</p>
+                <p className="text-xs text-gray-400">{t('pay_transactionConfirmed')}</p>
               </motion.div>
             ) : (
               <>
@@ -119,7 +171,7 @@ export const PaymentModal: React.FC = () => {
                 <div className="bg-pestle-bg p-4 rounded-2xl border border-pestle-border/60 flex justify-between items-center">
                   <div>
                     <span className="text-xs text-gray-400 font-medium">{t('payAmount')}</span>
-                    <div className="text-2xl font-black text-mango">₮{amount.toLocaleString()}</div>
+                    <div className="text-2xl font-black text-mango">{formatPrice(amount)}</div>
                   </div>
                   <div className="text-right">
                     <span className="text-[10px] text-gray-400 font-medium">
@@ -132,68 +184,80 @@ export const PaymentModal: React.FC = () => {
                 </div>
 
                 {/* Tabs for Payment Method */}
-                <div className="flex bg-pestle-bg p-1 rounded-xl border border-pestle-border text-xs font-bold">
+                <div className="grid grid-cols-5 bg-pestle-bg p-1 rounded-xl border border-pestle-border text-[10px] font-extrabold gap-1">
+                  <button
+                    onClick={() => setMethod('card')}
+                    className={`py-2 rounded-lg transition-all ${
+                      method === 'card' || method === 'stripe'
+                        ? 'bg-mango text-white shadow-sm'
+                        : 'text-gray-400 hover:text-pestle-text'
+                    }`}
+                  >
+                    💳 {t('pay_cardTab')}
+                  </button>
+                  <button
+                    onClick={() => setMethod('socialpay')}
+                    className={`py-2 rounded-lg transition-all ${
+                      method === 'socialpay'
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'text-gray-400 hover:text-pestle-text'
+                    }`}
+                  >
+                    SP
+                  </button>
+                  <button
+                    onClick={() => setMethod('applepay')}
+                    className={`py-2 rounded-lg transition-all ${
+                      method === 'applepay'
+                        ? 'bg-black text-white shadow-sm'
+                        : 'text-gray-400 hover:text-pestle-text'
+                    }`}
+                  >
+                    🍎 {t('applePayTitle')}
+                  </button>
+                  <button
+                    onClick={() => setMethod('paypal')}
+                    className={`py-2 rounded-lg transition-all ${
+                      method === 'paypal'
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'text-gray-400 hover:text-pestle-text'
+                    }`}
+                  >
+                    🅿️ PayPal
+                  </button>
                   <button
                     onClick={() => setMethod('qpay')}
-                    className={`flex-1 py-2 rounded-lg transition-all ${
+                    className={`py-2 rounded-lg transition-all ${
                       method === 'qpay'
                         ? 'bg-mango text-white shadow-sm'
                         : 'text-gray-400 hover:text-pestle-text'
                     }`}
                   >
-                    QPay QR
-                  </button>
-                  <button
-                    onClick={() => setMethod('socialpay')}
-                    className={`flex-1 py-2 rounded-lg transition-all ${
-                      method === 'socialpay'
-                        ? 'bg-mango text-white shadow-sm'
-                        : 'text-gray-400 hover:text-pestle-text'
-                    }`}
-                  >
-                    SocialPay
-                  </button>
-                  <button
-                    onClick={() => setMethod('card')}
-                    className={`flex-1 py-2 rounded-lg transition-all ${
-                      method === 'card'
-                        ? 'bg-mango text-white shadow-sm'
-                        : 'text-gray-400 hover:text-pestle-text'
-                    }`}
-                  >
-                    Card
+                    🇲🇳 QPay QR
                   </button>
                 </div>
 
                 {/* QR Code Container */}
                 {method === 'qpay' && (
                   <div className="flex flex-col items-center justify-center p-4 bg-white rounded-2xl border border-pestle-border relative shadow-inner">
-                    {/* Render visual QR Code pattern */}
-                    <div className="w-44 h-44 bg-slate-900 rounded-xl p-3 flex flex-col justify-between items-center relative overflow-hidden shadow-lg">
-                      <div className="grid grid-cols-6 gap-1 w-full h-full p-2 bg-white rounded-lg">
-                        {Array.from({ length: 36 }).map((_, i) => (
-                          <div
-                            key={i}
-                            className={`rounded-[2px] ${
-                              (i % 2 === 0 && i % 3 === 0) ||
-                              i === 0 ||
-                              i === 5 ||
-                              i === 30 ||
-                              i === 35
-                                ? 'bg-slate-900'
-                                : 'bg-transparent'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-10 h-10 bg-mango rounded-xl flex items-center justify-center text-white font-extrabold shadow-md">
+                    {invoice?.qrImage ? (
+                      <img
+                        src={invoice.qrImage}
+                        alt={t('pay_qrAlt')}
+                        className="w-44 h-44 rounded-xl object-contain bg-white"
+                      />
+                    ) : (
+                      // Loading placeholder while the invoice is being created.
+                      <div className="w-44 h-44 bg-slate-900 rounded-xl p-3 flex items-center justify-center relative overflow-hidden shadow-lg">
+                        <div className="w-10 h-10 bg-mango rounded-xl flex items-center justify-center text-white font-extrabold shadow-md animate-pulse">
                           Z
                         </div>
                       </div>
-                    </div>
+                    )}
                     <p className="text-[11px] text-gray-500 font-semibold mt-3 text-center">
-                      Банкны апп-аараа QR кодыг уншуулна уу
+                      {invoice?.simulated
+                        ? t('pay_demoHint')
+                        : t('pay_scanQrHint')}
                     </p>
                   </div>
                 )}
@@ -231,10 +295,10 @@ export const PaymentModal: React.FC = () => {
                       SP
                     </div>
                     <h4 className="font-bold text-sm text-pestle-text mb-1">
-                      SocialPay-ээр шилжүүлэх
+                      {t('pay_socialpayTitle')}
                     </h4>
                     <p className="text-xs text-gray-500">
-                      Утасны дугаараар шууд холбогдон төлбөр тооцоог хийнэ.
+                      {t('pay_socialpayDesc')}
                     </p>
                   </div>
                 )}
@@ -243,7 +307,7 @@ export const PaymentModal: React.FC = () => {
                   <div className="space-y-3">
                     <input
                       type="text"
-                      placeholder="Картын дугаар (4000 0000 0000 0000)"
+                      placeholder={t('pay_cardNumberPlaceholder')}
                       className="w-full bg-pestle-bg border border-pestle-border rounded-xl px-4 py-2.5 text-xs font-mono text-pestle-text focus:outline-none focus:border-mango"
                     />
                     <div className="flex gap-2">
@@ -261,10 +325,30 @@ export const PaymentModal: React.FC = () => {
                   </div>
                 )}
 
-                {/* Simulate Payment Action Button */}
+                {method === 'applepay' && (
+                  <div className="p-6 text-center bg-black/10 dark:bg-white/10 border border-pestle-border rounded-2xl">
+                    <div className="w-12 h-12 bg-black text-white rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold shadow-md">
+                      
+                    </div>
+                    <h4 className="font-bold text-sm text-pestle-text mb-1">{t('applePayTitle')}</h4>
+                    <p className="text-xs text-gray-500">{t('pay_applePayDesc')}</p>
+                  </div>
+                )}
+
+                {method === 'paypal' && (
+                  <div className="p-6 text-center bg-blue-500/10 border border-blue-500/20 rounded-2xl">
+                    <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold shadow-md">
+                      P
+                    </div>
+                    <h4 className="font-bold text-sm text-pestle-text mb-1">{t('pay_paypalTitle')}</h4>
+                    <p className="text-xs text-gray-500">{t('pay_paypalDesc')}</p>
+                  </div>
+                )}
+
+                {/* Payment Action Button */}
                 <button
-                  onClick={handleSimulatePayment}
-                  disabled={isProcessing}
+                  onClick={handlePay}
+                  disabled={isProcessing || (method === 'qpay' && !invoice)}
                   className="w-full btn-primary py-3.5 flex items-center justify-center gap-2 shadow-lg shadow-mango/20 disabled:opacity-50"
                 >
                   {isProcessing ? (
@@ -276,7 +360,7 @@ export const PaymentModal: React.FC = () => {
                     <>
                       <ShieldCheck size={18} />
                       <span>
-                        {t('confirmPay')} (₮{amount.toLocaleString()})
+                        {t('confirmPay')} ({formatPrice(amount)})
                       </span>
                     </>
                   )}

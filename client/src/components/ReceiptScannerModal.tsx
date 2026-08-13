@@ -83,8 +83,8 @@ export const ReceiptScannerModal: React.FC = () => {
     detectedItems.forEach((item) => addIngredient(item));
     setIsDone(true);
     toastSuccess(
-      `${detectedItems.length} орц нэмэгдлээ! 🎉`,
-      'Хөргөгчийн жагсаалт амжилттай шинэчлэгдлээ.'
+      t('scan_toastTitle', { n: detectedItems.length }),
+      t('scan_toastBody')
     );
     setTimeout(() => {
       setIsDone(false);
@@ -125,6 +125,7 @@ export const ReceiptScannerModal: React.FC = () => {
                 setSelectedImage(null);
                 setDetectedItems([]);
               }}
+              aria-label={t('close')}
               className="modal-close-btn"
             >
               <X size={18} />
@@ -137,9 +138,9 @@ export const ReceiptScannerModal: React.FC = () => {
                 <CheckCircle2 size={40} />
               </div>
               <h3 className="text-xl font-bold text-pestle-text mb-1">
-                Материал амжилттай нэмэгдлээ!
+                {t('scan_addedSuccess')}
               </h3>
-              <p className="text-xs text-gray-400">Хөргөгчний жагсаалт шинэчлэгдлээ</p>
+              <p className="text-xs text-gray-400">{t('scan_fridgeUpdated')}</p>
             </div>
           ) : (
             <div className="space-y-5">
@@ -151,10 +152,10 @@ export const ReceiptScannerModal: React.FC = () => {
                     </div>
                     <div className="text-center">
                       <span className="text-sm font-bold text-pestle-text block">
-                        Зураг эсвэл баримт оруулах
+                        {t('scan_uploadTitle')}
                       </span>
                       <span className="text-[11px] text-gray-400">
-                        PNG, JPG эсвэл Камераар дарах
+                        {t('scan_uploadHint')}
                       </span>
                     </div>
                     <input
@@ -170,7 +171,7 @@ export const ReceiptScannerModal: React.FC = () => {
                     className="w-full bg-pestle-bg border border-pestle-border py-3 rounded-xl text-xs font-bold text-mango hover:bg-mango/10 transition-colors flex items-center justify-center gap-2"
                   >
                     <Sparkles size={16} />
-                    <span>Демо баримтаар туршиж үзэх</span>
+                    <span>{t('scan_tryDemo')}</span>
                   </button>
                 </div>
               ) : (
@@ -181,7 +182,7 @@ export const ReceiptScannerModal: React.FC = () => {
                     {isAnalyzing && (
                       <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center text-white p-4">
                         <Loader2 size={32} className="animate-spin text-mango mb-2" />
-                        <span className="text-xs font-bold">Gemini AI уншиж байна...</span>
+                        <span className="text-xs font-bold">{t('scan_analyzing')}</span>
                       </div>
                     )}
                   </div>
@@ -191,7 +192,7 @@ export const ReceiptScannerModal: React.FC = () => {
                     <div>
                       <div className="flex justify-between items-center mb-3">
                         <span className="text-xs font-bold text-pestle-text">
-                          Илрүүлсэн орцууд ({detectedItems.length})
+                          {t('scan_detectedItems', { n: detectedItems.length })}
                         </span>
                         <span className="text-[10px] text-mint font-bold uppercase tracking-wider">
                           Auto-Categorized
@@ -211,7 +212,7 @@ export const ReceiptScannerModal: React.FC = () => {
                               <div>
                                 <h4 className="text-xs font-bold text-pestle-text">{item.name}</h4>
                                 <span className="text-[10px] text-gray-400">
-                                  Хугацаа: {item.expiryDays} хоног
+                                  {t('scan_expiryLabel', { n: item.expiryDays ?? 0 })}
                                 </span>
                               </div>
                             </div>
@@ -227,7 +228,7 @@ export const ReceiptScannerModal: React.FC = () => {
                         className="w-full btn-primary py-3.5 mt-4 font-bold flex items-center justify-center gap-2 shadow-lg shadow-mango/20"
                       >
                         <Plus size={18} />
-                        <span>Бүх орцыг хөргөгчинд нэмэх ({detectedItems.length})</span>
+                        <span>{t('scan_addAll', { n: detectedItems.length })}</span>
                       </button>
                     </div>
                   )}

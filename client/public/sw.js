@@ -89,3 +89,34 @@ self.addEventListener('fetch', (event) => {
       .catch(() => caches.match('/index.html'))
   );
 });
+
+// ── Web Push ──────────────────────────────────────────────────────────────────
+self.addEventListener('push', (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (e) {
+    data = { title: 'Zity Chef', body: event.data ? event.data.text() : '' };
+  }
+  const title = data.title || '🍳 Zity Chef';
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: data.body || '',
+      icon: data.icon || '/icon-192.png',
+      badge: '/icon-192.png',
+      data: { url: data.url || '/' },
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || '/';
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((wins) => {
+      const existing = wins.find((w) => 'focus' in w);
+      if (existing) return existing.focus();
+      return clients.openWindow(url);
+    })
+  );
+});

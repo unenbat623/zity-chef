@@ -4,17 +4,29 @@ import {
   Store,
   ShoppingBag,
   Plus,
-  Minus,
   Trash2,
   MapPin,
   CheckCircle,
   ShieldCheck,
   ChevronRight,
+  Activity,
+  LayoutDashboard,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { MOCK_INGREDIENTS } from '../constants';
 import { SmartImage } from './SmartImage';
 import { getIngredientImageUrl } from '../lib/imageService';
+import { useStoreProducts } from '../hooks/useStoreProducts';
+
+interface CatalogItem {
+  id: string;
+  name: string;
+  nameEn?: string | null;
+  emoji: string;
+  unit: string;
+  pricePerUnit?: number;
+  imageUrl?: string | null;
+}
 
 export const StoreView: React.FC = () => {
   const {
@@ -25,15 +37,24 @@ export const StoreView: React.FC = () => {
     triggerPayment,
     createOrder,
     orders,
+    ordersLoading,
+    ordersError,
+    setActiveTab,
+    lang,
     t,
   } = useApp();
+  const { products, loading } = useStoreProducts();
+  // Real DB catalog when available; fall back to the bundled mock list.
+  const catalog: CatalogItem[] = products.length ? products : (MOCK_INGREDIENTS as CatalogItem[]);
+  const nameOf = (item: CatalogItem) => (lang === 'en' && item.nameEn ? item.nameEn : item.name);
+
   const [address, setAddress] = useState<string>('Сүхбаатар дүүрэг, 1-р хороо, Zity Tower 402');
   const [activeSubTab, setActiveSubTab] = useState<'catalog' | 'cart' | 'orders'>('catalog');
 
-  const handleAddToCart = (item: (typeof MOCK_INGREDIENTS)[0]) => {
+  const handleAddToCart = (item: CatalogItem, displayName: string) => {
     addToCart({
       id: `cart-${item.id}-${Date.now()}`,
-      name: item.name,
+      name: displayName,
       emoji: item.emoji,
       unit: item.unit,
       quantity: item.unit === 'гр' ? 500 : 1,
@@ -44,112 +65,173 @@ export const StoreView: React.FC = () => {
 
   const handleCheckout = () => {
     if (cart.length === 0) return;
-    triggerPayment(totalCartAmount, 'Zity Grocery Store Delivery Order', () => {
-      createOrder(address, 'qpay');
+    triggerPayment(totalCartAmount, t('store_checkoutTitle'), (paymentMethod) => {
+      createOrder(address, paymentMethod);
       setActiveSubTab('orders');
-    });
+    }, 'qpay');
   };
 
   return (
     <div className="p-4 sm:p-6 space-y-5">
-      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-black text-pestle-text tracking-tight">
-            {t('storeTitle')}
-          </h2>
-          <p className="text-xs font-semibold text-gray-400 mt-0.5">{t('storeSub')}</p>
-        </div>
+      <header className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-800 via-teal-900 to-slate-900 p-5 sm:p-6 text-white shadow-xl border border-emerald-500/20">
+        <Store className="absolute -right-8 -bottom-8 h-40 w-40 text-emerald-500/10 rotate-12 pointer-events-none hidden sm:block" />
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+          <div className="min-w-0 relative z-10">
+            <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/20 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-200 border border-emerald-400/30">
+              <Store size={14} />
+              <span>{t('store_opsLabel')}</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight mt-3 text-white">
+              {t('storeTitle')}
+            </h2>
+            <p className="text-xs sm:text-sm font-semibold text-emerald-100/80 mt-1 max-w-xl">{t('storeSub')}</p>
+          </div>
 
-        {/* Sub-tab pills */}
-        <div className="flex w-full sm:w-auto bg-pestle-card border border-pestle-border p-1 rounded-xl text-xs font-bold justify-stretch sm:justify-start">
-          <button
-            onClick={() => setActiveSubTab('catalog')}
-            className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg transition-all text-center ${
-              activeSubTab === 'catalog'
-                ? 'bg-mango text-white'
-                : 'text-gray-400 hover:text-pestle-text'
-            }`}
-          >
-            Дэлгүүр
-          </button>
-          <button
-            onClick={() => setActiveSubTab('cart')}
-            className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg transition-all text-center relative ${
-              activeSubTab === 'cart'
-                ? 'bg-mango text-white'
-                : 'text-gray-400 hover:text-pestle-text'
-            }`}
-          >
-            Сагс ({cart.length})
-          </button>
+          <div className="relative z-10 flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/20 px-3 py-1.5 text-[11px] font-black text-emerald-100">
+              <span className="h-2 w-2 rounded-full bg-emerald-300" />
+              {t('store_onlineStatus')}
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-black text-white">
+              <Activity size={14} className="text-emerald-300" />
+              {orders.length} {t('dashboard_orders')}
+            </span>
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white px-3 py-1.5 text-[11px] font-black text-emerald-700 hover:bg-emerald-50"
+            >
+              <LayoutDashboard size={14} />
+              {t('store_openDashboard')}
+            </button>
+          </div>
         </div>
       </header>
+
+      <div className="grid grid-cols-3 bg-pestle-card border border-pestle-border p-1 rounded-2xl text-xs font-bold shadow-xs">
+          {[
+            ['catalog', t('store_subtabStore')],
+            ['cart', `${t('store_subtabCart')} (${cart.length})`],
+            ['orders', t('store_subtabOrders')],
+          ].map(([id, label]) => (
+            <button
+              key={id}
+              onClick={() => setActiveSubTab(id as 'catalog' | 'cart' | 'orders')}
+              className={`px-3 py-2 rounded-lg transition-all text-center ${
+                activeSubTab === id
+                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm'
+                  : 'text-gray-400 hover:text-pestle-text'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+      </div>
 
       {activeSubTab === 'catalog' && (
         <div className="space-y-6">
           {/* Nearest Supermarket Banner */}
-          <div className="pestle-card p-4 flex items-center justify-between bg-gradient-to-r from-teal-500/10 to-emerald-500/10 border-teal-500/20">
+          <div className="pestle-card p-4 flex items-center justify-between bg-emerald-500/8 border-emerald-500/20 rounded-3xl">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-teal-500 text-white rounded-xl flex items-center justify-center shadow-md">
+              <div className="w-10 h-10 bg-emerald-600 text-white rounded-xl flex items-center justify-center shadow-md">
                 <Store size={20} />
               </div>
               <div>
                 <h4 className="text-xs font-bold text-pestle-text">Zity Supermarket #04</h4>
-                <p className="text-[10px] text-teal-600 dark:text-teal-400 font-semibold">
-                  📍 150м зайд • Шуурхай хүргэлт 30мин
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                  {t('store_nearestInfo')}
                 </p>
               </div>
             </div>
-            <ChevronRight size={18} className="text-teal-600" />
+            <ChevronRight size={18} className="text-emerald-600" />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              [t('store_syncCart'), cart.length],
+              [t('store_syncOrders'), orders.length],
+              [t('store_syncDashboard'), t('store_syncLive')],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-2xl border border-pestle-border bg-pestle-card p-3">
+                <p className="text-[10px] font-black uppercase text-gray-400">{label}</p>
+                <p className="mt-1 text-lg font-black text-pestle-text">{value}</p>
+              </div>
+            ))}
           </div>
 
           {/* Product Catalog Grid */}
           <div className="space-y-3">
-            <h3 className="text-sm font-bold text-pestle-text">Шинэхэн хүнсний бүтээгдэхүүн</h3>
+            <h3 className="text-sm font-bold text-pestle-text">{t('store_freshProducts')}</h3>
+            {loading && products.length === 0 ? (
+              /* Loading skeleton grid */
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="pestle-card overflow-hidden animate-pulse">
+                    <div className="h-32 w-full bg-pestle-bg" />
+                    <div className="p-3 space-y-2">
+                      <div className="h-3 w-2/3 bg-pestle-bg rounded" />
+                      <div className="h-3 w-1/3 bg-pestle-bg rounded" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : !loading && catalog.length === 0 ? (
+              /* Empty catalog state */
+              <div className="pestle-card text-center py-16 px-6">
+                <Store size={48} className="mx-auto text-gray-300 mb-3" />
+                <h4 className="text-base font-bold text-pestle-text mb-1">
+                  {t('store_freshProducts')}
+                </h4>
+                <p className="text-xs text-gray-400">{t('store_emptyCatalog')}</p>
+              </div>
+            ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
-              {MOCK_INGREDIENTS.map((item) => (
+              {catalog.map((item) => {
+                const displayName = nameOf(item);
+                return (
                 <div
                   key={item.id}
-                  className="pestle-card overflow-hidden flex flex-col hover:border-mango transition-colors group cursor-pointer"
+                  className="pestle-card rounded-3xl overflow-hidden flex flex-col hover:border-emerald-500/70 hover:shadow-lg transition-all group cursor-pointer"
                 >
                   {/* Product Photo */}
                   <SmartImage
-                    src={getIngredientImageUrl(item.name, item.nameEn)}
-                    alt={item.name}
+                    src={item.imageUrl || getIngredientImageUrl(item.name, item.nameEn ?? undefined)}
+                    alt={displayName}
                     emoji={item.emoji}
-                    fallbackLabel={item.name}
+                    fallbackLabel={displayName}
                     className="h-32 w-full"
                   />
 
                   <div className="p-3 flex flex-col flex-1 justify-between">
                     <div>
                       <h4 className="font-bold text-xs text-pestle-text line-clamp-1">
-                        {item.name}
+                        {displayName}
                       </h4>
                       <span className="text-[10px] text-gray-400 font-medium">
-                        Шинэ ургац / Боловсруулсан
+                        {t('store_productTag')}
                       </span>
                     </div>
 
                     <div className="mt-2 flex items-center justify-between">
                       <div>
-                        <span className="text-[9px] text-gray-400 font-bold block">Нэгж үнэ</span>
+                        <span className="text-[9px] text-gray-400 font-bold block">{t('store_unitPrice')}</span>
                         <span className="text-xs font-black text-mango">
                           ₮{(item.pricePerUnit || 3000).toLocaleString()}
                         </span>
                       </div>
 
                       <button
-                        onClick={() => handleAddToCart(item)}
-                        className="w-8 h-8 bg-mango text-white rounded-xl flex items-center justify-center active:scale-95 transition-transform shadow-md shadow-mango/20"
+                        onClick={() => handleAddToCart(item, displayName)}
+                        className="w-8 h-8 bg-emerald-600 text-white rounded-xl flex items-center justify-center active:scale-95 transition-transform shadow-md shadow-emerald-600/20"
                       >
                         <Plus size={16} />
                       </button>
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
+            )}
           </div>
         </div>
       )}
@@ -160,12 +242,12 @@ export const StoreView: React.FC = () => {
             <div className="text-center py-16 bg-pestle-card border border-pestle-border rounded-2xl p-6">
               <ShoppingBag size={48} className="mx-auto text-gray-300 mb-3" />
               <h3 className="text-base font-bold text-pestle-text mb-1">{t('cartEmpty')}</h3>
-              <p className="text-xs text-gray-400 mb-4">Дэлгүүрээс орцуудаа сагсанд нэмнэ үү</p>
+              <p className="text-xs text-gray-400 mb-4">{t('store_cartEmptyHint')}</p>
               <button
                 onClick={() => setActiveSubTab('catalog')}
                 className="btn-primary py-2.5 px-6 text-xs"
               >
-                Дэлгүүр хэсэх
+                {t('store_browseStore')}
               </button>
             </div>
           ) : (
@@ -241,10 +323,21 @@ export const StoreView: React.FC = () => {
       {activeSubTab === 'orders' && (
         <div className="space-y-4">
           <h3 className="text-sm font-bold text-pestle-text">
-            Миний захиалгын түүх ({orders.length})
+            {t('store_orderHistory', { n: orders.length })}
           </h3>
-          {orders.length === 0 ? (
-            <p className="text-xs text-gray-400">Одоогоор захиалга байхгүй байна.</p>
+          {ordersLoading ? (
+            <div className="space-y-3">
+              {[0, 1].map((i) => (
+                <div key={i} className="pestle-card p-4 h-24 animate-pulse bg-pestle-bg/50" />
+              ))}
+            </div>
+          ) : ordersError ? (
+            <div className="text-center py-8 bg-red-500/5 border border-red-500/20 rounded-2xl p-5 space-y-2">
+              <p className="text-xs font-bold text-red-500">{t('store_ordersLoadError')}</p>
+              <p className="text-[11px] text-gray-400">{t('store_serverError')}</p>
+            </div>
+          ) : orders.length === 0 ? (
+            <p className="text-xs text-gray-400">{t('store_noOrders')}</p>
           ) : (
             orders.map((order) => (
               <div key={order.id} className="pestle-card p-4 space-y-3">
@@ -254,7 +347,7 @@ export const StoreView: React.FC = () => {
                     <span className="text-[10px] text-gray-400 block">{order.createdAt}</span>
                   </div>
                   <span className="text-[10px] font-bold bg-mint/15 text-mint px-2.5 py-1 rounded-full flex items-center gap-1">
-                    <CheckCircle size={10} /> Төлөгдсөн • Хүргэлтэнд
+                    <CheckCircle size={10} /> {t('store_paidDelivering')}
                   </span>
                 </div>
 

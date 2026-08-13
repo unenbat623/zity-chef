@@ -12,13 +12,15 @@ import {
   Moon,
   RotateCw,
   ChefHat,
-  HeartHandshake,
   TrendingUp,
   Check,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { WEEK_DAYS, MOCK_RECIPES } from '../constants';
+import { WEEK_DAYS } from '../constants';
 import type { Recipe } from '../types';
+import { MacroProgressWidget } from './MacroProgressWidget';
+import { useRecipes } from '../hooks/useRecipes';
+import { MOCK_RECIPES } from '../data/recipes';
 
 // Meal time slots
 type MealType = 'breakfast' | 'lunch' | 'dinner';
@@ -35,35 +37,50 @@ interface DaySchedule {
 
 export const CalendarView: React.FC = () => {
   const { lang, inventory, cart, addToCart, setActiveCookingRecipe, setActiveTab, t } = useApp();
+  const { recipes } = useRecipes();
   const [selectedDayId, setSelectedDayId] = useState<string>(WEEK_DAYS[0].day);
   const [selectedMealType, setSelectedMealType] = useState<MealType>('lunch');
   const [isRegenerating, setIsRegenerating] = useState<boolean>(false);
   const [addedToast, setAddedToast] = useState<string | null>(null);
-
-  // Map 7 days to 3 distinct meals each from MOCK_RECIPES
   const [schedule, setSchedule] = useState<DaySchedule[]>(() => {
-    const b = MOCK_RECIPES.filter((r) => r.category === 'Өглөөний цай');
-    const l = MOCK_RECIPES.filter((r) => r.category === 'Үндсэн хоол' || r.category === 'Салат ба Хөнгөн зууш');
-    const d = MOCK_RECIPES.filter((r) => r.category === 'Шөл ба Бүлээн хоол' || r.category === 'Үндсэн хоол');
-
+    const pool = MOCK_RECIPES;
+    const b = pool.filter((r) => r.category === 'Өглөөний цай');
+    const l = pool.filter((r) => r.category === 'Үндсэн хоол' || r.category === 'Салат ба Хөнгөн зууш');
+    const d = pool.filter((r) => r.category === 'Шөл ба Бүлээн хоол' || r.category === 'Үндсэн хоол');
     return WEEK_DAYS.map((w, idx) => ({
-      dayId: w.day,
-      dayLabel: w.day,
-      dateStr: w.date,
-      breakfast: b[idx % b.length] || MOCK_RECIPES[3],
-      lunch: l[idx % l.length] || MOCK_RECIPES[0],
-      dinner: d[(idx + 2) % d.length] || MOCK_RECIPES[1],
+      dayId: w.day, dayLabel: w.day, dateStr: w.date,
+      breakfast: b[idx % b.length] || pool[3] || pool[0],
+      lunch: l[idx % l.length] || pool[0],
+      dinner: d[(idx + 2) % d.length] || pool[1] || pool[0],
       targetCalories: 2000 + (idx % 3) * 100,
     }));
   });
+
+  // Re-hydrate schedule from real API recipes once they load
+  React.useEffect(() => {
+    if (!recipes || recipes.length === 0) return;
+    const b = recipes.filter((r) => r.category === 'Өглөөний цай');
+    const l = recipes.filter((r) => r.category === 'Үндсэн хоол' || r.category === 'Салат ба Хөнгөн зууш');
+    const d = recipes.filter((r) => r.category === 'Шөл ба Бүлээн хоол' || r.category === 'Үндсэн хоол');
+    setSchedule(
+      WEEK_DAYS.map((w, idx) => ({
+        dayId: w.day, dayLabel: w.day, dateStr: w.date,
+        breakfast: b[idx % b.length] || recipes[3] || recipes[0],
+        lunch: l[idx % l.length] || recipes[0],
+        dinner: d[(idx + 2) % d.length] || recipes[1] || recipes[0],
+        targetCalories: 2000 + (idx % 3) * 100,
+      }))
+    );
+  }, [recipes]);
 
   // Current active day schedule
   const activeDaySchedule = useMemo(() => {
     return schedule.find((s) => s.dayId === selectedDayId) || schedule[0];
   }, [schedule, selectedDayId]);
 
-  // Current active recipe based on meal type
-  const activeRecipe: Recipe = useMemo(() => {
+  // Current active recipe based on meal type — guard against empty schedule
+  const activeRecipe: Recipe | null = useMemo(() => {
+    if (!activeDaySchedule) return null;
     if (selectedMealType === 'breakfast') return activeDaySchedule.breakfast;
     if (selectedMealType === 'lunch') return activeDaySchedule.lunch;
     return activeDaySchedule.dinner;
@@ -72,43 +89,35 @@ export const CalendarView: React.FC = () => {
   // Dynamic calculation of ingredients available vs missing
   const ingredientStatus = useMemo(() => {
     const fridgeNames = inventory.map((i) => i.name.toLowerCase());
-
     const available: string[] = [];
     const missing: { name: string; estimatedPrice: number; quantityStr: string }[] = [];
+    if (!activeRecipe) return { available, missing, matchPct: 100 };
 
     activeRecipe.ingredients.forEach((ing) => {
       const lower = ing.toLowerCase();
       const hasItem = fridgeNames.some((f) => lower.includes(f) || f.includes(lower.split(' ')[0]));
-
       if (hasItem) {
         available.push(ing);
       } else {
-        // Price estimation based on ingredient type
         let estPrice = 4500;
         if (lower.includes('мах') || lower.includes('сэлмон') || lower.includes('загас')) estPrice = 14500;
         else if (lower.includes('бяслаг') || lower.includes('авокадо') || lower.includes('уураг')) estPrice = 8500;
         else if (lower.includes('тос') || lower.includes('соус') || lower.includes('амтлагч')) estPrice = 3200;
-
-        missing.push({
-          name: ing,
-          estimatedPrice: estPrice,
-          quantityStr: '1 порц',
-        });
+        missing.push({ name: ing, estimatedPrice: estPrice, quantityStr: '1 порц' });
       }
     });
 
     const totalCount = activeRecipe.ingredients.length;
     const matchPct = totalCount > 0 ? Math.round((available.length / totalCount) * 100) : 100;
-
     return { available, missing, matchPct };
   }, [activeRecipe, inventory]);
 
   // Total daily nutrition for all 3 meals
   const dailyNutrition = useMemo(() => {
+    if (!activeDaySchedule) return { totalCals: 0, totalProtein: 0, totalCarbs: 0, totalFat: 0 };
     const b = activeDaySchedule.breakfast.nutrition;
     const l = activeDaySchedule.lunch.nutrition;
     const d = activeDaySchedule.dinner.nutrition;
-
     const totalCals = b.calories + l.calories + d.calories;
     const totalProtein = b.protein + l.protein + d.protein;
     const totalCarbs = b.carbs + l.carbs + d.carbs;
@@ -133,20 +142,20 @@ export const CalendarView: React.FC = () => {
       });
     });
 
-    setAddedToast(`${ingredientStatus.missing.length} орц сагсанд нэмэгдлээ! 🛒`);
+    setAddedToast(t('calendar_ingredientsAddedToCart', { n: ingredientStatus.missing.length }));
     setTimeout(() => setAddedToast(null), 3000);
   };
 
-  // AI Re-plan simulation based on fridge inventory
+  // Re-plan the week by picking new recipes for each day.
   const handleRegeneratePlan = () => {
     setIsRegenerating(true);
     setTimeout(() => {
-      // Shuffle schedule to simulate AI optimization
+      const pool = recipes.length > 0 ? recipes : MOCK_RECIPES;
       setSchedule((prev) =>
         prev.map((s) => {
-          const randB = MOCK_RECIPES[Math.floor(Math.random() * MOCK_RECIPES.length)];
-          const randL = MOCK_RECIPES[Math.floor(Math.random() * MOCK_RECIPES.length)];
-          const randD = MOCK_RECIPES[Math.floor(Math.random() * MOCK_RECIPES.length)];
+          const randB = pool[Math.floor(Math.random() * pool.length)];
+          const randL = pool[Math.floor(Math.random() * pool.length)];
+          const randD = pool[Math.floor(Math.random() * pool.length)];
           return {
             ...s,
             breakfast: randB,
@@ -156,13 +165,20 @@ export const CalendarView: React.FC = () => {
         })
       );
       setIsRegenerating(false);
-      setAddedToast('✨ Хөргөгчинд байгаа орцуудад тааруулан AI шинэчлэн төлөвлөлөө!');
+      setAddedToast(t('calendar_planRegenerated'));
       setTimeout(() => setAddedToast(null), 3500);
     }, 800);
   };
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-4xl mx-auto pb-24">
+      {!activeRecipe && (
+        <div className="flex items-center justify-center h-48">
+          <div className="w-8 h-8 rounded-xl bg-mango/80 text-white font-black flex items-center justify-center animate-pulse">Z</div>
+        </div>
+      )}
+      {activeRecipe && (<>
+
       {/* Toast Notification */}
       <AnimatePresence>
         {addedToast && (
@@ -182,13 +198,13 @@ export const CalendarView: React.FC = () => {
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="text-2xl sm:text-3xl font-black text-pestle-text tracking-tight flex items-center gap-2">
-            <span>Төлөвлөгөө</span>
+            <span>{t('calendar_title')}</span>
             <span className="text-xs font-black bg-mango/15 text-mango px-2.5 py-1 rounded-full uppercase tracking-wider flex items-center gap-1">
               <Sparkles size={12} /> AI Meal Planner
             </span>
           </h2>
           <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5">
-            7 хоногийн ухаалаг хоолны төлөвлөгөө, калори ба хөргөгчний орцын тохироо
+            {t('calendar_subtitle')}
           </p>
         </div>
 
@@ -198,7 +214,7 @@ export const CalendarView: React.FC = () => {
           className="bg-pestle-card border border-pestle-border text-pestle-text hover:border-mango font-bold text-xs px-3.5 py-2.5 rounded-2xl flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer hover:shadow-md shrink-0"
         >
           <RotateCw size={14} className={`text-mango ${isRegenerating ? 'animate-spin' : ''}`} />
-          <span>{isRegenerating ? 'Төлөвлөж байна...' : 'AI-гаар дахин төлөвлөх'}</span>
+          <span>{isRegenerating ? t('calendar_planning') : t('calendar_regenerateWithAi')}</span>
         </button>
       </header>
 
@@ -234,7 +250,7 @@ export const CalendarView: React.FC = () => {
           <div className="flex items-center gap-2">
             <TrendingUp size={16} className="text-mango" />
             <span className="text-xs font-black text-pestle-text">
-              Өдрийн нийт калори & Шим тэжээл
+              {t('calendar_dailyCaloriesNutrition')}
             </span>
           </div>
           <span className="text-xs font-black text-mango">
@@ -259,34 +275,37 @@ export const CalendarView: React.FC = () => {
 
         <div className="grid grid-cols-3 gap-2 text-center pt-1">
           <div className="bg-pestle-card/80 border border-pestle-border/60 py-1.5 rounded-xl">
-            <p className="text-[9px] font-bold text-gray-400 uppercase">Уураг (Protein)</p>
+            <p className="text-[9px] font-bold text-gray-400 uppercase">{t('calendar_proteinLabel')}</p>
             <p className="text-xs font-black text-pestle-text">{dailyNutrition.totalProtein}g</p>
           </div>
           <div className="bg-pestle-card/80 border border-pestle-border/60 py-1.5 rounded-xl">
-            <p className="text-[9px] font-bold text-gray-400 uppercase">Нүүрс ус (Carbs)</p>
+            <p className="text-[9px] font-bold text-gray-400 uppercase">{t('calendar_carbsLabel')}</p>
             <p className="text-xs font-black text-pestle-text">{dailyNutrition.totalCarbs}g</p>
           </div>
           <div className="bg-pestle-card/80 border border-pestle-border/60 py-1.5 rounded-xl">
-            <p className="text-[9px] font-bold text-gray-400 uppercase">Өөх тос (Fat)</p>
+            <p className="text-[9px] font-bold text-gray-400 uppercase">{t('calendar_fatLabel')}</p>
             <p className="text-xs font-black text-pestle-text">{dailyNutrition.totalFat}g</p>
           </div>
         </div>
       </div>
 
+      {/* Interactive Macro Nutrient Progress Tracker */}
+      <MacroProgressWidget />
+
       {/* ── MEAL TIME SLOTS (Өглөө, Өдөр, Орой) ──────────────────────────────── */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-base font-black text-pestle-text tracking-tight">
-            Хоолны цагийн хуваарь
+            {t('calendar_mealSchedule')}
           </h3>
-          <span className="text-xs font-bold text-gray-400">Сонгосон өдөр: {activeDaySchedule.dayLabel}</span>
+          <span className="text-xs font-bold text-gray-400">{t('calendar_selectedDay', { n: activeDaySchedule.dayLabel })}</span>
         </div>
 
         <div className="grid grid-cols-3 gap-2 bg-pestle-card border border-pestle-border p-1.5 rounded-2xl">
           {[
-            { id: 'breakfast' as MealType, label: 'Өглөөний цай', icon: Sun, recipe: activeDaySchedule.breakfast },
-            { id: 'lunch' as MealType, label: 'Өдрийн хоол', icon: SunMedium, recipe: activeDaySchedule.lunch },
-            { id: 'dinner' as MealType, label: 'Оройн хоол', icon: Moon, recipe: activeDaySchedule.dinner },
+            { id: 'breakfast' as MealType, label: t('calendar_breakfast'), icon: Sun, recipe: activeDaySchedule.breakfast },
+            { id: 'lunch' as MealType, label: t('calendar_lunch'), icon: SunMedium, recipe: activeDaySchedule.lunch },
+            { id: 'dinner' as MealType, label: t('calendar_dinner'), icon: Moon, recipe: activeDaySchedule.dinner },
           ].map((m) => {
             const Icon = m.icon;
             const isSelected = selectedMealType === m.id;
@@ -346,14 +365,14 @@ export const CalendarView: React.FC = () => {
                   : 'bg-amber-500 text-white'
               }`}
             >
-              Тохироо: {ingredientStatus.matchPct}%
+              {t('calendar_match', { n: ingredientStatus.matchPct })}
             </span>
           </div>
 
           {/* Bottom Title overlay */}
           <div className="absolute bottom-4 left-4 right-4 text-white space-y-1">
             <span className="text-[10px] font-extrabold uppercase bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-full text-white/90">
-              {activeRecipe.category || 'Онцлох жор'}
+              {activeRecipe.category || t('calendar_featuredRecipe')}
             </span>
             <h3 className="text-xl sm:text-2xl font-black text-white drop-shadow-md leading-tight">
               {lang === 'mn' ? activeRecipe.title : activeRecipe.titleEn}
@@ -366,19 +385,19 @@ export const CalendarView: React.FC = () => {
           {/* Nutrition Info Pills */}
           <div className="grid grid-cols-4 gap-2 bg-pestle-bg p-3 rounded-2xl border border-pestle-border/60 text-center">
             <div>
-              <span className="text-[9px] font-bold text-gray-400 uppercase">Илчлэг</span>
+              <span className="text-[9px] font-bold text-gray-400 uppercase">{t('calendar_calories')}</span>
               <p className="text-xs sm:text-sm font-black text-mango">{activeRecipe.nutrition.calories} kcal</p>
             </div>
             <div>
-              <span className="text-[9px] font-bold text-gray-400 uppercase">Уураг</span>
+              <span className="text-[9px] font-bold text-gray-400 uppercase">{t('calendar_protein')}</span>
               <p className="text-xs sm:text-sm font-black text-pestle-text">{activeRecipe.nutrition.protein}g</p>
             </div>
             <div>
-              <span className="text-[9px] font-bold text-gray-400 uppercase">Нүүрс ус</span>
+              <span className="text-[9px] font-bold text-gray-400 uppercase">{t('calendar_carbs')}</span>
               <p className="text-xs sm:text-sm font-black text-pestle-text">{activeRecipe.nutrition.carbs}g</p>
             </div>
             <div>
-              <span className="text-[9px] font-bold text-gray-400 uppercase">Өөх тос</span>
+              <span className="text-[9px] font-bold text-gray-400 uppercase">{t('calendar_fat')}</span>
               <p className="text-xs sm:text-sm font-black text-pestle-text">{activeRecipe.nutrition.fat}g</p>
             </div>
           </div>
@@ -386,9 +405,9 @@ export const CalendarView: React.FC = () => {
           {/* ── INGREDIENTS STATUS (ХӨРГӨГЧИД БАЙГАА / ДУТУУ) ──────────────── */}
           <div className="space-y-3 pt-1">
             <h4 className="text-xs font-black text-pestle-text flex items-center justify-between">
-              <span>Хэрэгцээт орцын шинжилгээ</span>
+              <span>{t('calendar_ingredientAnalysis')}</span>
               <span className="text-[11px] text-gray-400 font-bold">
-                Нийт {activeRecipe.ingredients.length} орц
+                {t('calendar_totalIngredients', { n: activeRecipe.ingredients.length })}
               </span>
             </h4>
 
@@ -396,7 +415,7 @@ export const CalendarView: React.FC = () => {
             {ingredientStatus.available.length > 0 && (
               <div className="space-y-1.5">
                 <p className="text-[10px] font-extrabold text-mint uppercase tracking-wider flex items-center gap-1">
-                  <CheckCircle2 size={12} /> Хөргөгчид бэлэн байгаа орц ({ingredientStatus.available.length})
+                  <CheckCircle2 size={12} /> {t('calendar_availableIngredients', { n: ingredientStatus.available.length })}
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {ingredientStatus.available.map((ing, idx) => (
@@ -415,7 +434,7 @@ export const CalendarView: React.FC = () => {
             {ingredientStatus.missing.length > 0 && (
               <div className="space-y-2 pt-1">
                 <p className="text-[10px] font-extrabold text-amber-500 uppercase tracking-wider flex items-center gap-1">
-                  <AlertCircle size={12} /> Дутуу байгаа орц ({ingredientStatus.missing.length})
+                  <AlertCircle size={12} /> {t('calendar_missingIngredients', { n: ingredientStatus.missing.length })}
                 </p>
 
                 <div className="space-y-2 bg-pestle-bg p-3 rounded-2xl border border-pestle-border/60">
@@ -439,7 +458,7 @@ export const CalendarView: React.FC = () => {
                     className="w-full mt-2 bg-mint hover:bg-mint/90 text-white py-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-2 shadow-md shadow-mint/20 transition-all cursor-pointer active:scale-95"
                   >
                     <ShoppingCart size={15} />
-                    <span>Дутуу орцуудыг сагсанд нэмэх</span>
+                    <span>{t('calendar_addMissingToCart')}</span>
                   </button>
                 </div>
               </div>
@@ -455,10 +474,11 @@ export const CalendarView: React.FC = () => {
             className="w-full btn-primary py-3.5 font-black text-sm flex items-center justify-center gap-2.5 shadow-lg shadow-mango/25 active:scale-95 transition-all cursor-pointer rounded-2xl"
           >
             <Flame size={18} />
-            <span>Одоо хийх — Алхамчилсан тогооч горим</span>
+            <span>{t('calendar_cookNow')}</span>
           </button>
         </div>
       </motion.div>
+      </>)}
     </div>
   );
 };

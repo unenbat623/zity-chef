@@ -16,7 +16,7 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
   ingredient,
   onClose,
 }) => {
-  const { updateIngredient, removeIngredient } = useApp();
+  const { updateIngredient, removeIngredient, t } = useApp();
 
   const [name, setName] = useState<string>(ingredient.name);
   const [category, setCategory] = useState<Category>(ingredient.category);
@@ -78,10 +78,10 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
         {/* Modal Header */}
         <div className="flex justify-between items-center pb-4 border-b border-pestle-border/60">
           <div>
-            <h2 className="text-lg font-extrabold text-pestle-text">Материал Засах / Шинэчлэх</h2>
+            <h2 className="text-lg font-extrabold text-pestle-text">{t('edit_title')}</h2>
             <p className="text-xs text-gray-400 font-medium">{ingredient.name}</p>
           </div>
-          <button onClick={onClose} className="modal-close-btn">
+          <button onClick={onClose} aria-label={t('close')} className="modal-close-btn">
             <X size={18} />
           </button>
         </div>
@@ -91,8 +91,8 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
           {/* Image Upload / Preview */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-pestle-text flex justify-between">
-              <span>Материалын Зураг</span>
-              <span className="text-[10px] text-mango font-semibold">Солихын тулд товшино уу</span>
+              <span>{t('edit_ingredientImage')}</span>
+              <span className="text-[10px] text-mango font-semibold">{t('edit_tapToChange')}</span>
             </label>
 
             <input
@@ -111,7 +111,7 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
                 <>
                   <img src={imageBase64} alt={name} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
-                    <Camera size={16} /> Зураг солих
+                    <Camera size={16} /> {t('edit_changeImage')}
                   </div>
                 </>
               ) : (
@@ -126,7 +126,7 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-pestle-text">Нэр</label>
+            <label className="text-xs font-bold text-pestle-text">{t('edit_name')}</label>
             <input
               type="text"
               required
@@ -138,7 +138,7 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-pestle-text">Ангилал</label>
+              <label className="text-xs font-bold text-pestle-text">{t('edit_category')}</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as Category)}
@@ -153,7 +153,7 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-pestle-text">Хадгалах хугацаа (хоног)</label>
+              <label className="text-xs font-bold text-pestle-text">{t('edit_expiryDays')}</label>
               <input
                 type="number"
                 min={1}
@@ -168,7 +168,7 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
           {/* Quantity Controls */}
           <div className="space-y-2 pt-2">
             <div className="flex justify-between items-center">
-              <label className="text-xs font-bold text-pestle-text">Хэмжээ ба Нэгж</label>
+              <label className="text-xs font-bold text-pestle-text">{t('edit_quantityAndUnit')}</label>
               <div className="flex bg-pestle-bg p-1 rounded-xl border border-pestle-border text-xs font-bold">
                 {(['гр', 'л', 'ш'] as const).map((u) => (
                   <button
@@ -179,7 +179,7 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
                       unit === u ? 'bg-mango text-white' : 'text-gray-400'
                     }`}
                   >
-                    {u}
+                    {u === 'гр' ? t('edit_unitGram') : u === 'л' ? t('edit_unitLiter') : t('edit_unitPiece')}
                   </button>
                 ))}
               </div>
@@ -217,13 +217,13 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
               className="bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white px-4 py-3 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
             >
               <Trash2 size={16} />
-              <span>Устгах</span>
+              <span>{t('edit_delete')}</span>
             </button>
             <button
               type="submit"
               className="btn-primary flex-1 py-3 text-xs shadow-md shadow-mango/20"
             >
-              Өөрчлөлтийг хадгалах
+              {t('edit_saveChanges')}
             </button>
           </div>
         </form>

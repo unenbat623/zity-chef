@@ -1,11 +1,10 @@
 import { Ingredient, Language } from '../types';
 import { formatQuantity } from '../lib/utils';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+import { authedFetch } from '../lib/apiClient';
 
 // ── Retry with exponential backoff ──────────────────────────────────────────
 async function fetchWithRetry(
-  url: string,
+  path: string,
   options: RequestInit,
   retries = 3,
   baseDelayMs = 300
@@ -13,7 +12,7 @@ async function fetchWithRetry(
   let lastError: Error = new Error('Unknown error');
   for (let attempt = 0; attempt < retries; attempt++) {
     try {
-      const response = await fetch(url, options);
+      const response = await authedFetch(path, options);
       if (response.status === 429) {
         // Rate limited — wait longer
         await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
@@ -50,9 +49,8 @@ export async function getSisterAdvice(
     return pendingRequests.get(requestKey)!;
   }
 
-  const promise = fetchWithRetry(`${API_BASE}/api/ai/chat`, {
+  const promise = fetchWithRetry('/api/ai/chat', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message, inventoryContext, lang }),
   })
     .then(async (res) => {
@@ -77,9 +75,8 @@ export async function parseReceiptImage(
   mimeType = 'image/jpeg'
 ): Promise<Partial<Ingredient>[]> {
   try {
-    const res = await fetchWithRetry(`${API_BASE}/api/ai/ocr`, {
+    const res = await fetchWithRetry('/api/ai/ocr', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ base64Image, mimeType }),
     });
 
@@ -112,7 +109,7 @@ export async function parseReceiptImage(
 // ── Health check ─────────────────────────────────────────────────────────────
 export async function getServerHealth() {
   try {
-    const res = await fetch(`${API_BASE}/api/health`);
+    const res = await authedFetch('/api/health');
     return res.ok ? res.json() : null;
   } catch {
     return null;
