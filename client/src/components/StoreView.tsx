@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import {
   Store,
@@ -11,22 +11,21 @@ import {
   ChevronRight,
   Activity,
   LayoutDashboard,
+  ChefHat,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { MOCK_INGREDIENTS } from '../constants';
 import { SmartImage } from './SmartImage';
 import { getIngredientImageUrl } from '../lib/imageService';
 import { useStoreProducts } from '../hooks/useStoreProducts';
+import { useRecipes } from '../hooks/useRecipes';
+import {
+  CatalogProduct,
+  buildProductCartItem,
+  buildRecipeBundle,
+} from '../lib/recipeStore';
 
-interface CatalogItem {
-  id: string;
-  name: string;
-  nameEn?: string | null;
-  emoji: string;
-  unit: string;
-  pricePerUnit?: number;
-  imageUrl?: string | null;
-}
+type CatalogItem = CatalogProduct;
 
 export const StoreView: React.FC = () => {
   const {
@@ -41,26 +40,45 @@ export const StoreView: React.FC = () => {
     ordersError,
     setActiveTab,
     lang,
+    savedRecipeIds,
     t,
   } = useApp();
   const { products, loading } = useStoreProducts();
+  const { recipes } = useRecipes();
   // Real DB catalog when available; fall back to the bundled mock list.
   const catalog: CatalogItem[] = products.length ? products : (MOCK_INGREDIENTS as CatalogItem[]);
   const nameOf = (item: CatalogItem) => (lang === 'en' && item.nameEn ? item.nameEn : item.name);
 
   const [address, setAddress] = useState<string>('Сүхбаатар дүүрэг, 1-р хороо, Zity Tower 402');
   const [activeSubTab, setActiveSubTab] = useState<'catalog' | 'cart' | 'orders'>('catalog');
+  const [addedBundleIds, setAddedBundleIds] = useState<string[]>([]);
+
+  // Recipes mapped onto the store catalog: buyable ingredient bundles.
+  // Saved recipes come first, then the ones the store covers best.
+  const recipeBundles = useMemo(() => {
+    return recipes
+      .map((recipe) => buildRecipeBundle(recipe, catalog))
+      .filter((bundle) => bundle.matched.length > 0)
+      .sort((a, b) => {
+        const aSaved = savedRecipeIds.includes(a.recipe.id) ? 1 : 0;
+        const bSaved = savedRecipeIds.includes(b.recipe.id) ? 1 : 0;
+        if (aSaved !== bSaved) return bSaved - aSaved;
+        return b.matched.length / b.totalIngredients - a.matched.length / a.totalIngredients;
+      })
+      .slice(0, 4);
+  }, [recipes, catalog, savedRecipeIds]);
 
   const handleAddToCart = (item: CatalogItem, displayName: string) => {
-    addToCart({
-      id: `cart-${item.id}-${Date.now()}`,
-      name: displayName,
-      emoji: item.emoji,
-      unit: item.unit,
-      quantity: item.unit === 'гр' ? 500 : 1,
-      pricePerUnit: item.pricePerUnit || 3000,
-      totalPrice: (item.pricePerUnit || 3000) * (item.unit === 'гр' ? 1 : 1),
+    addToCart(buildProductCartItem(item, displayName));
+  };
+
+  const handleAddBundle = (bundle: (typeof recipeBundles)[number]) => {
+    bundle.matched.forEach(({ product }) => {
+      addToCart(buildProductCartItem(product, nameOf(product)));
     });
+    setAddedBundleIds((prev) =>
+      prev.includes(bundle.recipe.id) ? prev : [...prev, bundle.recipe.id]
+    );
   };
 
   const handleCheckout = () => {
@@ -157,6 +175,78 @@ export const StoreView: React.FC = () => {
               </div>
             ))}
           </div>
+
+          {/* Recipe Bundles — buy a recipe's ingredients in one tap */}
+          {recipeBundles.length > 0 && (
+            <section className="space-y-3 bg-gradient-to-r from-mango/10 via-amber-500/5 to-emerald-500/10 p-4 sm:p-5 rounded-3xl border border-mango/20">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-black text-pestle-text flex items-center gap-2">
+                  <ChefHat size={18} className="text-mango" />
+                  <span>{t('store_recipeBundles')}</span>
+                </h3>
+                <button
+                  onClick={() => setActiveTab('recipe')}
+                  className="text-[11px] font-black text-mango hover:text-amber-600 bg-mango/10 hover:bg-mango/20 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1 shrink-0"
+                >
+                  {t('store_openRecipes')} <ChevronRight size={13} />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {recipeBundles.map((bundle) => {
+                  const isAdded = addedBundleIds.includes(bundle.recipe.id);
+                  const title =
+                    lang === 'mn'
+                      ? bundle.recipe.title
+                      : bundle.recipe.titleEn || bundle.recipe.title;
+                  return (
+                    <div
+                      key={bundle.recipe.id}
+                      className="bg-pestle-card border border-pestle-border rounded-2xl p-3 flex items-center gap-3 shadow-xs hover:shadow-md transition-all"
+                    >
+                      <SmartImage
+                        src={bundle.recipe.image}
+                        alt={title}
+                        emoji="🍽️"
+                        className="w-16 h-16 rounded-xl shrink-0"
+                      />
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <h4 className="text-xs font-black text-pestle-text truncate">{title}</h4>
+                        <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full inline-block">
+                          {t('store_bundleAvailable', {
+                            matched: bundle.matched.length,
+                            total: bundle.totalIngredients,
+                          })}
+                        </span>
+                        <span className="text-xs font-black text-mango block">
+                          ≈ ₮{bundle.totalPrice.toLocaleString()}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleAddBundle(bundle)}
+                        disabled={isAdded}
+                        className={`shrink-0 text-[10px] font-black px-3 py-2 rounded-xl flex items-center gap-1 transition-all ${
+                          isAdded
+                            ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 cursor-default'
+                            : 'bg-mango text-white shadow-md shadow-mango/25 active:scale-95'
+                        }`}
+                      >
+                        {isAdded ? (
+                          <>
+                            <CheckCircle size={13} /> {t('store_bundleAdded')}
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingBag size={13} /> {t('store_addBundle')}
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
 
           {/* Product Catalog Grid */}
           <div className="space-y-3">

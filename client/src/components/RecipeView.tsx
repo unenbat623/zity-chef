@@ -18,6 +18,14 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useRecipes } from '../hooks/useRecipes';
+import { useStoreProducts } from '../hooks/useStoreProducts';
+import { MOCK_INGREDIENTS } from '../constants';
+import {
+  CatalogProduct,
+  buildIngredientCartItem,
+  matchIngredientToProduct,
+  FALLBACK_INGREDIENT_PRICE,
+} from '../lib/recipeStore';
 import { Recipe, RecipeCategory } from '../types';
 import { SmartImage } from './SmartImage';
 
@@ -36,8 +44,14 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
 }) => {
   const { lang, subscription, setShowSubModal, setActiveCookingRecipe, setActiveTab, inventory, addToCart, savedRecipeIds, toggleSaveRecipe, t } =
     useApp();
+  const { products } = useStoreProducts();
+  // Same catalog the store tab sells from — recipe orders resolve to real products.
+  const storeCatalog: CatalogProduct[] = products.length
+    ? products
+    : (MOCK_INGREDIENTS as CatalogProduct[]);
 
   const isSaved = savedRecipeIds.includes(recipe.id);
+  const [missingAdded, setMissingAdded] = useState(false);
 
   const handleStartCooking = () => {
     if (recipe.isPremium && subscription === 'free') {
@@ -71,16 +85,39 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
     return { present, missing, count: present.length, total: recipeIngredients.length };
   }, [recipeIngredients, inventory]);
 
+  // Resolve each missing ingredient against the store catalog once.
+  const missingWithProducts = useMemo(
+    () =>
+      matchDetails.missing.map((ing) => ({
+        ingredient: ing,
+        product: matchIngredientToProduct(ing, storeCatalog),
+      })),
+    [matchDetails.missing, storeCatalog]
+  );
+
+  const missingTotalPrice = useMemo(
+    () =>
+      missingWithProducts.reduce(
+        (sum, m) => sum + (m.product?.pricePerUnit || FALLBACK_INGREDIENT_PRICE),
+        0
+      ),
+    [missingWithProducts]
+  );
+
   const handleAddMissingToCart = (ingName: string) => {
-    addToCart({
-      id: `cart-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-      name: ingName,
-      emoji: '🛒',
-      unit: 'ш',
-      quantity: 1,
-      pricePerUnit: 3500,
-      totalPrice: 3500,
+    addToCart(buildIngredientCartItem(ingName, storeCatalog, lang));
+  };
+
+  const handleAddAllMissing = () => {
+    matchDetails.missing.forEach((ing) => {
+      addToCart(buildIngredientCartItem(ing, storeCatalog, lang));
     });
+    setMissingAdded(true);
+  };
+
+  const handleGoToStore = () => {
+    setActiveTab('store');
+    onClose();
   };
 
   return (
@@ -212,6 +249,9 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {recipeIngredients.map((ing, i) => {
               const isPresent = matchDetails.present.includes(ing);
+              const storeProduct = isPresent
+                ? null
+                : missingWithProducts.find((m) => m.ingredient === ing)?.product ?? null;
               return (
                 <div
                   key={i}
@@ -237,15 +277,60 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
                   {!isPresent && (
                     <button
                       onClick={() => handleAddMissingToCart(ing)}
-                      className="text-[10px] bg-mango/15 hover:bg-mango text-mango hover:text-white px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 font-bold"
+                      className="text-[10px] bg-mango/15 hover:bg-mango text-mango hover:text-white px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 font-bold shrink-0"
+                      title={
+                        storeProduct
+                          ? t('recipe_inStoreAs', { name: storeProduct.name })
+                          : t('recipe_order')
+                      }
                     >
-                      <ShoppingBag size={11} /> {t('recipe_order')}
+                      <ShoppingBag size={11} />
+                      <span>
+                        {storeProduct ? storeProduct.emoji : ''} ₮
+                        {(storeProduct?.pricePerUnit || FALLBACK_INGREDIENT_PRICE).toLocaleString()}
+                      </span>
                     </button>
                   )}
                 </div>
               );
             })}
           </div>
+
+          {/* Order every missing ingredient from the store in one tap */}
+          {matchDetails.missing.length > 0 && (
+            <div className="bg-mango/8 border border-mango/25 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-black text-pestle-text flex items-center gap-1.5">
+                  <ShoppingBag size={15} className="text-mango" />
+                  {t('recipe_missingFromStore', { n: matchDetails.missing.length })}
+                </span>
+                <span className="text-xs font-black text-mango">
+                  ≈ ₮{missingTotalPrice.toLocaleString()}
+                </span>
+              </div>
+              {missingAdded ? (
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <span className="flex-1 text-center text-xs font-black text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 rounded-xl py-2.5">
+                    ✓ {t('recipe_missingAdded')}
+                  </span>
+                  <button
+                    onClick={handleGoToStore}
+                    className="flex-1 btn-primary py-2.5 text-xs font-bold flex items-center justify-center gap-1.5"
+                  >
+                    <ShoppingBag size={14} /> {t('recipe_goToStoreCart')}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handleAddAllMissing}
+                  className="w-full btn-primary py-3 text-xs font-bold flex items-center justify-center gap-2"
+                >
+                  <ShoppingBag size={15} />
+                  <span>{t('recipe_addAllMissing', { n: matchDetails.missing.length })}</span>
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Cooking Steps */}
