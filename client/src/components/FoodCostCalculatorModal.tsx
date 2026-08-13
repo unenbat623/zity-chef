@@ -7,10 +7,26 @@ interface IngredientCostItem {
   id: string;
   name: string;
   quantity: number;
-  unit: string;
-  pricePerUnit: number;
+  unit: UnitCode;
+  pricePerUnit: number; // price for ONE base unit (1 g, 1 ml, 1 pc...)
   wastePercentage: number; // e.g. 10% waste during cleaning/cooking
 }
+
+type UnitCode = 'g' | 'kg' | 'ml' | 'l' | 'pc' | 'portion';
+
+// The price is typed in the unit people actually buy in (₮ per kg / per litre / per piece),
+// while quantity is typed in the unit people cook with (g / ml / pc).
+const UNIT_OPTIONS: { code: UnitCode; priceBasis: UnitCode; factor: number }[] = [
+  { code: 'g', priceBasis: 'kg', factor: 1000 },
+  { code: 'kg', priceBasis: 'kg', factor: 1 },
+  { code: 'ml', priceBasis: 'l', factor: 1000 },
+  { code: 'l', priceBasis: 'l', factor: 1 },
+  { code: 'pc', priceBasis: 'pc', factor: 1 },
+  { code: 'portion', priceBasis: 'portion', factor: 1 },
+];
+
+const getUnitMeta = (unit: UnitCode) =>
+  UNIT_OPTIONS.find((u) => u.code === unit) ?? UNIT_OPTIONS[0];
 
 export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
   isOpen,
@@ -22,10 +38,10 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
   const [targetMargin, setTargetMargin] = useState(65); // 65% Gross Margin
 
   const [ingredients, setIngredients] = useState<IngredientCostItem[]>([
-    { id: '1', name: 'Үхрийн цул мах', quantity: 600, unit: 'г', pricePerUnit: 22000 / 1000, wastePercentage: 5 },
-    { id: '2', name: 'Дээд гурил', quantity: 500, unit: 'г', pricePerUnit: 3500 / 1000, wastePercentage: 2 },
-    { id: '3', name: 'Сонгино, лууван', quantity: 250, unit: 'г', pricePerUnit: 4000 / 1000, wastePercentage: 12 },
-    { id: '4', name: 'Ургамлын тос & амтлагч', quantity: 1, unit: 'порц', pricePerUnit: 1500, wastePercentage: 0 },
+    { id: '1', name: 'Үхрийн цул мах', quantity: 600, unit: 'g', pricePerUnit: 22000 / 1000, wastePercentage: 5 },
+    { id: '2', name: 'Дээд гурил', quantity: 500, unit: 'g', pricePerUnit: 3500 / 1000, wastePercentage: 2 },
+    { id: '3', name: 'Сонгино, лууван', quantity: 250, unit: 'g', pricePerUnit: 4000 / 1000, wastePercentage: 12 },
+    { id: '4', name: 'Ургамлын тос & амтлагч', quantity: 1, unit: 'portion', pricePerUnit: 1500, wastePercentage: 0 },
   ]);
 
   const addIngredientRow = () => {
@@ -35,7 +51,7 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
         id: `ing-${Date.now()}`,
         name: t('cost_newIngredient'),
         quantity: 100,
-        unit: 'г',
+        unit: 'g',
         pricePerUnit: 5,
         wastePercentage: 0,
       },
@@ -49,6 +65,26 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
   const updateRow = (id: string, field: keyof IngredientCostItem, value: any) => {
     setIngredients((prev) =>
       prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
+    );
+  };
+
+  // The user types the price per purchase unit (₮/kg), so keep that number stable
+  // when the unit changes and convert the stored per-base-unit price instead.
+  const updateUnit = (id: string, unit: UnitCode) => {
+    setIngredients((prev) =>
+      prev.map((item) => {
+        if (item.id !== id) return item;
+        const shownPrice = item.pricePerUnit * getUnitMeta(item.unit).factor;
+        return { ...item, unit, pricePerUnit: shownPrice / getUnitMeta(unit).factor };
+      })
+    );
+  };
+
+  const updateShownPrice = (id: string, shownPrice: number) => {
+    setIngredients((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, pricePerUnit: shownPrice / getUnitMeta(item.unit).factor } : item
+      )
     );
   };
 
@@ -193,44 +229,130 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
             </button>
           </div>
 
-          <div className="space-y-2 max-h-56 overflow-y-auto no-scrollbar pr-1">
-            {ingredients.map((item) => (
-              <div
-                key={item.id}
-                className="grid grid-cols-12 gap-2 items-center bg-pestle-bg p-2 rounded-xl border border-pestle-border/60 text-xs"
-              >
-                <input
-                  type="text"
-                  value={item.name}
-                  onChange={(e) => updateRow(item.id, 'name', e.target.value)}
-                  placeholder={t('cost_ingredientName')}
-                  className="col-span-4 bg-pestle-card border border-pestle-border rounded-lg px-2 py-1 font-bold text-pestle-text"
-                />
-                <input
-                  type="number"
-                  value={item.quantity}
-                  onChange={(e) => updateRow(item.id, 'quantity', parseFloat(e.target.value) || 0)}
-                  placeholder={t('cost_quantity')}
-                  className="col-span-2 bg-pestle-card border border-pestle-border rounded-lg px-2 py-1 font-mono text-pestle-text text-center"
-                />
-                <input
-                  type="number"
-                  value={item.pricePerUnit}
-                  onChange={(e) => updateRow(item.id, 'pricePerUnit', parseFloat(e.target.value) || 0)}
-                  placeholder={t('cost_unitPrice')}
-                  className="col-span-3 bg-pestle-card border border-pestle-border rounded-lg px-2 py-1 font-mono text-pestle-text text-center"
-                />
-                <div className="col-span-2 text-right font-mono font-black text-mango">
-                  ₮{Math.round(item.quantity * (1 + item.wastePercentage / 100) * item.pricePerUnit).toLocaleString()}
-                </div>
-                <button
-                  onClick={() => removeIngredientRow(item.id)}
-                  className="col-span-1 text-gray-400 hover:text-rose-500 flex justify-end cursor-pointer"
+          <p className="text-[10px] text-gray-400 font-medium leading-snug">{t('cost_ingredientsHint')}</p>
+
+          <div className="space-y-2 max-h-72 overflow-y-auto no-scrollbar pr-1">
+            {ingredients.map((item) => {
+              const unitMeta = getUnitMeta(item.unit);
+              const unitLabel = t(`cost_unit_${item.unit}`);
+              const basisLabel = t(`cost_unit_${unitMeta.priceBasis}`);
+              const shownPrice = Math.round(item.pricePerUnit * unitMeta.factor * 100) / 100;
+              const lineTotal = Math.round(
+                item.quantity * (1 + item.wastePercentage / 100) * item.pricePerUnit
+              );
+
+              return (
+                <div
+                  key={item.id}
+                  className="bg-pestle-bg p-2.5 rounded-xl border border-pestle-border/60 text-xs space-y-2"
                 >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            ))}
+                  {/* Ingredient name */}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={item.name}
+                      onChange={(e) => updateRow(item.id, 'name', e.target.value)}
+                      placeholder={t('cost_ingredientName')}
+                      className="flex-1 min-w-0 bg-pestle-card border border-pestle-border rounded-lg px-2 py-1.5 font-bold text-pestle-text focus:outline-none focus:border-mango"
+                    />
+                    <button
+                      onClick={() => removeIngredientRow(item.id)}
+                      className="text-gray-400 hover:text-rose-500 cursor-pointer shrink-0"
+                      aria-label={t('cost_removeIngredient')}
+                      title={t('cost_removeIngredient')}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+
+                  {/* Labelled inputs: amount + unit + purchase price + waste */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div className="space-y-0.5">
+                      <label className="text-[9px] font-extrabold text-gray-400 uppercase block">
+                        {t('cost_quantity')}
+                      </label>
+                      <div className="flex items-center bg-pestle-card border border-pestle-border rounded-lg px-2 focus-within:border-mango">
+                        <input
+                          type="number"
+                          min={0}
+                          value={item.quantity}
+                          onChange={(e) => updateRow(item.id, 'quantity', parseFloat(e.target.value) || 0)}
+                          className="w-full min-w-0 bg-transparent py-1.5 font-mono text-pestle-text focus:outline-none"
+                        />
+                        <span className="text-[10px] font-bold text-gray-400 pl-1 shrink-0">{unitLabel}</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-0.5">
+                      <label className="text-[9px] font-extrabold text-gray-400 uppercase block">
+                        {t('cost_unit')}
+                      </label>
+                      <select
+                        value={item.unit}
+                        onChange={(e) => updateUnit(item.id, e.target.value as UnitCode)}
+                        className="w-full bg-pestle-card border border-pestle-border rounded-lg px-2 py-1.5 font-bold text-pestle-text cursor-pointer focus:outline-none focus:border-mango"
+                      >
+                        {UNIT_OPTIONS.map((u) => (
+                          <option key={u.code} value={u.code}>
+                            {t(`cost_unit_${u.code}`)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-0.5">
+                      <label className="text-[9px] font-extrabold text-gray-400 uppercase block truncate">
+                        {t('cost_purchasePrice', { unit: basisLabel })}
+                      </label>
+                      <div className="flex items-center bg-pestle-card border border-pestle-border rounded-lg px-2 focus-within:border-mango">
+                        <span className="text-[10px] font-bold text-gray-400 pr-1 shrink-0">₮</span>
+                        <input
+                          type="number"
+                          min={0}
+                          value={shownPrice}
+                          onChange={(e) => updateShownPrice(item.id, parseFloat(e.target.value) || 0)}
+                          className="w-full min-w-0 bg-transparent py-1.5 font-mono text-pestle-text focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-0.5">
+                      <label className="text-[9px] font-extrabold text-gray-400 uppercase block truncate">
+                        {t('cost_waste')}
+                      </label>
+                      <div className="flex items-center bg-pestle-card border border-pestle-border rounded-lg px-2 focus-within:border-mango">
+                        <input
+                          type="number"
+                          min={0}
+                          max={100}
+                          value={item.wastePercentage}
+                          onChange={(e) =>
+                            updateRow(
+                              item.id,
+                              'wastePercentage',
+                              Math.min(100, Math.max(0, parseFloat(e.target.value) || 0))
+                            )
+                          }
+                          className="w-full min-w-0 bg-transparent py-1.5 font-mono text-pestle-text focus:outline-none"
+                        />
+                        <span className="text-[10px] font-bold text-gray-400 pl-1 shrink-0">%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Plain-language formula so the line total is never a mystery number */}
+                  <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-t border-pestle-border/60 pt-1.5">
+                    <span className="text-[10px] text-gray-400 font-mono">
+                      {item.quantity.toLocaleString()} {unitLabel} × ₮{shownPrice.toLocaleString()}/{basisLabel}
+                      {item.wastePercentage > 0 && ` + ${item.wastePercentage}% ${t('cost_wasteShort')}`}
+                    </span>
+                    <span className="font-mono font-black text-mango">
+                      = ₮{lineTotal.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
