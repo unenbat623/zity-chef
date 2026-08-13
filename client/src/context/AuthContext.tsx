@@ -51,6 +51,23 @@ function getAuthRedirectUrl(): string {
   return window.location.origin;
 }
 
+function cleanAuthTokensFromUrl(): void {
+  if (typeof window === 'undefined') return;
+  const hash = window.location.hash || '';
+  const search = window.location.search || '';
+  const hasAuthPayload =
+    hash.includes('access_token=') ||
+    hash.includes('refresh_token=') ||
+    search.includes('access_token=') ||
+    search.includes('refresh_token=');
+
+  if (!hasAuthPayload) return;
+
+  const url = new URL(window.location.href);
+  url.hash = '';
+  window.history.replaceState({}, document.title, url.toString());
+}
+
 function getUserDisplayName(user: User): string | null {
   const meta = user.user_metadata ?? {};
   return (
@@ -110,6 +127,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!active) return;
       if (data.session) {
         await ensureChefProfile(data.session.user);
+        cleanAuthTokensFromUrl();
         setSession(data.session);
         setLoading(false);
       } else {
@@ -131,6 +149,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // When the identity actually changes, re-fetch all user-scoped data so a
       // login/logout swaps the fridge/orders to the correct account.
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
+        if (event === 'SIGNED_IN') cleanAuthTokensFromUrl();
         void ensureChefProfile(next?.user ?? null);
         queryClient.invalidateQueries();
       }

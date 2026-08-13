@@ -2,6 +2,7 @@ import { getAccessToken } from './supabase';
 
 function getDefaultApiBase(): string {
   if (typeof window === 'undefined') return 'http://localhost:3002';
+  if (import.meta.env.PROD) return '';
   return `${window.location.protocol}//${window.location.hostname}:3002`;
 }
 

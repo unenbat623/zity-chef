@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { supabaseAdmin } from '../supabase.js';
+import { supabaseAuth } from '../supabase.js';
 
 export const GUEST_ID = 'guest-user-00000000-0000-0000-0000-000000000000';
 
@@ -75,9 +75,9 @@ export async function authenticateToken(
   }
 
   // 2️⃣ Remote validation via Supabase Auth.
-  if (supabaseAdmin) {
+  if (supabaseAuth) {
     try {
-      const { data, error } = await supabaseAdmin.auth.getUser(token);
+      const { data, error } = await supabaseAuth.auth.getUser(token);
       if (!error && data.user) {
         req.user = {
           id: data.user.id,

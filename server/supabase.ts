@@ -27,6 +27,21 @@ export const supabaseAdmin =
     : null;
 
 /**
+ * Auth verification only needs a Supabase client that can call auth.getUser().
+ * Prefer service role when configured, but fall back to the anon key so
+ * production deployments without service_role still treat valid Google users
+ * as authenticated instead of silently dropping them into guest memory mode.
+ */
+export const supabaseAuth =
+  hasAdminConfig
+    ? supabaseAdmin
+    : hasAnonConfig
+      ? createClient(supabaseUrl, anonKey, {
+          auth: { autoRefreshToken: false, persistSession: false },
+        })
+      : null;
+
+/**
  * True when the per-user database path is usable. Requires the URL + anon key,
  * because user data is read/written through an RLS-scoped client (below), not
  * through the admin client.
