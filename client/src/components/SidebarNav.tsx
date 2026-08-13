@@ -6,13 +6,13 @@ import {
   Store,
   BookOpen,
   Users,
-  ChefHat,
   UserCircle,
   User,
   HelpCircle,
   LayoutDashboard,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { BrandLogo } from './BrandLogo';
 
 export const SidebarNav: React.FC = () => {
   const {
@@ -46,11 +46,7 @@ export const SidebarNav: React.FC = () => {
       {/* Brand Header */}
       <div className="space-y-6">
         <div className="flex items-center gap-3">
-          <div
-            className={`w-10 h-10 rounded-2xl bg-gradient-to-tr ${profile.coverGradient} flex items-center justify-center text-white shadow-md`}
-          >
-            <ChefHat size={22} strokeWidth={2.5} />
-          </div>
+          <BrandLogo className="w-10 h-10 shrink-0 drop-shadow-md" />
           <div>
             <div className="flex items-center gap-1.5">
               <h1 className="font-black text-base text-pestle-text tracking-tight">Zity Chef</h1>

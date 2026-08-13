@@ -97,14 +97,14 @@ export const FloatingAssistant: React.FC = () => {
             className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom,0px))] md:bottom-24 right-3 left-3 sm:left-auto sm:right-6 sm:w-80 bg-pestle-card border border-pestle-border rounded-[28px] shadow-2xl z-[150] overflow-hidden flex flex-col h-[420px] max-h-[68vh]"
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-mango to-amber-500 p-3.5 text-white flex items-center justify-between shrink-0 shadow-sm">
+            <div className="bg-gradient-to-r from-mango to-teal-600 p-3.5 text-white flex items-center justify-between shrink-0 shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center font-bold text-base">
                   👨‍🍳
                 </div>
                 <div>
                   <p className="font-extrabold text-xs sm:text-sm flex items-center gap-1.5">
-                    {t('assistantName')} <Sparkles size={13} className="text-amber-200" />
+                    {t('assistantName')} <Sparkles size={13} className="text-emerald-100" />
                   </p>
                   <p className="text-[9px] text-white/80 font-medium">
                     Gemini 3 Flash • {t('online')}

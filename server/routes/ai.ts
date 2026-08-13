@@ -14,11 +14,35 @@ const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3.2:1b';
 const PROVIDER =
   process.env.AI_PROVIDER || (GEMINI_KEY ? 'gemini' : 'ollama');
 
+// Primary model first; the `-latest` alias is a safety net for the day the
+// preview id is retired or is temporarily out of capacity.
 const GEMINI_MODEL = 'gemini-3-flash-preview';
+const GEMINI_FALLBACK_MODELS = [GEMINI_MODEL, 'gemini-flash-latest'];
+
 let geminiClient: GoogleGenAI | null = null;
 function gemini() {
   if (!geminiClient) geminiClient = new GoogleGenAI({ apiKey: GEMINI_KEY || 'demo-placeholder-key' });
   return geminiClient;
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+function errorInfo(err: unknown): { status: number; message: string } {
+  const e = err as { status?: number; code?: number; message?: string };
+  const message = e?.message || String(err);
+  let status = Number(e?.status ?? e?.code ?? 0);
+  if (!status) {
+    const m = message.match(/\b(429|4\d\d|5\d\d)\b/);
+    if (m) status = Number(m[1]);
+  }
+  return { status, message };
+}
+
+/** Transient = worth retrying: rate limit, overload, gateway/5xx blips. */
+function isTransient(err: unknown): boolean {
+  const { status, message } = errorInfo(err);
+  if (status === 429 || status === 500 || status === 502 || status === 503 || status === 504) return true;
+  return /RESOURCE_EXHAUSTED|UNAVAILABLE|overloaded|ETIMEDOUT|ECONNRESET|fetch failed/i.test(message);
 }
 
 // ── Chat completion across providers ──────────────────────────────────────────
@@ -26,6 +50,7 @@ async function ollamaChat(system: string, message: string): Promise<string> {
   const r = await fetch(`${OLLAMA_URL}/api/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    signal: AbortSignal.timeout(20_000),
     body: JSON.stringify({
       model: OLLAMA_MODEL,
       messages: [
@@ -37,21 +62,72 @@ async function ollamaChat(system: string, message: string): Promise<string> {
   });
   if (!r.ok) throw new Error(`Ollama HTTP ${r.status}`);
   const data = (await r.json()) as { message?: { content?: string } };
-  return data.message?.content || '';
+  const text = (data.message?.content || '').trim();
+  if (!text) throw new Error('Ollama returned an empty response');
+  return text;
 }
 
+/** Gemini call with per-model retry/backoff, then a fallback model. */
 async function geminiChat(system: string, message: string): Promise<string> {
-  const r = await gemini().models.generateContent({
-    model: GEMINI_MODEL,
-    contents: message,
-    config: { systemInstruction: system },
-  });
-  return r.text || '';
+  let lastError: unknown = new Error('Gemini call was never attempted');
+
+  for (const model of GEMINI_FALLBACK_MODELS) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const r = await gemini().models.generateContent({
+          model,
+          contents: message,
+          config: { systemInstruction: system },
+        });
+        const text = (r.text || '').trim();
+        if (text) return text;
+        // Empty body (e.g. the model spent its budget on thinking, or the answer
+        // was filtered) — not retryable on this model, move to the next one.
+        lastError = new Error(
+          `${model} returned no text (finishReason=${r.candidates?.[0]?.finishReason ?? 'unknown'})`
+        );
+        break;
+      } catch (err) {
+        lastError = err;
+        const { status, message: msg } = errorInfo(err);
+        console.warn(`[ai] ${model} attempt ${attempt + 1} failed (status=${status || '?'}): ${msg}`);
+        if (!isTransient(err)) break; // bad key / bad model id → next model
+        if (attempt < 2) await sleep(500 * 2 ** attempt);
+      }
+    }
+  }
+
+  throw lastError;
 }
 
 async function chatComplete(system: string, message: string): Promise<string> {
-  if (PROVIDER === 'gemini') return geminiChat(system, message);
-  return ollamaChat(system, message);
+  if (PROVIDER !== 'gemini') return ollamaChat(system, message);
+
+  try {
+    return await geminiChat(system, message);
+  } catch (err) {
+    console.error('[ai] Gemini unavailable:', errorInfo(err).message);
+    // Last resort: a local Ollama server, if one happens to be running.
+    try {
+      return await ollamaChat(system, message);
+    } catch {
+      throw err; // report the original (Gemini) cause
+    }
+  }
+}
+
+/** Honest, localized message shown when every provider failed. */
+function unavailableMessage(err: unknown, lang: string): string {
+  const { status, message } = errorInfo(err);
+  const quota = status === 429 || /RESOURCE_EXHAUSTED|quota/i.test(message);
+  if (lang === 'mn') {
+    return quota
+      ? 'AI-н хүсэлтийн хязгаар түр дүүрлээ. 1 минутын дараа дахин оролдоно уу. 🙏'
+      : 'AI туслах түр холбогдохгүй байна. Хэсэг хүлээгээд дахин оролдоно уу. 🙏';
+  }
+  return quota
+    ? 'The AI request limit is temporarily full. Please try again in a minute. 🙏'
+    : 'The AI assistant is temporarily unreachable. Please try again shortly. 🙏';
 }
 
 // ── In-flight request deduplication (per instance) ───────────────────────────
@@ -63,8 +139,24 @@ function makeContextKey(message: string, inventoryContext: string, lang: string)
 }
 
 // ── GET /api/ai/provider (which backend is active) ────────────────────────────
-router.get('/provider', (_req, res) => {
-  res.json({ provider: PROVIDER, model: PROVIDER === 'gemini' ? GEMINI_MODEL : OLLAMA_MODEL });
+// `?check=1` additionally makes one tiny live call, so a broken key / exhausted
+// quota can be diagnosed without guessing from the chat UI.
+router.get('/provider', async (req, res) => {
+  const info = {
+    provider: PROVIDER,
+    model: PROVIDER === 'gemini' ? GEMINI_MODEL : OLLAMA_MODEL,
+    keyConfigured: PROVIDER !== 'gemini' || Boolean(GEMINI_KEY),
+  };
+
+  if (req.query.check !== '1') return res.json(info);
+
+  try {
+    const sample = await chatComplete('Reply with the single word OK.', 'ping');
+    return res.json({ ...info, live: true, sample: sample.slice(0, 60) });
+  } catch (err) {
+    const { status, message } = errorInfo(err);
+    return res.status(503).json({ ...info, live: false, status: status || undefined, reason: message });
+  }
 });
 
 // ── AI Chat ───────────────────────────────────────────────────────────────────
@@ -86,8 +178,10 @@ router.post('/chat', async (req, res) => {
     try {
       const text = await inflight.get(cacheKey)!;
       return res.json({ text, fromCache: true });
-    } catch {
-      return res.status(500).json({ error: 'AI request processing failed' });
+    } catch (err) {
+      return res
+        .status(503)
+        .json({ error: 'AI_UNAVAILABLE', text: unavailableMessage(err, lang), degraded: true });
     }
   }
 
@@ -103,18 +197,20 @@ router.post('/chat', async (req, res) => {
     4. Хариултаа товч, ойлгомжтой байлга.
   `;
 
-  const call = chatComplete(systemInstruction, message).catch(() =>
-    lang === 'mn'
-      ? 'Сайн байна уу! Өнөөдөр ямар хоол хийж идэх вэ? Zity Тогооч нь туслахад бэлэн байна. ✨'
-      : 'Hello! What would you like to cook today? Zity Chef is ready to help. ✨'
-  );
-
+  const call = chatComplete(systemInstruction, message);
   inflight.set(cacheKey, call);
 
   try {
     const text = await call;
+    // Only real answers are cached — a canned failure message must never be
+    // replayed for 10 minutes after the provider has already recovered.
     await aiResponseCache.set(cacheKey, text, 10 * 60 * 1000);
     return res.json({ text, fromCache: false });
+  } catch (err) {
+    console.error('[ai] /chat failed:', errorInfo(err).message);
+    return res
+      .status(503)
+      .json({ error: 'AI_UNAVAILABLE', text: unavailableMessage(err, lang), degraded: true });
   } finally {
     inflight.delete(cacheKey);
   }
@@ -162,7 +258,8 @@ router.post('/ocr', async (req, res) => {
     const items = JSON.parse(raw);
     await ocrResultCache.set(imageHash, JSON.stringify(items), 60 * 60 * 1000);
     return res.json({ items, fromCache: false });
-  } catch {
+  } catch (err) {
+    console.error('[ai] /ocr failed, returning demo items:', errorInfo(err).message);
     return res.json({ items: fallback, fromCache: false, fallback: true });
   }
 });

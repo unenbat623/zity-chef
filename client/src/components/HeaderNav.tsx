@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { Sparkles, Sun, Moon, User } from 'lucide-react';
 import { AuthModal } from './AuthModal';
+import { BrandLogo } from './BrandLogo';
 import { NotificationCenter } from './NotificationCenter';
 
 export const HeaderNav: React.FC = () => {
@@ -30,11 +31,7 @@ export const HeaderNav: React.FC = () => {
       <header className="pt-[calc(0.65rem+env(safe-area-inset-top,0px))] pb-3 px-3 sm:px-6 flex justify-between items-center bg-pestle-bg/95 border-b border-pestle-border/60 sticky top-0 z-30 backdrop-blur-md w-full shrink-0 transition-colors duration-300">
         {/* Brand Logo & Name */}
         <div className="flex md:hidden items-center gap-2 min-w-0 shrink">
-          <div
-            className={`w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-tr ${profile.coverGradient} text-white font-black rounded-xl flex items-center justify-center shadow-sm shrink-0 text-sm sm:text-base`}
-          >
-            Z
-          </div>
+          <BrandLogo className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 drop-shadow-sm" />
           <div className="min-w-0 flex flex-col justify-center">
             <h1 className="font-extrabold text-sm sm:text-lg leading-tight tracking-tight flex items-center gap-1 text-pestle-text truncate">
               <span className="truncate">Zity Chef</span>

@@ -10,13 +10,20 @@ async function fetchWithRetry(
   baseDelayMs = 300
 ): Promise<Response> {
   let lastError: Error = new Error('Unknown error');
+  let lastResponse: Response | null = null;
+
   for (let attempt = 0; attempt < retries; attempt++) {
     try {
       const response = await authedFetch(path, options);
-      if (response.status === 429) {
-        // Rate limited — wait longer
-        await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
-        continue;
+      // Rate limited / provider temporarily down — back off and retry, but keep
+      // the response so its localized error body survives the last attempt.
+      if (response.status === 429 || response.status === 503) {
+        lastResponse = response;
+        if (attempt < retries - 1) {
+          await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+          continue;
+        }
+        return response;
       }
       return response;
     } catch (err) {
@@ -26,6 +33,8 @@ async function fetchWithRetry(
       }
     }
   }
+
+  if (lastResponse) return lastResponse;
   throw lastError;
 }
 
@@ -54,9 +63,18 @@ export async function getSisterAdvice(
     body: JSON.stringify({ message, inventoryContext, lang }),
   })
     .then(async (res) => {
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      return data.text as string;
+      const data = await res.json().catch(() => null as { text?: string; error?: string; errorEn?: string } | null);
+
+      if (!res.ok) {
+        // The API answers degraded states with an honest, localized message
+        // (quota full / provider down) — show that instead of a generic error.
+        if (data?.text) return data.text;
+        if (data?.error) return (lang === 'mn' ? data.error : data.errorEn || data.error) as string;
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      if (!data?.text) throw new Error('Empty AI response');
+      return data.text;
     })
     .catch(() =>
       lang === 'mn'
