@@ -21,7 +21,7 @@ import { useDirectMessages } from '../hooks/useDirectMessages';
 import { uploadDataUrl } from '../lib/storage';
 import { useRecipes } from '../hooks/useRecipes';
 
-// ── Types & Mock Data ──────────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
 interface StoryItem {
   id: string;
   img?: string;
@@ -39,116 +39,6 @@ interface UserStoryGroup {
   seen?: boolean;
   stories: StoryItem[];
 }
-
-const OTHER_STORIES: UserStoryGroup[] = [
-  {
-    id: 'user-bold',
-    userName: 'Болд-Эрдэнэ',
-    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bold',
-    seen: false,
-    stories: [
-      {
-        id: 's-bold-1',
-        img: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=600&q=80',
-        caption: 'Өнөөдрийн Карбонара 🍝 Маш амттай!',
-        sticker: '👨‍🍳 Pro Chef',
-        createdAt: '30 мин',
-      },
-      {
-        id: 's-bold-2',
-        img: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80',
-        caption: 'Эрүүл салатны цуглуулга 🥗',
-        sticker: '🥑 Healthy Life',
-        createdAt: '10 мин',
-      },
-    ],
-  },
-  {
-    id: 'user-sarnai',
-    userName: 'Сарнай',
-    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarnai',
-    seen: false,
-    stories: [
-      {
-        id: 's-sarnai-1',
-        img: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&q=80',
-        caption: 'Авокадо тост + шэглэсэн өндөг 🥑',
-        createdAt: '2 цаг',
-      },
-    ],
-  },
-  {
-    id: 'user-zorigo',
-    userName: 'Зоригоо',
-    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Zorigo',
-    seen: false,
-    stories: [
-      {
-        id: 's-zorigo-1',
-        img: 'https://images.unsplash.com/photo-1551218808-94e220e084d2?w=600&q=80',
-        caption: 'Хонины шөл 3 цаг зөөлөн чаналаа 🍲',
-        sticker: '🔥 Уламжлалт Жор',
-        createdAt: '4 цаг',
-      },
-    ],
-  },
-  {
-    id: 'user-enkhtuya',
-    userName: 'Энхтуяа',
-    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Enkh',
-    seen: true,
-    stories: [
-      {
-        id: 's-enkh-1',
-        img: 'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=600&q=80',
-        caption: 'Өглөөний цай ба кофены цаг ☕',
-        createdAt: '5 цаг',
-      },
-    ],
-  },
-];
-
-const INITIAL_POSTS = [
-  {
-    id: 'p1',
-    user: { name: 'Болд-Эрдэнэ', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bold' },
-    image: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800&q=80',
-    caption: 'Маш амттай Карбонара Паста хийлээ! 🍝 Бүх гэр бүл минь дуртай болчихлоо. Zity Chef-ийн заавраар хийсэн чинь үнэхээр амархан байна!',
-    recipe: null,
-    likes: 42,
-    liked: false,
-    saved: false,
-    time: '2 цаг',
-    comments: [
-      { user: 'Сарнай', text: 'Яаж хийсэн бэ? Жорыг хуваалцаарай 👏' },
-      { user: 'Зоригоо', text: 'Харахад маш амттай харагдаж байна!' },
-    ],
-  },
-  {
-    id: 'p2',
-    user: { name: 'Сарнай', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarnai' },
-    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80',
-    caption: 'Өглөөний хоол: Авокадо тост + гахайн өндөг 🥑 Эрүүл, хурдан, амттай!',
-    recipe: null,
-    likes: 89,
-    liked: true,
-    saved: true,
-    time: '4 цаг',
-    comments: [{ user: 'Болд-Эрдэнэ', text: 'Минийхтэй адилхан хоол 😍' }],
-  },
-  {
-    id: 'p3',
-    user: { name: 'Зоригоо', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Zorigo' },
-    image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=800&q=80',
-    caption: 'Уламжлалт Нүүдэлчний Цүйван хийлээ! 🍜 Гурилаа өөрөө хайрч хэрчсэн чинь хөвсгөр зөөлөн болов.',
-    recipe: null,
-    likes: 156,
-    liked: true,
-    saved: false,
-    time: '6 цаг',
-    comments: [],
-  },
-];
 
 const GRADIENT_PRESETS = [
   'from-amber-500 via-rose-500 to-purple-600',
@@ -669,9 +559,14 @@ const DirectChatDrawer: React.FC<{
 };
 
 // ── INSTAGRAM POST CREATOR MODAL ───────────────────────────────────────────────
-const CreatePostModal: React.FC<{ onClose: () => void; onPost: (p: any) => void }> = ({
+const CreatePostModal: React.FC<{
+  onClose: () => void;
+  onPost: (p: any) => void;
+  author: { name: string; avatar: string };
+}> = ({
   onClose,
   onPost,
+  author,
 }) => {
   const { t } = useApp();
   const { recipes } = useRecipes();
@@ -693,8 +588,8 @@ const CreatePostModal: React.FC<{ onClose: () => void; onPost: (p: any) => void 
     if (!caption.trim() && !imageBase64 && !selectedRecipe) return;
     onPost({
       id: `p-${Date.now()}`,
-      user: { name: 'Миний бичлэг', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=me' },
-      image: imageBase64 || selectedRecipe?.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80',
+      user: author,
+      image: imageBase64 || selectedRecipe?.image || null,
       caption: caption.trim(),
       recipe: selectedRecipe,
       likes: 0,
@@ -1039,48 +934,32 @@ export const CommunityView: React.FC = () => {
   const ownStoryGroup: UserStoryGroup = {
     id: 'user-me',
     userName: profile.name || 'Таны Story',
-    userAvatar: profile.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=me`,
+    userAvatar: profile.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile.name || 'Zity Chef')}`,
     isOwn: true,
     seen: true,
-    stories: [
-      {
-        id: 's-me-1',
-        img: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&q=80',
-        caption: 'Өнөөдөр Zity Chef-тэй хоол бэлдлээ 🍳',
-        sticker: '📍 Улаанбаатар',
-        createdAt: '1 цаг',
-      },
-    ],
+    stories: [],
   };
 
-  const [stories, setStories] = useState<UserStoryGroup[]>([ownStoryGroup, ...OTHER_STORIES]);
-  const [posts, setPosts] = useState<any[]>(INITIAL_POSTS);
+  const [stories, setStories] = useState<UserStoryGroup[]>([ownStoryGroup]);
+  const [posts, setPosts] = useState<any[]>([]);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [showCreateStory, setShowCreateStory] = useState(false);
   const [activeStoryGroup, setActiveStoryGroup] = useState<UserStoryGroup | null>(null);
   const [chatUser, setChatUser] = useState<{ name: string; avatar: string } | null>(null);
 
-  // Merge server feed on top of the seed posts (keeps the UI populated in demo
-  // mode where the backend returns an empty feed).
   useEffect(() => {
-    if (feedPosts.length) {
-      setPosts([...feedPosts, ...INITIAL_POSTS]);
-    }
+    setPosts(feedPosts);
   }, [feedPosts]);
 
-  // Merge server story groups (other users) into the strip, keeping the local
-  // own-group and the seed stories.
   useEffect(() => {
-    if (!serverStoryGroups.length) return;
-    setStories((prev) => {
-      const seenIds = new Set(prev.map((s) => s.id));
-      const fresh = serverStoryGroups.filter((g: UserStoryGroup) => !g.isOwn && !seenIds.has(g.id));
-      if (!fresh.length) return prev;
-      const own = prev.filter((s) => s.isOwn);
-      const others = prev.filter((s) => !s.isOwn);
-      return [...own, ...fresh, ...others];
-    });
-  }, [serverStoryGroups]);
+    const ownFromServer = serverStoryGroups.find((g: UserStoryGroup) => g.isOwn);
+    const own = ownFromServer
+      ? { ...ownFromServer, userName: profile.name || ownFromServer.userName, userAvatar: profile.avatarUrl || ownFromServer.userAvatar, isOwn: true }
+      : ownStoryGroup;
+    const others = serverStoryGroups.filter((g: UserStoryGroup) => !g.isOwn);
+    setStories([own, ...others]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverStoryGroups, profile.name, profile.avatarUrl]);
 
   const handleLike = (postId: string) => {
     let nextLiked = false;
@@ -1091,7 +970,7 @@ export const CommunityView: React.FC = () => {
         return { ...p, liked: nextLiked, likes: p.liked ? p.likes - 1 : p.likes + 1 };
       })
     );
-    persistLike(postId, nextLiked); // fire-and-forget; no-ops for demo/seed posts
+    persistLike(postId, nextLiked);
   };
 
   const handleSave = (postId: string) => {
@@ -1149,8 +1028,8 @@ export const CommunityView: React.FC = () => {
       return [
         {
           id: `user-me-${Date.now()}`,
-          userName: 'Миний Story',
-          userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=me',
+          userName: profile.name || 'Миний Story',
+          userAvatar: profile.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile.name || 'Zity Chef')}`,
           isOwn: true,
           seen: false,
           stories: [newStory],
@@ -1301,6 +1180,10 @@ export const CommunityView: React.FC = () => {
         {showCreatePost && (
           <CreatePostModal
             onClose={() => setShowCreatePost(false)}
+            author={{
+              name: profile.name || 'Zity Chef',
+              avatar: profile.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile.name || 'Zity Chef')}`,
+            }}
             onPost={handleNewPost}
           />
         )}
