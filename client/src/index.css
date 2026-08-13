@@ -127,9 +127,10 @@
   backface-visibility: hidden;
 }
 
-/* Prevent layout breaking */
+/* Prevent long unbroken strings from stretching the layout.
+   Deliberately NOT `max-width: 100%` — that clamps popovers/dropdowns to the
+   width of their anchor element (a 36px icon button collapses the panel). */
 * {
-  max-width: 100%;
   word-break: break-word;
 }
 

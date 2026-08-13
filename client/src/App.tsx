@@ -49,6 +49,9 @@ const NotFoundView = lazy(() =>
 const FloatingAssistant = lazy(() =>
   import('./components/FloatingAssistant').then((m) => ({ default: m.FloatingAssistant }))
 );
+const DesktopWidgetPanel = lazy(() =>
+  import('./components/DesktopWidgetPanel').then((m) => ({ default: m.DesktopWidgetPanel }))
+);
 const ViewFallback: React.FC = () => (
   <div className="flex items-center justify-center py-24">
     <div className="w-8 h-8 rounded-xl bg-mango/80 text-white font-black flex items-center justify-center animate-pulse">
@@ -101,8 +104,9 @@ const AppContent: React.FC = () => {
           </AnimatePresence>
         </main>
 
-        {/* Assistant stays out of the primary workspace; open it only when needed. */}
-        <div className="md:hidden">
+        {/* Below xl there is no room for the side panel, so the assistant lives
+            in a floating bubble instead. Exactly one of the two is ever shown. */}
+        <div className="xl:hidden">
           <Suspense fallback={null}>
             <FloatingAssistant />
           </Suspense>
@@ -111,6 +115,12 @@ const AppContent: React.FC = () => {
         {/* Mobile bottom nav */}
         <BottomNav />
       </div>
+
+      {/* Right-hand assistant & nutrition panel — xl and up */}
+      <Suspense fallback={null}>
+        <DesktopWidgetPanel />
+      </Suspense>
+
       {/* Global modals */}
       <PaymentModal />
       <SubscriptionModal />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Sparkles,
   ShoppingBag,
@@ -7,10 +7,44 @@ import {
   CheckCircle2,
   Mic,
   Droplets,
+  Plus,
+  RotateCcw,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getSisterAdvice, getServerHealth } from '../services/geminiService';
 import { useRecipes } from '../hooks/useRecipes';
+
+const CALORIE_GOAL = 2000;
+const GLASS_ML = 250;
+
+interface DailyLog {
+  date: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  waterGlasses: number;
+}
+
+function todayKey(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function emptyLog(): DailyLog {
+  return { date: todayKey(), calories: 0, protein: 0, carbs: 0, fat: 0, waterGlasses: 0 };
+}
+
+/** Reads today's log; anything stored for a previous day resets to zero. */
+function readDailyLog(): DailyLog {
+  try {
+    const raw = localStorage.getItem('zity_daily_log');
+    if (!raw) return emptyLog();
+    const parsed = JSON.parse(raw) as DailyLog;
+    return parsed.date === todayKey() ? { ...emptyLog(), ...parsed } : emptyLog();
+  } catch {
+    return emptyLog();
+  }
+}
 
 export const DesktopWidgetPanel: React.FC = () => {
   const {
@@ -20,6 +54,7 @@ export const DesktopWidgetPanel: React.FC = () => {
     totalCartAmount,
     triggerPayment,
     createOrder,
+    activeCookingRecipe,
     setActiveCookingRecipe,
     setActiveTab,
     t,
@@ -30,9 +65,31 @@ export const DesktopWidgetPanel: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [isListening, setIsListening] = useState<boolean>(false);
 
-  // Nutrition state
-  const [calories, setCalories] = useState<number>(520);
-  const [waterGlasses, setWaterGlasses] = useState<number>(4);
+  // Real, locally persisted daily nutrition log (resets each calendar day).
+  const [dailyLog, setDailyLog] = useState<DailyLog>(readDailyLog);
+
+  useEffect(() => {
+    localStorage.setItem('zity_daily_log', JSON.stringify(dailyLog));
+  }, [dailyLog]);
+
+  const addWater = useCallback(() => {
+    setDailyLog((prev) => ({ ...prev, date: todayKey(), waterGlasses: prev.waterGlasses + 1 }));
+  }, []);
+
+  const logActiveRecipe = useCallback(() => {
+    if (!activeCookingRecipe) return;
+    const n = activeCookingRecipe.nutrition;
+    setDailyLog((prev) => ({
+      date: todayKey(),
+      calories: prev.calories + (n.calories || 0),
+      protein: prev.protein + (n.protein || 0),
+      carbs: prev.carbs + (n.carbs || 0),
+      fat: prev.fat + (n.fat || 0),
+      waterGlasses: prev.waterGlasses,
+    }));
+  }, [activeCookingRecipe]);
+
+  const resetLog = useCallback(() => setDailyLog(emptyLog()), []);
 
   const [chatLog, setChatLog] = useState<{ role: 'user' | 'assistant'; text: string }[]>([
     { role: 'assistant', text: t('aiInitialGreeting') },
@@ -165,42 +222,71 @@ export const DesktopWidgetPanel: React.FC = () => {
 
       {/* Daily Nutrition & Water Tracker Widget */}
       <div className="bg-pestle-bg border border-pestle-border rounded-2xl p-3.5 space-y-3">
-        <div className="flex justify-between items-center text-xs font-bold">
-          <span className="text-pestle-text flex items-center gap-1.5">
-            <Flame size={14} className="text-mango" /> {t('calories')}
+        <div className="flex justify-between items-center gap-2 text-xs font-bold">
+          <span className="text-pestle-text flex items-center gap-1.5 min-w-0">
+            <Flame size={14} className="text-mango shrink-0" />
+            <span className="truncate">{t('widget_dailyLog')}</span>
           </span>
-          <span className="text-mango font-black">{calories} / 2,000 kcal</span>
+          {(dailyLog.calories > 0 || dailyLog.waterGlasses > 0) && (
+            <button
+              onClick={resetLog}
+              title={t('widget_resetDay')}
+              className="text-gray-400 hover:text-mango p-0.5 rounded-md transition-colors shrink-0"
+            >
+              <RotateCcw size={12} />
+            </button>
+          )}
+        </div>
+
+        <div className="flex justify-between items-center text-xs font-bold">
+          <span className="text-gray-400">{t('calories')}</span>
+          <span className="text-mango font-black">
+            {dailyLog.calories.toLocaleString()} / {CALORIE_GOAL.toLocaleString()} kcal
+          </span>
         </div>
         <div className="w-full bg-pestle-card h-2 rounded-full border border-pestle-border overflow-hidden">
           <div
             className="bg-mango h-full rounded-full transition-all duration-500"
-            style={{ width: `${Math.min(100, (calories / 2000) * 100)}%` }}
+            style={{ width: `${Math.min(100, (dailyLog.calories / CALORIE_GOAL) * 100)}%` }}
           />
         </div>
 
+        {/* Log the recipe currently open in cooking mode */}
+        {activeCookingRecipe && (
+          <button
+            onClick={logActiveRecipe}
+            className="w-full text-[10px] font-bold bg-mango/10 text-mango border border-mango/25 px-2 py-1.5 rounded-xl hover:bg-mango hover:text-white transition-colors flex items-center justify-center gap-1"
+          >
+            <Plus size={12} />
+            {t('widget_logRecipe', {
+              n: activeCookingRecipe.nutrition.calories,
+            })}
+          </button>
+        )}
+
         {/* Water Tracker */}
-        <div className="pt-2 border-t border-pestle-border/60 flex items-center justify-between text-xs">
-          <span className="font-bold text-pestle-text flex items-center gap-1">
-            <Droplets size={14} className="text-sky-500" /> {t('widget_water')}:{' '}
-            <strong className="text-sky-500">{waterGlasses * 250}ml</strong>
+        <div className="pt-2 border-t border-pestle-border/60 flex items-center justify-between gap-2 text-xs">
+          <span className="font-bold text-pestle-text flex items-center gap-1 min-w-0">
+            <Droplets size={14} className="text-sky-500 shrink-0" /> {t('widget_water')}:{' '}
+            <strong className="text-sky-500">{dailyLog.waterGlasses * GLASS_ML}ml</strong>
           </span>
           <button
-            onClick={() => setWaterGlasses((prev) => prev + 1)}
-            className="text-[10px] font-bold bg-sky-500/10 text-sky-500 border border-sky-500/20 px-2 py-0.5 rounded-lg hover:bg-sky-500 hover:text-white transition-colors"
+            onClick={addWater}
+            className="text-[10px] font-bold bg-sky-500/10 text-sky-500 border border-sky-500/20 px-2 py-0.5 rounded-lg hover:bg-sky-500 hover:text-white transition-colors shrink-0"
           >
-            +250ml
+            +{GLASS_ML}ml
           </button>
         </div>
 
         <div className="grid grid-cols-3 text-center text-[10px] text-gray-400 font-bold pt-1 border-t border-pestle-border/40">
           <div>
-            {t('widget_protein')}: <span className="text-pestle-text">42g</span>
+            {t('widget_protein')}: <span className="text-pestle-text">{dailyLog.protein}g</span>
           </div>
           <div>
-            {t('widget_carbs')}: <span className="text-pestle-text">68g</span>
+            {t('widget_carbs')}: <span className="text-pestle-text">{dailyLog.carbs}g</span>
           </div>
           <div>
-            {t('widget_fat')}: <span className="text-pestle-text">18g</span>
+            {t('widget_fat')}: <span className="text-pestle-text">{dailyLog.fat}g</span>
           </div>
         </div>
       </div>
