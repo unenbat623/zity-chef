@@ -72,7 +72,7 @@ interface AppContextType {
 
 const VALID_TABS = ['fridge', 'calendar', 'cooking', 'store', 'recipe', 'community', 'dashboard', 'profile', 'help'];
 const SUPPORTED_LANGUAGES: Language[] = ['mn', 'en'];
-const DEFAULT_SAVED_RECIPE_IDS = ['r1', 'r3'];
+const DEFAULT_SAVED_RECIPE_IDS: string[] = [];
 const DEFAULT_PROFILE: UserProfile = {
   name: 'Таны Нэр',
   username: '@chef_mongolia',
@@ -80,10 +80,10 @@ const DEFAULT_PROFILE: UserProfile = {
   avatarUrl: null,
   coverGradient: 'from-emerald-600 via-teal-600 to-slate-800',
   accentColor: '#10B981',
-  postsCount: 3,
-  followersCount: 128,
-  followingCount: 47,
-  recipesCreated: 12,
+  postsCount: 0,
+  followersCount: 0,
+  followingCount: 0,
+  recipesCreated: 0,
 };
 
 function getStoredLanguage(): Language {
@@ -286,6 +286,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             name: displayName,
             username,
             avatarUrl: avatarUrl || nextProfile.avatarUrl,
+            postsCount: 0,
+            followersCount: 0,
+            followingCount: 0,
+            recipesCreated: 0,
           }
         : nextProfile
     );

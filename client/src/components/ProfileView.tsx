@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MOCK_RECIPES as RECIPES } from '../data/recipes';
 import {
   Camera,
   Edit3,
@@ -23,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
+import { useRecipes } from '../hooks/useRecipes';
 import { uploadImage } from '../lib/storage';
 import { FoodCostCalculatorModal } from './FoodCostCalculatorModal';
 
@@ -36,16 +36,6 @@ const THEME_GRADIENTS = [
   { labelKey: 'profile_themeCyan', value: 'from-cyan-500 via-blue-500 to-indigo-600', accent: '#06B6D4' },
   { labelKey: 'profile_themeStone', value: 'from-slate-600 via-gray-600 to-zinc-700', accent: '#475569' },
   { labelKey: 'profile_themeRoseGold', value: 'from-fuchsia-600 via-pink-500 to-amber-400', accent: '#D946EF' },
-];
-
-// ── Mock Post Feed Data ──────────────────────────────────────────────────────
-const PROFILE_POSTS = [
-  { id: 'pp1', img: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400&q=80', likes: 42 },
-  { id: 'pp2', img: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&q=80', likes: 89 },
-  { id: 'pp3', img: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400&q=80', likes: 156 },
-  { id: 'pp4', img: 'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=400&q=80', likes: 73 },
-  { id: 'pp5', img: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80', likes: 118 },
-  { id: 'pp6', img: 'https://images.unsplash.com/photo-1551218808-94e220e084d2?w=400&q=80', likes: 201 },
 ];
 
 // ── Edit Profile Modal ────────────────────────────────────────────────────────
@@ -270,8 +260,9 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
 // ── MAIN PROFILE VIEW ─────────────────────────────────────────────────────────
 export const ProfileView: React.FC = () => {
-  const { profile, setActiveTab, savedRecipeIds, toggleSaveRecipe, setActiveCookingRecipe, t } = useApp();
+  const { profile, setActiveTab, savedRecipeIds, toggleSaveRecipe, setActiveCookingRecipe, inventory, orders, t } = useApp();
   const { user: authUser, isAnonymous } = useAuth();
+  const { recipes } = useRecipes();
   const [showEdit, setShowEdit] = useState(false);
   const [showCostCalculator, setShowCostCalculator] = useState(false);
   const [activeGrid, setActiveGrid] = useState<'posts' | 'recipes'>('posts');
@@ -279,14 +270,15 @@ export const ProfileView: React.FC = () => {
     ? authUser.email || authUser.phone || profile.username
     : 'Түр хэрэглэгч';
 
-  const savedRecipesList = RECIPES.filter((r) => savedRecipeIds.includes(r.id));
-
-  const stats = [
-    { label: t('profile_statPosts'), value: profile.postsCount, icon: Grid3x3 },
-    { label: t('profile_statFollowers'), value: profile.followersCount, icon: Users },
-    { label: t('profile_statFollowing'), value: profile.followingCount, icon: Heart },
-    { label: t('profile_statRecipes'), value: profile.recipesCreated, icon: BookOpen },
+  const savedRecipesList = recipes.filter((r) => savedRecipeIds.includes(r.id));
+  const personalStats = [
+    { label: t('profile_statPosts'), value: 0, icon: Grid3x3 },
+    { label: t('dashboard_products'), value: inventory.length, icon: ChefHat },
+    { label: t('dashboard_orders'), value: orders.length, icon: Heart },
+    { label: t('profile_statRecipes'), value: savedRecipeIds.length, icon: BookOpen },
   ];
+
+  const stats = personalStats;
 
   const accentStyle = { color: profile.accentColor };
   const accentBgStyle = { backgroundColor: profile.accentColor + '18' };
@@ -435,24 +427,27 @@ export const ProfileView: React.FC = () => {
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
-                className="grid grid-cols-3 gap-1.5 sm:gap-2"
+                className="pestle-card border border-pestle-border rounded-3xl py-12 px-4 text-center flex flex-col items-center gap-3"
               >
-                {PROFILE_POSTS.map((p, idx) => (
-                  <motion.div
-                    key={p.id}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: idx * 0.04 }}
-                    className="aspect-square rounded-2xl overflow-hidden relative group cursor-pointer shadow-sm"
-                  >
-                    <img src={p.img} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 text-white text-xs font-black">
-                        <Heart size={16} className="fill-white" /> {p.likes}
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
+                <div
+                  className="w-16 h-16 rounded-3xl flex items-center justify-center"
+                  style={{ backgroundColor: profile.accentColor + '18' }}
+                >
+                  <Grid3x3 size={28} style={accentStyle} />
+                </div>
+                <div>
+                  <p className="text-sm font-black text-pestle-text">{t('profile_noPostsTitle')}</p>
+                  <p className="text-xs text-gray-400 font-medium mt-1 max-w-sm">
+                    {t('profile_noPostsDesc')}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setActiveTab('community')}
+                  className="text-xs font-bold px-4 py-2 rounded-xl text-white shadow-md"
+                  style={{ backgroundColor: profile.accentColor }}
+                >
+                  {t('profile_toCommunity')}
+                </button>
               </motion.div>
             )}
 
