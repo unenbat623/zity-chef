@@ -45,6 +45,12 @@ function toMessage(error: unknown): string {
   return 'Алдаа гарлаа. Дахин оролдоно уу.';
 }
 
+function getAuthRedirectUrl(): string {
+  const configuredRedirect = import.meta.env.VITE_AUTH_REDIRECT_URL;
+  if (configuredRedirect) return configuredRedirect;
+  return window.location.origin;
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -144,7 +150,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { error } = await supabase!.auth.signInWithOAuth({
           provider: 'google',
           options: {
-            redirectTo: window.location.origin,
+            redirectTo: getAuthRedirectUrl(),
             queryParams: { access_type: 'offline', prompt: 'consent' },
           },
         });
@@ -172,7 +178,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const blocked = await guard();
         if (blocked) return blocked;
         const { error } = await supabase!.auth.resetPasswordForEmail(email, {
-          redirectTo: window.location.origin,
+          redirectTo: getAuthRedirectUrl(),
         });
         return error ? { ok: false, error: toMessage(error) } : { ok: true };
       },

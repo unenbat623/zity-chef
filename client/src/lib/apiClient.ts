@@ -1,6 +1,11 @@
 import { getAccessToken } from './supabase';
 
-export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+function getDefaultApiBase(): string {
+  if (typeof window === 'undefined') return 'http://localhost:3002';
+  return `${window.location.protocol}//${window.location.hostname}:3002`;
+}
+
+export const API_BASE = import.meta.env.VITE_API_URL || getDefaultApiBase();
 
 /**
  * fetch() wrapper that attaches the current Supabase access token as a Bearer
