@@ -2,6 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ingredient } from '../types';
 import { authedFetch } from '../lib/apiClient';
 
+// Stable empty fallback — a fresh `[]` per render would change identity every
+// time and invalidate every downstream useMemo/useEffect that depends on it.
+const NO_INGREDIENTS: Ingredient[] = [];
+
 async function fetchInventory(): Promise<Ingredient[]> {
   const res = await authedFetch('/api/inventory');
   if (!res.ok) throw new Error('Failed to fetch inventory');
@@ -118,7 +122,7 @@ export function useInventory() {
   });
 
   return {
-    inventory: query.data ?? [],
+    inventory: query.data ?? NO_INGREDIENTS,
     isLoading: query.isLoading,
     isError: query.isError,
     refetch: query.refetch,

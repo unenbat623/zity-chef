@@ -174,13 +174,13 @@ export const DesktopWidgetPanel: React.FC = () => {
         <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
           <button
             onClick={() => handleSendText(t('widget_promptExpiring'))}
-            className="text-[10px] font-bold bg-pestle-bg border border-pestle-border px-2.5 py-1 rounded-lg text-gray-500 hover:text-mango hover:border-mango transition-colors whitespace-nowrap"
+            className="text-[10px] font-bold bg-pestle-bg border border-pestle-border px-2.5 py-1.5 rounded-lg text-gray-500 hover:text-mango hover:border-mango transition-colors whitespace-nowrap"
           >
             💡 {t('widget_chipExpiring')}
           </button>
           <button
             onClick={() => handleSendText(t('widget_promptBreakfast'))}
-            className="text-[10px] font-bold bg-pestle-bg border border-pestle-border px-2.5 py-1 rounded-lg text-gray-500 hover:text-mango hover:border-mango transition-colors whitespace-nowrap"
+            className="text-[10px] font-bold bg-pestle-bg border border-pestle-border px-2.5 py-1.5 rounded-lg text-gray-500 hover:text-mango hover:border-mango transition-colors whitespace-nowrap"
           >
             ⚡ {t('widget_chipBreakfast')}
           </button>
@@ -272,7 +272,7 @@ export const DesktopWidgetPanel: React.FC = () => {
           </span>
           <button
             onClick={addWater}
-            className="text-[10px] font-bold bg-sky-500/10 text-sky-500 border border-sky-500/20 px-2 py-0.5 rounded-lg hover:bg-sky-500 hover:text-white transition-colors shrink-0"
+            className="text-[10px] font-bold bg-sky-500/10 text-sky-500 border border-sky-500/20 px-2.5 py-2 rounded-lg hover:bg-sky-500 hover:text-white transition-colors shrink-0"
           >
             +{GLASS_ML}ml
           </button>

@@ -1052,20 +1052,20 @@ export const CommunityView: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => setShowCreateStory(true)}
-            className="bg-pestle-card border border-pestle-border py-2.5 px-3.5 rounded-2xl text-xs font-bold text-pestle-text hover:border-mango flex items-center gap-1.5 shadow-xs transition-all"
+            className="bg-pestle-card border border-pestle-border py-2.5 px-3.5 rounded-2xl text-xs font-bold text-pestle-text hover:border-mango flex items-center gap-1.5 shadow-xs transition-all shrink-0 whitespace-nowrap"
           >
-            <Camera size={16} className="text-mango" />
+            <Camera size={16} className="text-mango shrink-0" />
             <span className="hidden sm:inline">{t('community_addStory')}</span>
           </button>
 
           <button
             onClick={() => setShowCreatePost(true)}
-            className="btn-primary py-2.5 px-4 rounded-2xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-mango/20"
+            className="btn-primary py-2.5 px-4 rounded-2xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-mango/20 shrink-0 whitespace-nowrap"
           >
-            <Plus size={16} />
+            <Plus size={16} className="shrink-0" />
             <span>{t('community_publish')}</span>
           </button>
         </div>

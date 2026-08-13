@@ -105,6 +105,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
 
   const steps = recipe.steps;
   const step = steps[currentStep];
+  const stepTip = ((lang === 'mn' ? step.sisterTip : step.sisterTipEn || step.sisterTip) || '').trim();
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -133,11 +134,15 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
     } else {
-      const textToRead = `${t('cooking_stepWord', { n: currentStep + 1 })}. ${
-        lang === 'mn' ? step.title : step.titleEn || step.title
-      }. ${lang === 'mn' ? step.description : step.descriptionEn || step.description}. ${t('sisterTip')} ${
-        lang === 'mn' ? step.sisterTip : step.sisterTipEn || step.sisterTip
-      }`;
+      const textToRead = [
+        `${t('cooking_stepWord', { n: currentStep + 1 })}. ${
+          lang === 'mn' ? step.title : step.titleEn || step.title
+        }`,
+        lang === 'mn' ? step.description : step.descriptionEn || step.description,
+        stepTip ? `${t('sisterTip')} ${stepTip}` : null,
+      ]
+        .filter(Boolean)
+        .join('. ');
 
       const utterance = new SpeechSynthesisUtterance(textToRead);
       utterance.lang = lang === 'mn' ? 'mn-MN' : 'en-US';
@@ -261,7 +266,9 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
                 • {recipe.difficulty} • {t('cooking_stepsCount', { n: steps.length })}
               </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black text-pestle-text mt-1">{recipe.title}</h2>
+            <h2 className="text-xl sm:text-2xl font-black text-pestle-text mt-1">
+              {lang === 'mn' ? recipe.title : recipe.titleEn || recipe.title}
+            </h2>
           </div>
         </div>
 
@@ -559,15 +566,17 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
                 </div>
               )}
 
-              {/* AI Sister Pro Tip Card */}
-              <div className="bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border border-amber-500/25 p-4 rounded-2xl space-y-1.5 shadow-xs">
-                <span className="text-xs font-extrabold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-                  <Sparkles size={16} /> {t('sisterTip')}
-                </span>
-                <p className="text-xs sm:text-sm text-pestle-text leading-relaxed font-semibold">
-                  {lang === 'mn' ? step.sisterTip : step.sisterTipEn || step.sisterTip}
-                </p>
-              </div>
+              {/* AI Sister Pro Tip Card — recipes from the DB may carry no tip */}
+              {stepTip && (
+                <div className="bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border border-amber-500/25 p-4 rounded-2xl space-y-1.5 shadow-xs">
+                  <span className="text-xs font-extrabold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                    <Sparkles size={16} /> {t('sisterTip')}
+                  </span>
+                  <p className="text-xs sm:text-sm text-pestle-text leading-relaxed font-semibold">
+                    {stepTip}
+                  </p>
+                </div>
+              )}
             </motion.div>
           </AnimatePresence>
 

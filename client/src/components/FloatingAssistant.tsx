@@ -65,9 +65,10 @@ export const FloatingAssistant: React.FC = () => {
             >
               <button
                 onClick={() => setShowBubble(false)}
-                className="absolute top-1 right-1 p-0.5 text-gray-400 hover:text-pestle-text transition-colors"
+                aria-label={t('close')}
+                className="absolute -top-1.5 -right-1.5 w-7 h-7 rounded-full bg-pestle-card border border-pestle-border text-gray-400 hover:text-pestle-text flex items-center justify-center transition-colors shadow-sm"
               >
-                <X size={10} />
+                <X size={12} />
               </button>
               <p className="text-[11px] font-semibold leading-tight text-pestle-text">
                 {t('assistant_greetingBubble')}

@@ -12,6 +12,8 @@ export interface StoreProduct {
   imageUrl: string | null;
 }
 
+const NO_PRODUCTS: StoreProduct[] = [];
+
 async function fetchProducts(): Promise<StoreProduct[]> {
   const res = await fetch(`${API_BASE}/api/store/products`);
   if (!res.ok) throw new Error('Failed to load products');
@@ -26,5 +28,5 @@ export function useStoreProducts() {
     refetchInterval: 20_000,
     refetchOnWindowFocus: true,
   });
-  return { products: query.data ?? [], loading: query.isLoading };
+  return { products: query.data ?? NO_PRODUCTS, loading: query.isLoading };
 }

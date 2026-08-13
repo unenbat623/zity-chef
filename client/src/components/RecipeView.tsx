@@ -794,7 +794,7 @@ export const RecipeView: React.FC = () => {
                           e.stopPropagation();
                           toggleSaveRecipe(recipe.id);
                         }}
-                        className={`w-7 h-7 rounded-full backdrop-blur-md flex items-center justify-center transition-transform hover:scale-110 ${
+                        className={`w-7 h-7 shrink-0 rounded-full backdrop-blur-md flex items-center justify-center transition-transform hover:scale-110 ${
                           savedRecipeIds.includes(recipe.id)
                             ? 'bg-mango text-white'
                             : 'bg-black/60 text-white hover:bg-black/80'

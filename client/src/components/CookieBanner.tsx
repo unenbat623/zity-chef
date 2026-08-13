@@ -41,12 +41,18 @@ export const CookieBanner: React.FC = () => {
                 <p className="hidden sm:block text-[11px] text-gray-500 font-medium mt-1 leading-relaxed line-clamp-2">
                   {t('cookieNotice')}
                 </p>
-                <div className="hidden sm:flex gap-3 text-[10px] font-bold text-mango mt-1">
-                  <button onClick={() => setShowModal('privacy')} className="hover:underline">
+                <div className="hidden sm:flex items-center gap-1 text-[10px] font-bold text-mango mt-1 -ml-1.5">
+                  <button
+                    onClick={() => setShowModal('privacy')}
+                    className="hover:underline px-1.5 py-1.5 rounded-md"
+                  >
                     {t('privacyPolicy')}
                   </button>
                   <span>•</span>
-                  <button onClick={() => setShowModal('terms')} className="hover:underline">
+                  <button
+                    onClick={() => setShowModal('terms')}
+                    className="hover:underline px-1.5 py-1.5 rounded-md"
+                  >
                     {t('termsOfService')}
                   </button>
                 </div>

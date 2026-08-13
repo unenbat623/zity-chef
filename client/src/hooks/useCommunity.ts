@@ -32,6 +32,12 @@ async function fetchStories(): Promise<any[]> {
   return data.groups || [];
 }
 
+// Shared frozen fallbacks. Returning a fresh `[]` while a query is loading or
+// errored gives every render a new array identity, which makes consumers'
+// `useEffect([feedPosts])` re-fire forever ("Maximum update depth exceeded").
+const NO_POSTS: FeedPost[] = [];
+const NO_STORY_GROUPS: any[] = [];
+
 export function useCommunity() {
   const queryClient = useQueryClient();
 
@@ -92,9 +98,9 @@ export function useCommunity() {
   });
 
   return {
-    feedPosts: query.data ?? [],
+    feedPosts: query.data ?? NO_POSTS,
     feedLoading: query.isLoading,
-    serverStoryGroups: storiesQuery.data ?? [],
+    serverStoryGroups: storiesQuery.data ?? NO_STORY_GROUPS,
     persistStory: (payload: {
       imageUrl?: string | null;
       caption?: string | null;

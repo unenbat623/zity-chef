@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { OrderRecord, CartItem } from '../types';
 import { authedFetch } from '../lib/apiClient';
 
+const NO_ORDERS: OrderRecord[] = [];
+
 async function fetchOrders(): Promise<OrderRecord[]> {
   const res = await authedFetch('/api/orders');
   if (!res.ok) throw new Error('Failed to fetch orders');
@@ -42,7 +44,7 @@ export function useOrders() {
   });
 
   return {
-    orders: query.data ?? [],
+    orders: query.data ?? NO_ORDERS,
     isLoading: query.isLoading,
     isError: query.isError,
     createOrder: createOrderMutation.mutate,
