@@ -16,8 +16,8 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
   isOpen,
   onClose,
 }) => {
-  const { formatPrice } = useApp();
-  const [dishName, setDishName] = useState('Тусгай Гурилан Цуйван');
+  const { formatPrice, t } = useApp();
+  const [dishName, setDishName] = useState(t('cost_defaultDishName'));
   const [portions, setPortions] = useState(4);
   const [targetMargin, setTargetMargin] = useState(65); // 65% Gross Margin
 
@@ -33,7 +33,7 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
       ...prev,
       {
         id: `ing-${Date.now()}`,
-        name: 'Шинэ орц',
+        name: t('cost_newIngredient'),
         quantity: 100,
         unit: 'г',
         pricePerUnit: 5,
@@ -99,13 +99,13 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
             </div>
             <div>
               <h3 className="text-lg font-black text-pestle-text flex items-center gap-1.5">
-                <span>Хоолны Өртөг & Ашгийн Тооцоолуур</span>
+                <span>{t('cost_title')}</span>
                 <span className="text-[10px] bg-amber-500/15 text-amber-500 px-2 py-0.5 rounded-full font-bold">
-                  Pro Chef Tool
+                  {t('cost_badge')}
                 </span>
               </h3>
               <p className="text-xs text-gray-400 font-medium">
-                Хоолны өртөг (Food Cost %), ашиг болон санал болгох зарагдах үнийг бодно.
+                {t('cost_subtitle')}
               </p>
             </div>
           </div>
@@ -121,7 +121,7 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
         {/* Top Controls: Dish Name & Portions */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-pestle-bg p-3.5 rounded-2xl border border-pestle-border/60">
           <div className="sm:col-span-2 space-y-1">
-            <label className="text-[10px] font-extrabold text-gray-400 uppercase">Хоолны нэр</label>
+            <label className="text-[10px] font-extrabold text-gray-400 uppercase">{t('cost_dishName')}</label>
             <input
               type="text"
               value={dishName}
@@ -130,7 +130,7 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
             />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-extrabold text-gray-400 uppercase">Нэг удаад хийх порц</label>
+            <label className="text-[10px] font-extrabold text-gray-400 uppercase">{t('cost_portions')}</label>
             <input
               type="number"
               min={1}
@@ -144,19 +144,19 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
         {/* Summary Metric Cards */}
         <div className="grid grid-cols-3 gap-3">
           <div className="bg-pestle-bg border border-pestle-border/80 p-3 rounded-2xl text-center">
-            <span className="text-[9px] font-extrabold text-gray-400 uppercase">Нийт Өртөг</span>
+            <span className="text-[9px] font-extrabold text-gray-400 uppercase">{t('cost_totalCost')}</span>
             <p className="text-sm sm:text-base font-black text-pestle-text mt-0.5">
               {formatPrice(Math.round(totalBatchCost))}
             </p>
           </div>
           <div className="bg-mango/10 border border-mango/25 p-3 rounded-2xl text-center">
-            <span className="text-[9px] font-extrabold text-mango uppercase">1 Порцын Өртөг</span>
+            <span className="text-[9px] font-extrabold text-mango uppercase">{t('cost_perPortion')}</span>
             <p className="text-sm sm:text-base font-black text-mango mt-0.5">
               {formatPrice(Math.round(costPerPortion))}
             </p>
           </div>
           <div className="bg-mint/10 border border-mint/25 p-3 rounded-2xl text-center">
-            <span className="text-[9px] font-extrabold text-mint uppercase">Санал болгох Зарах Үнэ</span>
+            <span className="text-[9px] font-extrabold text-mint uppercase">{t('cost_suggestedPrice')}</span>
             <p className="text-sm sm:text-base font-black text-mint mt-0.5">
               {formatPrice(Math.round(recommendedSellingPrice))}
             </p>
@@ -167,9 +167,9 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
         <div className="space-y-2 bg-pestle-bg p-3.5 rounded-2xl border border-pestle-border/60">
           <div className="flex justify-between items-center text-xs font-bold">
             <span className="text-pestle-text flex items-center gap-1.5">
-              <TrendingUp size={14} className="text-mint" /> Зорилтот Ашгийн Нийт Хувь (Gross Margin):
+              <TrendingUp size={14} className="text-mint" /> {t('cost_targetMargin')}
             </span>
-            <span className="text-mint font-black font-mono">{targetMargin}% (Food Cost: {foodCostPercentage}%)</span>
+            <span className="text-mint font-black font-mono">{targetMargin}% ({t('cost_foodCost')}: {foodCostPercentage}%)</span>
           </div>
           <input
             type="range"
@@ -184,12 +184,12 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
         {/* Ingredients Cost Breakdown Table */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs font-extrabold text-pestle-text">
-            <span>Орцын Жагсаалт ба Нэгжийн Өртөг</span>
+            <span>{t('cost_ingredientsTitle')}</span>
             <button
               onClick={addIngredientRow}
               className="bg-mango text-white text-[10px] font-black px-2.5 py-1 rounded-xl flex items-center gap-1 hover:bg-mango/90 cursor-pointer shadow-xs"
             >
-              <Plus size={12} /> Орц нэмэх
+              <Plus size={12} /> {t('cost_addIngredient')}
             </button>
           </div>
 
@@ -203,21 +203,21 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
                   type="text"
                   value={item.name}
                   onChange={(e) => updateRow(item.id, 'name', e.target.value)}
-                  placeholder="Орцын нэр"
+                  placeholder={t('cost_ingredientName')}
                   className="col-span-4 bg-pestle-card border border-pestle-border rounded-lg px-2 py-1 font-bold text-pestle-text"
                 />
                 <input
                   type="number"
                   value={item.quantity}
                   onChange={(e) => updateRow(item.id, 'quantity', parseFloat(e.target.value) || 0)}
-                  placeholder="Хэмжээ"
+                  placeholder={t('cost_quantity')}
                   className="col-span-2 bg-pestle-card border border-pestle-border rounded-lg px-2 py-1 font-mono text-pestle-text text-center"
                 />
                 <input
                   type="number"
                   value={item.pricePerUnit}
                   onChange={(e) => updateRow(item.id, 'pricePerUnit', parseFloat(e.target.value) || 0)}
-                  placeholder="Нэгжийн үнэ"
+                  placeholder={t('cost_unitPrice')}
                   className="col-span-3 bg-pestle-card border border-pestle-border rounded-lg px-2 py-1 font-mono text-pestle-text text-center"
                 />
                 <div className="col-span-2 text-right font-mono font-black text-mango">
@@ -239,7 +239,7 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
           onClick={onClose}
           className="w-full btn-primary py-3 font-black text-xs shadow-lg shadow-mango/20 cursor-pointer rounded-2xl"
         >
-          Тооцоог Дуусгах
+          {t('cost_done')}
         </button>
       </motion.div>
     </motion.div>

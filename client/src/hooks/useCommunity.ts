@@ -35,8 +35,18 @@ async function fetchStories(): Promise<any[]> {
 export function useCommunity() {
   const queryClient = useQueryClient();
 
-  const query = useQuery({ queryKey: ['community', 'feed'], queryFn: fetchFeed });
-  const storiesQuery = useQuery({ queryKey: ['community', 'stories'], queryFn: fetchStories });
+  const query = useQuery({
+    queryKey: ['community', 'feed'],
+    queryFn: fetchFeed,
+    refetchInterval: 10_000,
+    refetchOnWindowFocus: true,
+  });
+  const storiesQuery = useQuery({
+    queryKey: ['community', 'stories'],
+    queryFn: fetchStories,
+    refetchInterval: 10_000,
+    refetchOnWindowFocus: true,
+  });
 
   const createStoryMutation = useMutation({
     mutationFn: (payload: {
@@ -55,6 +65,7 @@ export function useCommunity() {
         method: 'POST',
         body: JSON.stringify({ liked }),
       }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['community', 'feed'] }),
   });
 
   const commentMutation = useMutation({
@@ -63,6 +74,7 @@ export function useCommunity() {
         method: 'POST',
         body: JSON.stringify({ text, authorName }),
       }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['community', 'feed'] }),
   });
 
   const createPostMutation = useMutation({

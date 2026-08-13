@@ -714,7 +714,7 @@ export const RecipeView: React.FC = () => {
                             ? 'bg-mango text-white'
                             : 'bg-black/60 text-white hover:bg-black/80'
                         }`}
-                        title={savedRecipeIds.includes(recipe.id) ? 'Remove bookmark' : 'Save recipe'}
+                        title={savedRecipeIds.includes(recipe.id) ? t('recipe_removeBookmark') : t('recipe_saveBookmark')}
                       >
                         <Bookmark size={13} className={savedRecipeIds.includes(recipe.id) ? 'fill-white' : ''} />
                       </button>

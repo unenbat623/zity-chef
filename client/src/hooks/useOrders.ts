@@ -30,6 +30,8 @@ export function useOrders() {
   const query = useQuery({
     queryKey: ['orders'],
     queryFn: fetchOrders,
+    refetchInterval: 15_000,
+    refetchOnWindowFocus: true,
   });
 
   const createOrderMutation = useMutation({

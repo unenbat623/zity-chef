@@ -37,15 +37,15 @@ export class ErrorBoundary extends Component<Props, State> {
       <div className="min-h-screen w-full flex items-center justify-center bg-pestle-bg text-pestle-text p-6">
         <div className="max-w-sm w-full text-center space-y-4">
           <div className="text-5xl">🍳</div>
-          <h1 className="text-lg font-extrabold">Уучлаарай, алдаа гарлаа</h1>
+          <h1 className="text-lg font-extrabold">Алдаа гарлаа / Something went wrong</h1>
           <p className="text-sm text-gray-400">
-            Апп-д санамсаргүй алдаа гарлаа. Хуудсыг дахин ачаалж үзнэ үү.
+            Хуудсыг дахин ачаалж үзнэ үү. / Please reload the page and try again.
           </p>
           <button
             onClick={this.handleReload}
             className="btn-primary w-full py-3 text-sm font-bold"
           >
-            Дахин ачаалах
+            Дахин ачаалах / Reload
           </button>
           {import.meta.env.DEV && this.state.error && (
             <pre className="text-left text-[10px] text-red-400 bg-red-500/5 border border-red-500/20 rounded-xl p-3 overflow-auto max-h-40">

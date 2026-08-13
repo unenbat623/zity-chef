@@ -9,6 +9,8 @@ import {
   CheckCircle,
   ShieldCheck,
   ChevronRight,
+  Activity,
+  LayoutDashboard,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { MOCK_INGREDIENTS } from '../constants';
@@ -23,6 +25,7 @@ interface CatalogItem {
   emoji: string;
   unit: string;
   pricePerUnit?: number;
+  imageUrl?: string | null;
 }
 
 export const StoreView: React.FC = () => {
@@ -36,6 +39,7 @@ export const StoreView: React.FC = () => {
     orders,
     ordersLoading,
     ordersError,
+    setActiveTab,
     lang,
     t,
   } = useApp();
@@ -61,73 +65,97 @@ export const StoreView: React.FC = () => {
 
   const handleCheckout = () => {
     if (cart.length === 0) return;
-    triggerPayment(totalCartAmount, 'Zity Grocery Store Delivery Order', () => {
-      createOrder(address, 'qpay');
+    triggerPayment(totalCartAmount, t('store_checkoutTitle'), (paymentMethod) => {
+      createOrder(address, paymentMethod);
       setActiveSubTab('orders');
-    });
+    }, 'qpay');
   };
 
   return (
     <div className="p-4 sm:p-6 space-y-5">
-      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-black text-pestle-text tracking-tight">
-            {t('storeTitle')}
-          </h2>
-          <p className="text-xs font-semibold text-gray-400 mt-0.5">{t('storeSub')}</p>
-        </div>
+      <header className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-800 via-teal-900 to-slate-900 p-5 sm:p-6 text-white shadow-xl border border-emerald-500/20">
+        <Store className="absolute -right-8 -bottom-8 h-40 w-40 text-emerald-500/10 rotate-12 pointer-events-none hidden sm:block" />
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+          <div className="min-w-0 relative z-10">
+            <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/20 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-200 border border-emerald-400/30">
+              <Store size={14} />
+              <span>{t('store_opsLabel')}</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight mt-3 text-white">
+              {t('storeTitle')}
+            </h2>
+            <p className="text-xs sm:text-sm font-semibold text-emerald-100/80 mt-1 max-w-xl">{t('storeSub')}</p>
+          </div>
 
-        {/* Sub-tab pills */}
-        <div className="flex w-full sm:w-auto bg-pestle-card border border-pestle-border p-1 rounded-xl text-xs font-bold justify-stretch sm:justify-start">
-          <button
-            onClick={() => setActiveSubTab('catalog')}
-            className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg transition-all text-center ${
-              activeSubTab === 'catalog'
-                ? 'bg-mango text-white'
-                : 'text-gray-400 hover:text-pestle-text'
-            }`}
-          >
-            {t('store_subtabStore')}
-          </button>
-          <button
-            onClick={() => setActiveSubTab('cart')}
-            className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg transition-all text-center relative ${
-              activeSubTab === 'cart'
-                ? 'bg-mango text-white'
-                : 'text-gray-400 hover:text-pestle-text'
-            }`}
-          >
-            {t('store_subtabCart')} ({cart.length})
-          </button>
-          <button
-            onClick={() => setActiveSubTab('orders')}
-            className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg transition-all text-center ${
-              activeSubTab === 'orders'
-                ? 'bg-mango text-white'
-                : 'text-gray-400 hover:text-pestle-text'
-            }`}
-          >
-            {t('store_subtabOrders')}
-          </button>
+          <div className="relative z-10 flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/20 px-3 py-1.5 text-[11px] font-black text-emerald-100">
+              <span className="h-2 w-2 rounded-full bg-emerald-300" />
+              {t('store_onlineStatus')}
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-black text-white">
+              <Activity size={14} className="text-emerald-300" />
+              {orders.length} {t('dashboard_orders')}
+            </span>
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white px-3 py-1.5 text-[11px] font-black text-emerald-700 hover:bg-emerald-50"
+            >
+              <LayoutDashboard size={14} />
+              {t('store_openDashboard')}
+            </button>
+          </div>
         </div>
       </header>
+
+      <div className="grid grid-cols-3 bg-pestle-card border border-pestle-border p-1 rounded-2xl text-xs font-bold shadow-xs">
+          {[
+            ['catalog', t('store_subtabStore')],
+            ['cart', `${t('store_subtabCart')} (${cart.length})`],
+            ['orders', t('store_subtabOrders')],
+          ].map(([id, label]) => (
+            <button
+              key={id}
+              onClick={() => setActiveSubTab(id as 'catalog' | 'cart' | 'orders')}
+              className={`px-3 py-2 rounded-lg transition-all text-center ${
+                activeSubTab === id
+                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm'
+                  : 'text-gray-400 hover:text-pestle-text'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+      </div>
 
       {activeSubTab === 'catalog' && (
         <div className="space-y-6">
           {/* Nearest Supermarket Banner */}
-          <div className="pestle-card p-4 flex items-center justify-between bg-gradient-to-r from-teal-500/10 to-emerald-500/10 border-teal-500/20">
+          <div className="pestle-card p-4 flex items-center justify-between bg-emerald-500/8 border-emerald-500/20 rounded-3xl">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-teal-500 text-white rounded-xl flex items-center justify-center shadow-md">
+              <div className="w-10 h-10 bg-emerald-600 text-white rounded-xl flex items-center justify-center shadow-md">
                 <Store size={20} />
               </div>
               <div>
                 <h4 className="text-xs font-bold text-pestle-text">Zity Supermarket #04</h4>
-                <p className="text-[10px] text-teal-600 dark:text-teal-400 font-semibold">
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
                   {t('store_nearestInfo')}
                 </p>
               </div>
             </div>
-            <ChevronRight size={18} className="text-teal-600" />
+            <ChevronRight size={18} className="text-emerald-600" />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              [t('store_syncCart'), cart.length],
+              [t('store_syncOrders'), orders.length],
+              [t('store_syncDashboard'), t('store_syncLive')],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-2xl border border-pestle-border bg-pestle-card p-3">
+                <p className="text-[10px] font-black uppercase text-gray-400">{label}</p>
+                <p className="mt-1 text-lg font-black text-pestle-text">{value}</p>
+              </div>
+            ))}
           </div>
 
           {/* Product Catalog Grid */}
@@ -162,11 +190,11 @@ export const StoreView: React.FC = () => {
                 return (
                 <div
                   key={item.id}
-                  className="pestle-card overflow-hidden flex flex-col hover:border-mango transition-colors group cursor-pointer"
+                  className="pestle-card rounded-3xl overflow-hidden flex flex-col hover:border-emerald-500/70 hover:shadow-lg transition-all group cursor-pointer"
                 >
                   {/* Product Photo */}
                   <SmartImage
-                    src={getIngredientImageUrl(item.name, item.nameEn ?? undefined)}
+                    src={item.imageUrl || getIngredientImageUrl(item.name, item.nameEn ?? undefined)}
                     alt={displayName}
                     emoji={item.emoji}
                     fallbackLabel={displayName}
@@ -193,7 +221,7 @@ export const StoreView: React.FC = () => {
 
                       <button
                         onClick={() => handleAddToCart(item, displayName)}
-                        className="w-8 h-8 bg-mango text-white rounded-xl flex items-center justify-center active:scale-95 transition-transform shadow-md shadow-mango/20"
+                        className="w-8 h-8 bg-emerald-600 text-white rounded-xl flex items-center justify-center active:scale-95 transition-transform shadow-md shadow-emerald-600/20"
                       >
                         <Plus size={16} />
                       </button>

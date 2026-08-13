@@ -26,7 +26,9 @@ export function useRecipes() {
   const query = useQuery<Recipe[]>({
     queryKey: ['recipes'],
     queryFn: fetchRecipes,
-    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
   });
 
   return {

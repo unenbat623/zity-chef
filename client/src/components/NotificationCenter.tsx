@@ -31,36 +31,44 @@ export const NotificationCenter: React.FC = () => {
     return inventory.filter((item) => item.expiryDays <= 3);
   }, [inventory]);
 
-  // Dynamic notification list
-  const [notifications, setNotifications] = useState<NotificationItem[]>(() => [
-    {
-      id: 'notif-1',
-      title: '⚠️ Муудах дөхсөн орцын сануулга',
-      body: `Хөргөгчинд ${expiringItems.length > 0 ? expiringItems.map(i => i.name).slice(0, 3).join(', ') : 'орцууд'} дуусах дөхсөн байна. Амттай хоол хийж идээрэй!`,
-      time: 'Түрүүхэн',
-      type: 'warning',
-      read: false,
-      actionTab: 'fridge',
-    },
-    {
-      id: 'notif-2',
-      title: '🍳 Өнөөдрийн хоолны төлөвлөгөө',
-      body: 'Zity Тогооч танд зориулсан долоо хоногийн хоолны цэсийг бэлтгэлээ.',
-      time: '2 цагийн өмнө',
-      type: 'meal',
-      read: false,
-      actionTab: 'calendar',
-    },
-    {
-      id: 'notif-3',
-      title: '📸 AI Зураг & Баримт уншигч бэлэн',
-      body: 'Дэлгүүрийн баримтын зургийг аваад хөргөгчиндөө автоматаар материал нэмээрэй!',
-      time: 'Өчигдөр',
-      type: 'tip',
-      read: true,
-      actionTab: 'fridge',
-    },
-  ]);
+  const [readIds, setReadIds] = useState<string[]>(['notif-3']);
+  const [cleared, setCleared] = useState<boolean>(false);
+  const expiringNames = expiringItems.length > 0
+    ? expiringItems.map((i) => i.name).slice(0, 3).join(', ')
+    : t('notif_expiringFallback');
+
+  const notifications = useMemo<NotificationItem[]>(() => {
+    if (cleared) return [];
+    return [
+      {
+        id: 'notif-1',
+        title: t('notif_expiringTitle'),
+        body: t('notif_expiringBody', { items: expiringNames }),
+        time: t('notif_justNow'),
+        type: 'warning',
+        read: readIds.includes('notif-1'),
+        actionTab: 'fridge',
+      },
+      {
+        id: 'notif-2',
+        title: t('notif_mealPlanTitle'),
+        body: t('notif_mealPlanBody'),
+        time: t('notif_twoHoursAgo'),
+        type: 'meal',
+        read: readIds.includes('notif-2'),
+        actionTab: 'calendar',
+      },
+      {
+        id: 'notif-3',
+        title: t('notif_scannerTitle'),
+        body: t('notif_scannerBody'),
+        time: t('notif_yesterday'),
+        type: 'tip',
+        read: readIds.includes('notif-3'),
+        actionTab: 'fridge',
+      },
+    ];
+  }, [cleared, expiringNames, readIds, t]);
 
   const unreadCount = useMemo(() => {
     return notifications.filter((n) => !n.read).length;
@@ -71,26 +79,24 @@ export const NotificationCenter: React.FC = () => {
     if (granted) {
       setPushEnabled(true);
       await subscribeToPush();
-      toastSuccess('Мэдэгдэл амжилттай идэвхжлээ!', 'Браузер болон утсан дээр сануулга ирэх болно.');
+      toastSuccess(t('notif_pushEnabledTitle'), t('notif_pushEnabledBody'));
       sendExpiryNotification(expiringItems);
     } else {
-      toastInfo('Мэдэгдлийн зөвшөөрөл олгогдсонгүй', 'Браузерын тохиргооноос зөвшөөрөл олгоно уу.');
+      toastInfo(t('notif_pushDeniedTitle'), t('notif_pushDeniedBody'));
     }
   };
 
   const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    setReadIds(notifications.map((n) => n.id));
   };
 
   const clearAll = () => {
-    setNotifications([]);
+    setCleared(true);
   };
 
   const handleNotificationClick = (notif: NotificationItem) => {
     // Mark clicked notification as read
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === notif.id ? { ...n, read: true } : n))
-    );
+    setReadIds((prev) => (prev.includes(notif.id) ? prev : [...prev, notif.id]));
     if (notif.actionTab) {
       setActiveTab(notif.actionTab);
     }
@@ -103,7 +109,7 @@ export const NotificationCenter: React.FC = () => {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative w-8 h-8 sm:w-9 sm:h-9 bg-pestle-card border border-pestle-border hover:border-mango/60 rounded-xl flex items-center justify-center text-pestle-text shadow-xs transition-all active:scale-95 cursor-pointer"
-        title="Notification Center"
+        title={t('notif_centerTitle')}
       >
         <Bell size={16} className={unreadCount > 0 ? 'text-mango animate-bounce' : 'text-gray-400'} />
         {unreadCount > 0 && (
@@ -133,7 +139,7 @@ export const NotificationCenter: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <Bell size={16} className="text-mango" />
                   <h3 className="font-black text-xs text-pestle-text uppercase tracking-wider">
-                    Мэдэгдлийн төв ({notifications.length})
+                    {t('notif_centerTitle')} ({notifications.length})
                   </h3>
                 </div>
                 <div className="flex items-center gap-1">
@@ -142,7 +148,7 @@ export const NotificationCenter: React.FC = () => {
                       onClick={markAllAsRead}
                       className="text-[10px] font-bold text-mango hover:underline px-2 py-1 rounded-lg"
                     >
-                      Уншсанаар тэмдэглэх
+                      {t('notif_markAllRead')}
                     </button>
                   )}
                   <button
@@ -159,8 +165,8 @@ export const NotificationCenter: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <ShieldCheck size={16} className="text-mango" />
                   <div>
-                    <p className="text-[11px] font-bold text-pestle-text">Web Push Сануулга</p>
-                    <p className="text-[9px] text-gray-400 font-medium">Апп хаалттай үед сануулна</p>
+                    <p className="text-[11px] font-bold text-pestle-text">{t('notif_pushTitle')}</p>
+                    <p className="text-[9px] text-gray-400 font-medium">{t('notif_pushSubtitle')}</p>
                   </div>
                 </div>
                 <button
@@ -171,7 +177,7 @@ export const NotificationCenter: React.FC = () => {
                       : 'bg-mango text-white hover:opacity-90'
                   }`}
                 >
-                  {pushEnabled ? '✓ Идэвхтэй' : 'Идэвхжүүлэх'}
+                  {pushEnabled ? t('notif_pushActive') : t('notif_pushActivate')}
                 </button>
               </div>
 
@@ -179,7 +185,7 @@ export const NotificationCenter: React.FC = () => {
               <div className="max-h-80 overflow-y-auto divide-y divide-pestle-border/40 p-1">
                 {notifications.length === 0 ? (
                   <div className="py-8 text-center text-xs text-gray-400 font-medium">
-                    Шинэ мэдэгдэл байхгүй байна 🎉
+                    {t('notif_empty')}
                   </div>
                 ) : (
                   notifications.map((notif) => (
@@ -218,7 +224,7 @@ export const NotificationCenter: React.FC = () => {
                     onClick={clearAll}
                     className="text-[10px] font-bold text-gray-400 hover:text-red-500 flex items-center gap-1 py-1 px-3 rounded-lg transition-colors"
                   >
-                    <Trash2 size={12} /> Мэдэгдлүүдийг цэвэрлэх
+                    <Trash2 size={12} /> {t('notif_clearAll')}
                   </button>
                 </div>
               )}

@@ -24,9 +24,9 @@ export const MacroProgressWidget: React.FC = () => {
           </div>
           <div>
             <h3 className="text-xs font-black text-pestle-text uppercase tracking-wider">
-              Өдрийн Илчлэг ба Шим тэжээл
+              {t('macro_title')}
             </h3>
-            <p className="text-[10px] text-gray-400 font-medium">Daily Macro Goals</p>
+            <p className="text-[10px] text-gray-400 font-medium">{t('macro_subtitle')}</p>
           </div>
         </div>
         <span className="text-[10px] font-black text-mango bg-mango/10 px-2.5 py-1 rounded-full flex items-center gap-1">
@@ -37,7 +37,7 @@ export const MacroProgressWidget: React.FC = () => {
       {/* Calorie Main Progress Bar */}
       <div className="space-y-1.5">
         <div className="flex justify-between text-[11px] font-bold text-pestle-text">
-          <span>Нийт Илчлэг (Calories)</span>
+          <span>{t('macro_calories')}</span>
           <span className="text-mango">{calPercent}%</span>
         </div>
         <div className="w-full bg-pestle-bg h-3 rounded-full border border-pestle-border overflow-hidden p-0.5">
@@ -55,7 +55,7 @@ export const MacroProgressWidget: React.FC = () => {
         {/* Protein */}
         <div className="bg-pestle-bg border border-pestle-border p-2.5 rounded-2xl space-y-1">
           <div className="flex items-center justify-between text-[10px] font-bold text-gray-400">
-            <span>Уураг</span>
+            <span>{t('protein')}</span>
             <span className="text-emerald-500">{proteinPercent}%</span>
           </div>
           <p className="text-xs font-black text-pestle-text">{currentProgress.protein}g / {dailyTarget.protein}g</p>
@@ -67,7 +67,7 @@ export const MacroProgressWidget: React.FC = () => {
         {/* Carbs */}
         <div className="bg-pestle-bg border border-pestle-border p-2.5 rounded-2xl space-y-1">
           <div className="flex items-center justify-between text-[10px] font-bold text-gray-400">
-            <span>Нүүрс ус</span>
+            <span>{t('carbs')}</span>
             <span className="text-blue-500">{carbsPercent}%</span>
           </div>
           <p className="text-xs font-black text-pestle-text">{currentProgress.carbs}g / {dailyTarget.carbs}g</p>
@@ -79,7 +79,7 @@ export const MacroProgressWidget: React.FC = () => {
         {/* Fat */}
         <div className="bg-pestle-bg border border-pestle-border p-2.5 rounded-2xl space-y-1">
           <div className="flex items-center justify-between text-[10px] font-bold text-gray-400">
-            <span>Өөх тос</span>
+            <span>{t('fat')}</span>
             <span className="text-amber-500">{fatPercent}%</span>
           </div>
           <p className="text-xs font-black text-pestle-text">{currentProgress.fat}g / {dailyTarget.fat}g</p>

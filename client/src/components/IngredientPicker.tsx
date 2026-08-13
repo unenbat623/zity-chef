@@ -20,7 +20,7 @@ import { SmartImage } from './SmartImage';
 import { getIngredientImageUrl } from '../lib/imageService';
 
 export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  const { addIngredient, setShowScanModal, t } = useApp();
+  const { addIngredient, setShowScanModal, unitSystem, t } = useApp();
   const [selectedCategory, setSelectedCategory] = useState<Category | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedIngredient, setSelectedIngredient] = useState<Ingredient | null>(null);
@@ -406,7 +406,7 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-bold text-gray-400">{t('picker_amountToAdd')}</span>
                   <span className="text-lg font-black text-mango">
-                    {formatQuantity(quantity, unit)}
+                    {formatQuantity(quantity, unit, unitSystem)}
                   </span>
                 </div>
 

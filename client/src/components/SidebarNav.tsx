@@ -16,6 +16,7 @@ import {
   UserCircle,
   User,
   HelpCircle,
+  LayoutDashboard,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -42,6 +43,7 @@ export const SidebarNav: React.FC = () => {
     { id: 'store', label: t('tabStore'), icon: Store, count: cart.length },
     { id: 'recipe', label: t('tabRecipe'), icon: BookOpen },
     { id: 'community', label: t('sidebar_community'), icon: Users, badge: 'NEW' },
+    { id: 'dashboard', label: t('tabDashboard'), icon: LayoutDashboard, badge: 'LIVE' },
     { id: 'help', label: t('sidebar_help'), icon: HelpCircle },
   ];
 
@@ -67,7 +69,7 @@ export const SidebarNav: React.FC = () => {
                 PRO
               </span>
             </div>
-            <p className="text-[10px] text-gray-400 font-semibold">AI Kitchen Ecosystem</p>
+            <p className="text-[10px] text-gray-400 font-semibold">{t('brand_sidebarSubtitle')}</p>
           </div>
         </div>
 
@@ -151,8 +153,8 @@ export const SidebarNav: React.FC = () => {
           onClick={() => setActiveTab('profile')}
           className={`w-full flex items-center gap-3 p-2.5 rounded-2xl border transition-all hover:shadow-sm ${
             activeTab === 'profile'
-              ? 'border-violet-500/40 bg-violet-500/10'
-              : 'border-pestle-border hover:border-violet-400/50 bg-pestle-bg'
+              ? 'border-emerald-500/40 bg-emerald-500/10'
+              : 'border-pestle-border hover:border-emerald-400/50 bg-pestle-bg'
           }`}
         >
           <div
@@ -168,7 +170,7 @@ export const SidebarNav: React.FC = () => {
             <p className="text-[11px] font-black text-pestle-text truncate">{profile.name}</p>
             <p className="text-[9px] text-gray-400 font-medium truncate">{profile.username}</p>
           </div>
-          <UserCircle size={15} className="text-violet-500 shrink-0" />
+          <UserCircle size={15} className="text-emerald-500 shrink-0" />
         </button>
       </div>
     </aside>

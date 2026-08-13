@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 export type Category = '🥦 Ногоо' | '🥩 Мах' | '🥛 Сүү, өндөг' | '🧂 Амтлагч' | '🍎 Жимс';
 
-export type Language = 'mn' | 'en' | 'ja' | 'ko' | 'zh' | 'es';
+export type Language = 'mn' | 'en';
 
 export type Currency = 'MNT' | 'USD' | 'EUR' | 'JPY' | 'KRW';
 

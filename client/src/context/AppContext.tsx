@@ -8,7 +8,8 @@ import { useOrders } from '../hooks/useOrders';
 interface PendingPayment {
   amount: number;
   title: string;
-  onSuccess?: () => void;
+  onSuccess?: (paymentMethod: 'qpay' | 'socialpay' | 'card') => void;
+  preferredMethod?: 'qpay' | 'socialpay' | 'card';
 }
 
 interface AppContextType {
@@ -56,14 +57,25 @@ interface AppContextType {
   showScanModal: boolean;
   setShowScanModal: (show: boolean) => void;
   paymentModalState: PendingPayment | null;
-  triggerPayment: (amount: number, title: string, onSuccess?: () => void) => void;
+  triggerPayment: (
+    amount: number,
+    title: string,
+    onSuccess?: (paymentMethod: 'qpay' | 'socialpay' | 'card') => void,
+    preferredMethod?: 'qpay' | 'socialpay' | 'card'
+  ) => void;
   closePaymentModal: () => void;
 
   // Translation helper (accepts any key; falls back to mn then the key itself)
   t: (key: string, params?: Record<string, string | number>) => string;
 }
 
-const VALID_TABS = ['fridge', 'calendar', 'cooking', 'store', 'recipe', 'community', 'profile', 'help'];
+const VALID_TABS = ['fridge', 'calendar', 'cooking', 'store', 'recipe', 'community', 'dashboard', 'profile', 'help'];
+const SUPPORTED_LANGUAGES: Language[] = ['mn', 'en'];
+
+function getStoredLanguage(): Language {
+  const saved = localStorage.getItem('zity_lang') as Language | null;
+  return saved && SUPPORTED_LANGUAGES.includes(saved) ? saved : 'mn';
+}
 
 function getTabFromUrl(): string {
   if (typeof window === 'undefined') return 'fridge';
@@ -75,7 +87,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [lang, setLang] = useState<Language>(() => {
-    return (localStorage.getItem('zity_lang') as Language) || 'mn';
+    return getStoredLanguage();
   });
 
   const [currency, setCurrency] = useState<Currency>(() => {
@@ -146,8 +158,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     username: '@chef_mongolia',
     bio: 'Хоол хийх дуртай, Zity Chef-ийн хэрэглэгч 🍳',
     avatarUrl: null,
-    coverGradient: 'from-violet-600 via-purple-600 to-fuchsia-600',
-    accentColor: '#8B5CF6',
+    coverGradient: 'from-emerald-600 via-teal-600 to-slate-800',
+    accentColor: '#10B981',
     postsCount: 3,
     followersCount: 128,
     followingCount: 47,
@@ -156,7 +168,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [profile, setProfileState] = useState<UserProfile>(() => {
     const saved = localStorage.getItem('zity_profile');
-    return saved ? { ...DEFAULT_PROFILE, ...JSON.parse(saved) } : DEFAULT_PROFILE;
+    if (!saved) return DEFAULT_PROFILE;
+
+    const parsed = { ...DEFAULT_PROFILE, ...JSON.parse(saved) };
+    const hasLegacyDefaultTheme =
+      parsed.accentColor === '#8B5CF6' &&
+      parsed.coverGradient === 'from-violet-600 via-purple-600 to-fuchsia-600';
+
+    return hasLegacyDefaultTheme
+      ? {
+          ...parsed,
+          coverGradient: DEFAULT_PROFILE.coverGradient,
+          accentColor: DEFAULT_PROFILE.accentColor,
+        }
+      : parsed;
   });
 
   const setProfile = useCallback((p: UserProfile) => {
@@ -182,6 +207,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [paymentModalState, setPaymentModalState] = useState<PendingPayment | null>(null);
 
   useEffect(() => {
+    if (!SUPPORTED_LANGUAGES.includes(lang)) {
+      setLang('mn');
+      return;
+    }
     localStorage.setItem('zity_lang', lang);
   }, [lang]);
 
@@ -228,6 +257,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     localStorage.setItem('zity_cart', JSON.stringify(cart));
   }, [cart]);
+
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (!event.key || event.newValue === null) return;
+
+      try {
+        if (event.key === 'zity_cart') {
+          setCart(JSON.parse(event.newValue));
+        } else if (event.key === 'zity_profile') {
+          setProfileState({ ...DEFAULT_PROFILE, ...JSON.parse(event.newValue) });
+        } else if (event.key === 'zity_saved_recipes') {
+          setSavedRecipeIds(JSON.parse(event.newValue));
+        } else if (event.key === 'zity_subscription') {
+          setSubscriptionState(event.newValue as SubscriptionTier);
+        }
+      } catch {
+        // Ignore malformed cross-tab payloads; the current tab keeps its state.
+      }
+    };
+
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   const toggleDarkMode = useCallback(() => setIsDark((prev) => !prev), []);
 
@@ -287,8 +339,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 
   const triggerPayment = useCallback(
-    (amount: number, title: string, onSuccess?: () => void) => {
-      setPaymentModalState({ amount, title, onSuccess });
+    (
+      amount: number,
+      title: string,
+      onSuccess?: (paymentMethod: 'qpay' | 'socialpay' | 'card') => void,
+      preferredMethod: 'qpay' | 'socialpay' | 'card' = 'card'
+    ) => {
+      setPaymentModalState({ amount, title, onSuccess, preferredMethod });
     },
     []
   );

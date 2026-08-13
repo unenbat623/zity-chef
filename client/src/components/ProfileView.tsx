@@ -474,7 +474,7 @@ export const ProfileView: React.FC = () => {
                               <button
                                 onClick={() => toggleSaveRecipe(r.id)}
                                 className="text-mango hover:scale-110 transition-transform p-0.5"
-                                title="Remove bookmark"
+                                title={t('recipe_removeBookmark')}
                               >
                                 <Bookmark size={15} className="fill-mango" />
                               </button>

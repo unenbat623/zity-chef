@@ -10,6 +10,7 @@
     "build": "vite build",
     "test": "vitest run",
     "test:watch": "vitest",
+    "db:push": "node scripts/apply-supabase-migrations.mjs",
     "format": "prettier --write \"client/src/**/*.{ts,tsx}\" \"server/**/*.ts\" \"client/public/*.json\"",
     "format:check": "prettier --check \"client/src/**/*.{ts,tsx}\" \"server/**/*.ts\" \"client/public/*.json\"",
     "start": "NODE_ENV=production tsx server/index.ts",

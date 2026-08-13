@@ -280,7 +280,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   {view === 'forgot' && t('auth_titleForgot')}
                   {view === 'profile' && t('auth_titleProfile')}
                 </h3>
-                <p className="text-[10px] text-gray-400 font-semibold">AI Kitchen Ecosystem</p>
+                <p className="text-[10px] text-gray-400 font-semibold">{t('brand_sidebarSubtitle')}</p>
               </div>
             </div>
 

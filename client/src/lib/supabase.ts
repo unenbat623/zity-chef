@@ -8,13 +8,23 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
+function hasRealSupabaseConfig(url: string, key: string): boolean {
+  const placeholders = ['your-project-ref', 'your_supabase', 'your-'];
+  return Boolean(
+    url &&
+      key &&
+      url.includes('.supabase.co') &&
+      !placeholders.some((placeholder) => url.includes(placeholder) || key.includes(placeholder))
+  );
+}
+
 /**
  * True when both env vars are present. When false the app still runs, but in a
  * local-only "demo" mode: no real accounts, no per-user persistence. This lets
  * developers boot the UI without a Supabase project while making the missing
  * configuration obvious (see the console warning below).
  */
-export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
+export const isSupabaseConfigured = hasRealSupabaseConfig(supabaseUrl, supabaseAnonKey);
 
 if (!isSupabaseConfigured && import.meta.env.DEV) {
   // eslint-disable-next-line no-console

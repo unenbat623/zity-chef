@@ -42,6 +42,8 @@ export function useInventory() {
   const query = useQuery({
     queryKey: ['inventory'],
     queryFn: fetchInventory,
+    refetchInterval: 15_000,
+    refetchOnWindowFocus: true,
   });
 
   const addItemMutation = useMutation({

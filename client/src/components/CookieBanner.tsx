@@ -28,20 +28,20 @@ export const CookieBanner: React.FC = () => {
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
-            className="fixed bottom-4 left-4 right-4 md:left-auto md:right-6 md:max-w-md z-[180] bg-pestle-card/90 backdrop-blur-xl border border-pestle-border p-4 rounded-3xl shadow-2xl flex flex-col gap-3"
+            className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] left-3 right-3 md:bottom-4 md:left-auto md:right-6 md:max-w-md z-[180] bg-pestle-card/95 backdrop-blur-xl border border-pestle-border p-2 sm:p-4 rounded-2xl shadow-2xl flex flex-col gap-2 sm:gap-3"
           >
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 bg-mango/15 text-mango rounded-2xl flex items-center justify-center shrink-0">
-                <Cookie size={20} />
+              <div className="hidden sm:flex w-10 h-10 bg-mango/15 text-mango rounded-2xl items-center justify-center shrink-0">
+                <Cookie size={18} />
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="text-xs font-black text-pestle-text flex items-center gap-1.5">
+                <h4 className="text-xs font-black text-pestle-text flex items-center gap-1.5 pr-6">
                   <ShieldCheck size={14} className="text-emerald-500" /> GDPR & Cookie Notice
                 </h4>
-                <p className="text-[11px] text-gray-500 font-medium mt-1 leading-relaxed">
+                <p className="hidden sm:block text-[11px] text-gray-500 font-medium mt-1 leading-relaxed line-clamp-2">
                   {t('cookieNotice')}
                 </p>
-                <div className="flex gap-3 text-[10px] font-bold text-mango mt-1">
+                <div className="hidden sm:flex gap-3 text-[10px] font-bold text-mango mt-1">
                   <button onClick={() => setShowModal('privacy')} className="hover:underline">
                     {t('privacyPolicy')}
                   </button>
@@ -51,18 +51,25 @@ export const CookieBanner: React.FC = () => {
                   </button>
                 </div>
               </div>
+              <button
+                onClick={() => setShowBanner(false)}
+                className="absolute right-3 top-3 w-7 h-7 rounded-full bg-pestle-bg border border-pestle-border text-gray-400 hover:text-pestle-text flex items-center justify-center"
+                aria-label={t('close')}
+              >
+                <X size={14} />
+              </button>
             </div>
 
             <div className="flex gap-2">
               <button
                 onClick={handleAccept}
-                className="flex-1 bg-mango text-white text-xs font-bold py-2 rounded-xl hover:opacity-90 transition-opacity shadow-xs"
+                className="flex-1 bg-mango text-white text-xs font-bold py-2 sm:py-2 rounded-xl hover:opacity-90 transition-opacity shadow-xs"
               >
                 {t('acceptCookies')}
               </button>
               <button
                 onClick={() => setShowBanner(false)}
-                className="px-3 bg-pestle-bg border border-pestle-border text-gray-400 hover:text-pestle-text text-xs font-bold rounded-xl transition-colors"
+                className="px-3 py-2 bg-pestle-bg border border-pestle-border text-gray-400 hover:text-pestle-text text-xs font-bold rounded-xl transition-colors"
               >
                 {t('declineCookies')}
               </button>

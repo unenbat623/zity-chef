@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Refrigerator, Calendar, Store, BookOpen, Flame, Users, User } from 'lucide-react';
+import { Refrigerator, Store, BookOpen, Flame, Users, User, LayoutDashboard } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export const BottomNav: React.FC = () => {
@@ -12,12 +12,13 @@ export const BottomNav: React.FC = () => {
     { id: 'cooking', icon: Flame, label: t('tabCooking') },
     { id: 'community', icon: Users, label: t('bottomnav_community') },
     { id: 'store', icon: Store, label: t('tabStore'), badge: cart.length > 0 ? cart.length : null },
+    { id: 'dashboard', icon: LayoutDashboard, label: t('bottomnav_dashboard') },
     { id: 'profile', icon: User, label: t('bottomnav_profile'), isProfile: true },
   ];
 
   return (
     // md:hidden — hidden on desktop (sidebar handles navigation there)
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-pestle-card/95 backdrop-blur-md border-t border-pestle-border px-2 py-2 pb-safe flex justify-around items-center z-50 shadow-2xl">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-pestle-card/95 backdrop-blur-md border-t border-pestle-border px-2 py-2 pb-safe flex justify-start items-center gap-1 overflow-x-auto no-scrollbar z-50 shadow-2xl">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.id;
@@ -26,13 +27,13 @@ export const BottomNav: React.FC = () => {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className="relative flex-1 flex flex-col items-center gap-0.5 py-1 group active:scale-95 transition-transform min-w-0"
+            className="relative flex-[0_0_64px] sm:flex-1 flex flex-col items-center gap-0.5 py-1 group active:scale-95 transition-transform min-w-0"
           >
             <div className="relative">
               {tab.isProfile ? (
                 <div
                   className={`w-6 h-6 rounded-full overflow-hidden flex items-center justify-center border-2 transition-all ${
-                    isActive ? 'border-violet-500' : 'border-transparent'
+                    isActive ? 'border-emerald-500' : 'border-transparent'
                   }`}
                   style={isActive ? { background: profile.accentColor } : {}}
                 >
@@ -82,4 +83,3 @@ export const BottomNav: React.FC = () => {
     </nav>
   );
 };
-

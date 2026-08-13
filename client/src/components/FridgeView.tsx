@@ -24,6 +24,7 @@ export const FridgeView: React.FC = () => {
     removeIngredient,
     updateIngredient,
     setShowScanModal,
+    unitSystem,
     t,
   } = useApp();
   const [showPicker, setShowPicker] = useState<boolean>(false);
@@ -73,7 +74,7 @@ export const FridgeView: React.FC = () => {
             title={t('fridge_enableNotif')}
           >
             <Bell size={15} className="text-mango" />
-            <span className="hidden xs:inline">{t('fridge_notifBtn')}</span>
+            <span className="hidden sm:inline">{t('fridge_notifBtn')}</span>
           </button>
 
           <button
@@ -226,7 +227,7 @@ export const FridgeView: React.FC = () => {
                 {item.name}
               </h3>
               <span className="text-[11px] font-mono font-semibold text-mango mb-2">
-                {formatQuantity(item.quantity, item.unit)}
+                {formatQuantity(item.quantity, item.unit, unitSystem)}
               </span>
 
               {/* Freshness Bar */}

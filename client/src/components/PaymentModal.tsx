@@ -34,6 +34,7 @@ export const PaymentModal: React.FC = () => {
       return;
     }
 
+    setMethod(paymentModalState.preferredMethod || 'card');
     const timer = setInterval(() => {
       setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
@@ -78,6 +79,11 @@ export const PaymentModal: React.FC = () => {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  function orderPaymentMethod(): 'qpay' | 'socialpay' | 'card' {
+    if (method === 'qpay' || method === 'socialpay') return method;
+    return 'card';
+  }
+
   function handleSuccess() {
     setIsProcessing(false);
     setIsSuccess(true);
@@ -86,7 +92,7 @@ export const PaymentModal: React.FC = () => {
       t('pay_successToastBody', { n: amount.toLocaleString() })
     );
     setTimeout(() => {
-      if (onSuccess) onSuccess();
+      if (onSuccess) onSuccess(orderPaymentMethod());
       closePaymentModal();
     }, 1800);
   }
@@ -133,7 +139,7 @@ export const PaymentModal: React.FC = () => {
             </div>
             <div>
               <span className="text-[10px] font-extrabold uppercase tracking-widest bg-white/20 px-2 py-0.5 rounded-full">
-                Secure QPay Checkout
+                {t('pay_secureCheckout')}
               </span>
               <h2 className="text-xl font-bold mt-1">{title}</h2>
             </div>
@@ -178,7 +184,7 @@ export const PaymentModal: React.FC = () => {
                 </div>
 
                 {/* Tabs for Payment Method */}
-                <div className="grid grid-cols-4 bg-pestle-bg p-1 rounded-xl border border-pestle-border text-[10px] font-extrabold gap-1">
+                <div className="grid grid-cols-5 bg-pestle-bg p-1 rounded-xl border border-pestle-border text-[10px] font-extrabold gap-1">
                   <button
                     onClick={() => setMethod('card')}
                     className={`py-2 rounded-lg transition-all ${
@@ -187,7 +193,17 @@ export const PaymentModal: React.FC = () => {
                         : 'text-gray-400 hover:text-pestle-text'
                     }`}
                   >
-                    💳 Card / Stripe
+                    💳 {t('pay_cardTab')}
+                  </button>
+                  <button
+                    onClick={() => setMethod('socialpay')}
+                    className={`py-2 rounded-lg transition-all ${
+                      method === 'socialpay'
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'text-gray-400 hover:text-pestle-text'
+                    }`}
+                  >
+                    SP
                   </button>
                   <button
                     onClick={() => setMethod('applepay')}
@@ -197,7 +213,7 @@ export const PaymentModal: React.FC = () => {
                         : 'text-gray-400 hover:text-pestle-text'
                     }`}
                   >
-                    🍎 Apple Pay
+                    🍎 {t('applePayTitle')}
                   </button>
                   <button
                     onClick={() => setMethod('paypal')}
@@ -314,8 +330,8 @@ export const PaymentModal: React.FC = () => {
                     <div className="w-12 h-12 bg-black text-white rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold shadow-md">
                       
                     </div>
-                    <h4 className="font-bold text-sm text-pestle-text mb-1">Apple Pay</h4>
-                    <p className="text-xs text-gray-500">Double-click side button to pay with Touch/FaceID.</p>
+                    <h4 className="font-bold text-sm text-pestle-text mb-1">{t('applePayTitle')}</h4>
+                    <p className="text-xs text-gray-500">{t('pay_applePayDesc')}</p>
                   </div>
                 )}
 
@@ -324,8 +340,8 @@ export const PaymentModal: React.FC = () => {
                     <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold shadow-md">
                       P
                     </div>
-                    <h4 className="font-bold text-sm text-pestle-text mb-1">PayPal Global Checkout</h4>
-                    <p className="text-xs text-gray-500">You will be redirected to PayPal to complete your purchase safely.</p>
+                    <h4 className="font-bold text-sm text-pestle-text mb-1">{t('pay_paypalTitle')}</h4>
+                    <p className="text-xs text-gray-500">{t('pay_paypalDesc')}</p>
                   </div>
                 )}
 

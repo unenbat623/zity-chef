@@ -11,6 +11,7 @@ import { PaymentModal } from './components/PaymentModal';
 import { SubscriptionModal } from './components/SubscriptionModal';
 import { ReceiptScannerModal } from './components/ReceiptScannerModal';
 import { CookieBanner } from './components/CookieBanner';
+import { useRealtimeSync } from './hooks/useRealtimeSync';
 
 // ── Route-level code splitting ────────────────────────────────────────────────
 // FridgeView (the default tab) stays eager for an instant first paint; the rest
@@ -32,6 +33,9 @@ const CommunityView = lazy(() =>
 );
 const ProfileView = lazy(() =>
   import('./components/ProfileView').then((m) => ({ default: m.ProfileView }))
+);
+const ChefDashboardView = lazy(() =>
+  import('./components/ChefDashboardView').then((m) => ({ default: m.ChefDashboardView }))
 );
 const HelpView = lazy(() =>
   import('./components/HelpView').then((m) => ({ default: m.HelpView }))
@@ -59,9 +63,10 @@ const ViewFallback: React.FC = () => (
 
 const AppContent: React.FC = () => {
   const { activeTab, activeCookingRecipe } = useApp();
+  useRealtimeSync();
 
   // Tabs that are known/valid
-  const validTabs = ['fridge', 'calendar', 'cooking', 'store', 'recipe', 'community', 'profile', 'help'];
+  const validTabs = ['fridge', 'calendar', 'cooking', 'store', 'recipe', 'community', 'dashboard', 'profile', 'help'];
   const is404 = !validTabs.includes(activeTab);
 
   return (
@@ -91,6 +96,7 @@ const AppContent: React.FC = () => {
                 {activeTab === 'store' && <StoreView />}
                 {activeTab === 'recipe' && <RecipeView />}
                 {activeTab === 'community' && <CommunityView />}
+                {activeTab === 'dashboard' && <ChefDashboardView />}
                 {activeTab === 'profile' && <ProfileView />}
                 {activeTab === 'help' && <HelpView />}
                 {is404 && <NotFoundView />}

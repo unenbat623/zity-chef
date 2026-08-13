@@ -13,6 +13,7 @@ import paymentsRouter from './routes/payments.js';
 import storeRouter from './routes/store.js';
 import pushRouter from './routes/push.js';
 import recipesRouter from './routes/recipes.js';
+import chefRouter from './routes/chef.js';
 
 const IS_PROD = process.env.NODE_ENV === 'production';
 
@@ -109,6 +110,7 @@ export function createApp(): Express {
   app.use('/api/store', storeRouter);
   app.use('/api/push', pushRouter);
   app.use('/api/recipes', recipesRouter);
+  app.use('/api/chef', chefRouter);
 
   // ── Health & metrics ────────────────────────────────────────────────────
   app.get('/api/health', (_req, res) => {

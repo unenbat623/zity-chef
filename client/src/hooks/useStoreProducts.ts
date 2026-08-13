@@ -20,6 +20,11 @@ async function fetchProducts(): Promise<StoreProduct[]> {
 }
 
 export function useStoreProducts() {
-  const query = useQuery({ queryKey: ['store', 'products'], queryFn: fetchProducts });
+  const query = useQuery({
+    queryKey: ['store', 'products'],
+    queryFn: fetchProducts,
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: true,
+  });
   return { products: query.data ?? [], loading: query.isLoading };
 }

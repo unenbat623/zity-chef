@@ -154,17 +154,17 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
   const toggleHandsFree = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      toastWarning('Дуут удирдлага дэмжигдээгүй', 'Таны хөтөч Web Speech Recognition API дэмжихгүй байна.');
+      toastWarning(t('cooking_handsFreeUnsupportedTitle'), t('cooking_handsFreeUnsupportedDesc'));
       return;
     }
 
     if (isListeningVoiceCommands) {
       setIsListeningVoiceCommands(false);
       setLastVoiceCommand(null);
-      toastSuccess('Hands-Free зогслоо', 'Дуут удирдлагын микрофон унтраалаа.');
+      toastSuccess(t('cooking_handsFreeStoppedTitle'), t('cooking_handsFreeStoppedDesc'));
     } else {
       setIsListeningVoiceCommands(true);
-      toastSuccess('Hands-Free Идэвхжлээ 🎙️', '"Дараах", "Өмнөх", "Эхлэх", "Зогсоох", "Унших" гэж хэлээрэй!');
+      toastSuccess(t('cooking_handsFreeStartedTitle'), t('cooking_handsFreeStartedDesc'));
     }
   };
 
@@ -274,11 +274,11 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
                 ? 'bg-rose-500 text-white border-rose-500 animate-pulse shadow-md shadow-rose-500/30'
                 : 'bg-pestle-bg border-pestle-border text-pestle-text hover:border-mango'
             }`}
-            title="Дуут удирдлага (Hands-Free)"
+            title={t('cooking_handsFreeTitle')}
           >
             {isListeningVoiceCommands ? <Mic size={16} /> : <MicOff size={16} />}
             <span className="hidden sm:inline">
-              {isListeningVoiceCommands ? 'Hands-Free 🎙️' : 'Hands-Free'}
+              {isListeningVoiceCommands ? t('cooking_handsFreeListening') : t('cooking_handsFree')}
             </span>
           </button>
 
@@ -311,15 +311,15 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
         >
           <div className="flex items-center gap-2 text-xs font-black text-rose-500">
             <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
-            <span>Hands-Free Удирдлага Идэвхтэй 🎙️</span>
+            <span>{t('cooking_handsFreeActive')}</span>
             {lastVoiceCommand && (
               <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">
-                • Сүүлд сонссон: "{lastVoiceCommand}"
+                • {t('cooking_lastHeard')}: "{lastVoiceCommand}"
               </span>
             )}
           </div>
           <span className="text-[10px] font-bold text-gray-400 bg-pestle-card px-2.5 py-1 rounded-xl border border-pestle-border">
-            Тушаалууд: "Дараах", "Өмнөх", "Эхлэх", "Зогсоох", "Унших"
+            {t('cooking_voiceCommands')}
           </span>
         </motion.div>
       )}

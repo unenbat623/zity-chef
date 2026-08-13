@@ -63,7 +63,7 @@ export const HeaderNav: React.FC = () => {
               )}
             </h1>
             <p className="hidden sm:block text-[10px] sm:text-[11px] text-gray-400 font-medium truncate leading-none">
-              Smart AI Culinary Assistant
+              {t('brand_subtitle')}
             </p>
           </div>
         </div>
@@ -104,8 +104,8 @@ export const HeaderNav: React.FC = () => {
               className="text-[10px] font-extrabold bg-mango/15 text-mango border border-mango/30 px-2 py-1.5 sm:px-3 rounded-xl hover:bg-mango hover:text-white transition-all flex items-center gap-1 active:scale-95 whitespace-nowrap shadow-xs"
             >
               <Sparkles size={11} />
-              <span className="hidden xs:inline">{t('upgradeBtn')}</span>
-              <span className="xs:hidden">PRO</span>
+              <span className="hidden sm:inline">{t('upgradeBtn')}</span>
+              <span className="sm:hidden">PRO</span>
             </button>
           )}
 
@@ -113,7 +113,7 @@ export const HeaderNav: React.FC = () => {
           <select
             value={currency}
             onChange={(e) => setCurrency(e.target.value as any)}
-            className="h-8 bg-pestle-card border border-pestle-border hover:border-mango/60 rounded-xl px-1.5 text-[11px] font-black text-pestle-text shadow-xs cursor-pointer focus:outline-none"
+            className="hidden sm:block h-8 bg-pestle-card border border-pestle-border hover:border-mango/60 rounded-xl px-1.5 text-[11px] font-black text-pestle-text shadow-xs cursor-pointer focus:outline-none"
             title={t('global_currency')}
           >
             <option value="MNT">🇲🇳 MNT ₮</option>
@@ -123,19 +123,25 @@ export const HeaderNav: React.FC = () => {
             <option value="KRW">🇰🇷 KRW ₩</option>
           </select>
 
+          <select
+            value={unitSystem}
+            onChange={(e) => setUnitSystem(e.target.value as any)}
+            className="hidden lg:block h-8 max-w-[142px] bg-pestle-card border border-pestle-border hover:border-mango/60 rounded-xl px-1.5 text-[11px] font-black text-pestle-text shadow-xs cursor-pointer focus:outline-none"
+            title={t('global_unitSystem')}
+          >
+            <option value="metric">{t('global_metric')}</option>
+            <option value="imperial">{t('global_imperial')}</option>
+          </select>
+
           {/* Animated Language Switcher */}
           <select
             value={lang}
             onChange={(e) => setLang(e.target.value as any)}
-            className="h-8 bg-pestle-card border border-pestle-border hover:border-mango/60 rounded-xl px-1.5 text-[11px] font-black text-pestle-text shadow-xs cursor-pointer focus:outline-none"
+            className="h-8 max-w-[70px] sm:max-w-none bg-pestle-card border border-pestle-border hover:border-mango/60 rounded-xl px-1.5 text-[11px] font-black text-pestle-text shadow-xs cursor-pointer focus:outline-none"
             title={t('header_switchLang')}
           >
             <option value="mn">🇲🇳 MN</option>
             <option value="en">🇬🇧 EN</option>
-            <option value="ja">🇯🇵 JA</option>
-            <option value="ko">🇰🇷 KO</option>
-            <option value="zh">🇨🇳 ZH</option>
-            <option value="es">🇪🇸 ES</option>
           </select>
           {/* Animated Dark Mode Toggle */}
           <motion.button
