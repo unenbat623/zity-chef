@@ -51,6 +51,47 @@ function getAuthRedirectUrl(): string {
   return window.location.origin;
 }
 
+function getUserDisplayName(user: User): string | null {
+  const meta = user.user_metadata ?? {};
+  return (
+    (meta.full_name as string | undefined) ||
+    (meta.name as string | undefined) ||
+    user.email?.split('@')[0] ||
+    user.phone ||
+    null
+  );
+}
+
+function getUserAvatarUrl(user: User): string | null {
+  const meta = user.user_metadata ?? {};
+  return (
+    (meta.avatar_url as string | undefined) ||
+    (meta.picture as string | undefined) ||
+    null
+  );
+}
+
+async function ensureChefProfile(user: User | null): Promise<void> {
+  if (!supabase || !user || user.is_anonymous) return;
+
+  const { error } = await supabase.from('profiles').upsert(
+    {
+      id: user.id,
+      email: user.email ?? null,
+      display_name: getUserDisplayName(user),
+      avatar_url: getUserAvatarUrl(user),
+    },
+    { onConflict: 'id' }
+  );
+
+  if (error) {
+    // The auth session is still valid; this warning makes profile/RLS setup
+    // issues visible without blocking the user from entering the app.
+    // eslint-disable-next-line no-console
+    console.warn('[Zity Chef] Profile sync failed:', error.message);
+  }
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -68,6 +109,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     supabase.auth.getSession().then(async ({ data }) => {
       if (!active) return;
       if (data.session) {
+        await ensureChefProfile(data.session.user);
         setSession(data.session);
         setLoading(false);
       } else {
@@ -89,6 +131,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // When the identity actually changes, re-fetch all user-scoped data so a
       // login/logout swaps the fridge/orders to the correct account.
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
+        void ensureChefProfile(next?.user ?? null);
         queryClient.invalidateQueries();
       }
     });
@@ -113,7 +156,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       async signInWithPassword(email, password) {
         const blocked = await guard();
         if (blocked) return blocked;
-        const { error } = await supabase!.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase!.auth.signInWithPassword({ email, password });
+        if (!error) await ensureChefProfile(data.user);
         return error ? { ok: false, error: toMessage(error) } : { ok: true };
       },
 
@@ -126,6 +170,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           options: { data: { full_name: fullName } },
         });
         if (error) return { ok: false, error: toMessage(error) };
+        await ensureChefProfile(data.user);
         // If email confirmation is required, there is no session yet.
         return { ok: true, pendingVerification: !data.session };
       },
@@ -133,7 +178,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       async verifyEmailOtp(email, token) {
         const blocked = await guard();
         if (blocked) return blocked;
-        const { error } = await supabase!.auth.verifyOtp({ email, token, type: 'email' });
+        const { data, error } = await supabase!.auth.verifyOtp({ email, token, type: 'email' });
+        if (!error) await ensureChefProfile(data.user);
         return error ? { ok: false, error: toMessage(error) } : { ok: true };
       },
 
@@ -170,7 +216,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       async verifyPhoneOtp(phone, token) {
         const blocked = await guard();
         if (blocked) return blocked;
-        const { error } = await supabase!.auth.verifyOtp({ phone, token, type: 'sms' });
+        const { data, error } = await supabase!.auth.verifyOtp({ phone, token, type: 'sms' });
+        if (!error) await ensureChefProfile(data.user);
         return error ? { ok: false, error: toMessage(error) } : { ok: true };
       },
 

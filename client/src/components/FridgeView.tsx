@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Search, Scan, AlertTriangle, Trash2, Edit, Bell, Sparkles } from 'lucide-react';
+import { Plus, Search, Scan, AlertTriangle, Edit, Sparkles } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { CATEGORIES } from '../constants';
 import { Ingredient } from '../types';
@@ -9,11 +9,6 @@ import { IngredientPicker } from './IngredientPicker';
 import { IngredientImage } from './SmartImage';
 import { getIngredientImageUrl } from '../lib/imageService';
 import { EditIngredientModal } from './EditIngredientModal';
-import {
-  requestNotificationPermission,
-  sendExpiryNotification,
-  subscribeToPush,
-} from '../lib/notificationService';
 
 export const FridgeView: React.FC = () => {
   const {
@@ -36,16 +31,6 @@ export const FridgeView: React.FC = () => {
   const expiringItems = inventory.filter((item) => item.expiryDays <= 3);
   const expiringCount = expiringItems.length;
 
-  const handleEnableNotifications = async () => {
-    const granted = await requestNotificationPermission();
-    if (!granted) return;
-    // Register for server-sent Web Push (expiry reminders when the app is closed).
-    subscribeToPush();
-    if (expiringCount > 0) {
-      sendExpiryNotification(expiringItems);
-    }
-  };
-
   const filteredInventory = inventory.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCat = selectedCat === 'all' || item.category === selectedCat;
@@ -67,16 +52,6 @@ export const FridgeView: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Push Notification Trigger Button */}
-          <button
-            onClick={handleEnableNotifications}
-            className="bg-pestle-card border border-pestle-border px-3 py-2 rounded-xl text-xs font-bold text-pestle-text hover:border-mango transition-colors flex items-center gap-1.5"
-            title={t('fridge_enableNotif')}
-          >
-            <Bell size={15} className="text-mango" />
-            <span className="hidden sm:inline">{t('fridge_notifBtn')}</span>
-          </button>
-
           <button
             onClick={() => setShowScanModal(true)}
             className="w-full sm:w-auto justify-center bg-mint/15 text-mint border border-mint/30 px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 hover:bg-mint hover:text-white transition-all active:scale-95 shadow-sm"
@@ -176,13 +151,12 @@ export const FridgeView: React.FC = () => {
 
       {/* Loading skeleton */}
       {inventoryLoading && !inventoryError && inventory.length === 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="pestle-card p-3.5 animate-pulse">
-              <div className="w-full h-28 rounded-xl bg-pestle-bg mb-3" />
-              <div className="h-3 w-2/3 mx-auto rounded bg-pestle-bg mb-2" />
-              <div className="h-2 w-1/3 mx-auto rounded bg-pestle-bg mb-3" />
-              <div className="h-1.5 w-full rounded-full bg-pestle-bg" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="pestle-card p-3.5 animate-pulse opacity-70">
+              <div className="w-full h-24 rounded-xl bg-pestle-bg mb-3" />
+              <div className="h-3 w-2/3 rounded bg-pestle-bg mb-2" />
+              <div className="h-2 w-1/3 rounded bg-pestle-bg" />
             </div>
           ))}
         </div>
@@ -258,8 +232,12 @@ export const FridgeView: React.FC = () => {
       )}
 
       {!inventoryLoading && !inventoryError && filteredInventory.length === 0 && (
-        <div className="text-center py-12 bg-pestle-card border border-pestle-border rounded-2xl p-6">
-          <p className="text-sm font-bold text-gray-400">{t('fridge_noItems')}</p>
+        <div className="text-center py-14 bg-pestle-card border border-pestle-border rounded-3xl p-6">
+          <div className="w-12 h-12 rounded-2xl bg-mango/10 text-mango mx-auto flex items-center justify-center mb-3">
+            <Plus size={22} />
+          </div>
+          <p className="text-sm font-black text-pestle-text">{t('fridge_noItems')}</p>
+          <p className="text-xs font-semibold text-gray-400 mt-1">{t('store_cartEmptyHint')}</p>
         </div>
       )}
 

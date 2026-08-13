@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Ingredient, SubscriptionTier, CartItem, Order, Language, Recipe, UserProfile, Currency, UnitSystem } from '../types';
 import { translations } from '../lib/i18n';
 import { formatCurrency } from '../lib/currency';
 import { useInventory } from '../hooks/useInventory';
 import { useOrders } from '../hooks/useOrders';
+import { useAuth } from './AuthContext';
 
 interface PendingPayment {
   amount: number;
@@ -71,6 +72,19 @@ interface AppContextType {
 
 const VALID_TABS = ['fridge', 'calendar', 'cooking', 'store', 'recipe', 'community', 'dashboard', 'profile', 'help'];
 const SUPPORTED_LANGUAGES: Language[] = ['mn', 'en'];
+const DEFAULT_SAVED_RECIPE_IDS = ['r1', 'r3'];
+const DEFAULT_PROFILE: UserProfile = {
+  name: 'Таны Нэр',
+  username: '@chef_mongolia',
+  bio: 'Хоол хийх дуртай, Zity Chef-ийн хэрэглэгч 🍳',
+  avatarUrl: null,
+  coverGradient: 'from-emerald-600 via-teal-600 to-slate-800',
+  accentColor: '#10B981',
+  postsCount: 3,
+  followersCount: 128,
+  followingCount: 47,
+  recipesCreated: 12,
+};
 
 function getStoredLanguage(): Language {
   const saved = localStorage.getItem('zity_lang') as Language | null;
@@ -83,9 +97,43 @@ function getTabFromUrl(): string {
   return tab && VALID_TABS.includes(tab) ? tab : 'fridge';
 }
 
+function readStoredJson<T>(key: string, fallback: T): T {
+  const saved = localStorage.getItem(key);
+  if (!saved) return fallback;
+
+  try {
+    return JSON.parse(saved) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function getScopedKey(base: string, accountId: string): string {
+  return `${base}:${accountId}`;
+}
+
+function normalizeProfile(profile: Partial<UserProfile> | null | undefined): UserProfile {
+  const parsed = { ...DEFAULT_PROFILE, ...(profile ?? {}) };
+  const hasLegacyDefaultTheme =
+    parsed.accentColor === '#8B5CF6' &&
+    parsed.coverGradient === 'from-violet-600 via-purple-600 to-fuchsia-600';
+
+  return hasLegacyDefaultTheme
+    ? {
+        ...parsed,
+        coverGradient: DEFAULT_PROFILE.coverGradient,
+        accentColor: DEFAULT_PROFILE.accentColor,
+      }
+    : parsed;
+}
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user: authUser, isAnonymous } = useAuth();
+  const accountId = authUser?.id ?? 'local';
+  const hydratedAccountRef = useRef<string | null>(null);
+
   const [lang, setLang] = useState<Language>(() => {
     return getStoredLanguage();
   });
@@ -153,51 +201,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const DEFAULT_PROFILE: UserProfile = {
-    name: 'Таны Нэр',
-    username: '@chef_mongolia',
-    bio: 'Хоол хийх дуртай, Zity Chef-ийн хэрэглэгч 🍳',
-    avatarUrl: null,
-    coverGradient: 'from-emerald-600 via-teal-600 to-slate-800',
-    accentColor: '#10B981',
-    postsCount: 3,
-    followersCount: 128,
-    followingCount: 47,
-    recipesCreated: 12,
-  };
-
   const [profile, setProfileState] = useState<UserProfile>(() => {
-    const saved = localStorage.getItem('zity_profile');
-    if (!saved) return DEFAULT_PROFILE;
-
-    const parsed = { ...DEFAULT_PROFILE, ...JSON.parse(saved) };
-    const hasLegacyDefaultTheme =
-      parsed.accentColor === '#8B5CF6' &&
-      parsed.coverGradient === 'from-violet-600 via-purple-600 to-fuchsia-600';
-
-    return hasLegacyDefaultTheme
-      ? {
-          ...parsed,
-          coverGradient: DEFAULT_PROFILE.coverGradient,
-          accentColor: DEFAULT_PROFILE.accentColor,
-        }
-      : parsed;
+    return normalizeProfile(readStoredJson<Partial<UserProfile>>('zity_profile', DEFAULT_PROFILE));
   });
 
   const setProfile = useCallback((p: UserProfile) => {
     setProfileState(p);
-    localStorage.setItem('zity_profile', JSON.stringify(p));
   }, []);
 
   const [savedRecipeIds, setSavedRecipeIds] = useState<string[]>(() => {
     const saved = localStorage.getItem('zity_saved_recipes');
-    return saved ? JSON.parse(saved) : ['r1', 'r3'];
+    return saved ? JSON.parse(saved) : DEFAULT_SAVED_RECIPE_IDS;
   });
 
   const toggleSaveRecipe = useCallback((recipeId: string) => {
     setSavedRecipeIds((prev) => {
       const next = prev.includes(recipeId) ? prev.filter((id) => id !== recipeId) : [...prev, recipeId];
-      localStorage.setItem('zity_saved_recipes', JSON.stringify(next));
       return next;
     });
   }, []);
@@ -221,6 +240,77 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     localStorage.setItem('zity_unit_system', unitSystem);
   }, [unitSystem]);
+
+  const accountStorage = useMemo(
+    () => ({
+      profile: getScopedKey('zity_profile', accountId),
+      cart: getScopedKey('zity_cart', accountId),
+      savedRecipes: getScopedKey('zity_saved_recipes', accountId),
+      subscription: getScopedKey('zity_subscription', accountId),
+    }),
+    [accountId]
+  );
+
+  useEffect(() => {
+    const hasRealAccount = Boolean(authUser && !isAnonymous);
+    const metadata = authUser?.user_metadata ?? {};
+    const displayName =
+      (metadata.full_name as string | undefined) ||
+      (metadata.name as string | undefined) ||
+      authUser?.email?.split('@')[0] ||
+      authUser?.phone ||
+      DEFAULT_PROFILE.name;
+    const username =
+      authUser?.email ? `@${authUser.email.split('@')[0]}` : authUser?.phone ? `@${authUser.phone}` : DEFAULT_PROFILE.username;
+    const avatarUrl =
+      (metadata.avatar_url as string | undefined) ||
+      (metadata.picture as string | undefined) ||
+      null;
+
+    const legacyAllowed = !hasRealAccount;
+    const storedProfileKey = localStorage.getItem(accountStorage.profile)
+      ? accountStorage.profile
+      : legacyAllowed && localStorage.getItem('zity_profile')
+        ? 'zity_profile'
+        : null;
+    const nextProfile = normalizeProfile(
+      storedProfileKey
+        ? readStoredJson<Partial<UserProfile>>(storedProfileKey, DEFAULT_PROFILE)
+        : DEFAULT_PROFILE
+    );
+
+    setProfileState(
+      hasRealAccount
+        ? {
+            ...nextProfile,
+            name: displayName,
+            username,
+            avatarUrl: avatarUrl || nextProfile.avatarUrl,
+          }
+        : nextProfile
+    );
+
+    setSubscriptionState(
+      (localStorage.getItem(accountStorage.subscription) as SubscriptionTier | null) ||
+        (legacyAllowed ? (localStorage.getItem('zity_subscription') as SubscriptionTier | null) : null) ||
+        'free'
+    );
+    setCart(
+      localStorage.getItem(accountStorage.cart)
+        ? readStoredJson<CartItem[]>(accountStorage.cart, [])
+        : legacyAllowed
+          ? readStoredJson<CartItem[]>('zity_cart', [])
+          : []
+    );
+    setSavedRecipeIds(
+      localStorage.getItem(accountStorage.savedRecipes)
+        ? readStoredJson<string[]>(accountStorage.savedRecipes, DEFAULT_SAVED_RECIPE_IDS)
+        : legacyAllowed
+          ? readStoredJson<string[]>('zity_saved_recipes', DEFAULT_SAVED_RECIPE_IDS)
+          : DEFAULT_SAVED_RECIPE_IDS
+    );
+    hydratedAccountRef.current = accountId;
+  }, [accountId, accountStorage, authUser, isAnonymous]);
 
   const formatPrice = useCallback((amountInMNT: number) => {
     return formatCurrency(amountInMNT, currency);
@@ -251,25 +341,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [profile?.accentColor]);
 
   useEffect(() => {
-    localStorage.setItem('zity_subscription', subscription);
-  }, [subscription]);
+    if (hydratedAccountRef.current !== accountId) return;
+    localStorage.setItem(accountStorage.subscription, subscription);
+  }, [accountId, accountStorage.subscription, subscription]);
 
   useEffect(() => {
-    localStorage.setItem('zity_cart', JSON.stringify(cart));
-  }, [cart]);
+    if (hydratedAccountRef.current !== accountId) return;
+    localStorage.setItem(accountStorage.cart, JSON.stringify(cart));
+  }, [accountId, accountStorage.cart, cart]);
+
+  useEffect(() => {
+    if (hydratedAccountRef.current !== accountId) return;
+    localStorage.setItem(accountStorage.profile, JSON.stringify(profile));
+  }, [accountId, accountStorage.profile, profile]);
+
+  useEffect(() => {
+    if (hydratedAccountRef.current !== accountId) return;
+    localStorage.setItem(accountStorage.savedRecipes, JSON.stringify(savedRecipeIds));
+  }, [accountId, accountStorage.savedRecipes, savedRecipeIds]);
 
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
       if (!event.key || event.newValue === null) return;
 
       try {
-        if (event.key === 'zity_cart') {
+        if (event.key === accountStorage.cart) {
           setCart(JSON.parse(event.newValue));
-        } else if (event.key === 'zity_profile') {
-          setProfileState({ ...DEFAULT_PROFILE, ...JSON.parse(event.newValue) });
-        } else if (event.key === 'zity_saved_recipes') {
+        } else if (event.key === accountStorage.profile) {
+          setProfileState(normalizeProfile(JSON.parse(event.newValue)));
+        } else if (event.key === accountStorage.savedRecipes) {
           setSavedRecipeIds(JSON.parse(event.newValue));
-        } else if (event.key === 'zity_subscription') {
+        } else if (event.key === accountStorage.subscription) {
           setSubscriptionState(event.newValue as SubscriptionTier);
         }
       } catch {
@@ -279,7 +381,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
-  }, []);
+  }, [accountStorage]);
 
   const toggleDarkMode = useCallback(() => setIsDark((prev) => !prev), []);
 

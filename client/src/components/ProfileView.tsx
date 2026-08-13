@@ -22,6 +22,7 @@ import {
   Calculator,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { uploadImage } from '../lib/storage';
 import { FoodCostCalculatorModal } from './FoodCostCalculatorModal';
 
@@ -270,9 +271,13 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 // ── MAIN PROFILE VIEW ─────────────────────────────────────────────────────────
 export const ProfileView: React.FC = () => {
   const { profile, setActiveTab, savedRecipeIds, toggleSaveRecipe, setActiveCookingRecipe, t } = useApp();
+  const { user: authUser, isAnonymous } = useAuth();
   const [showEdit, setShowEdit] = useState(false);
   const [showCostCalculator, setShowCostCalculator] = useState(false);
   const [activeGrid, setActiveGrid] = useState<'posts' | 'recipes'>('posts');
+  const accountLabel = authUser && !isAnonymous
+    ? authUser.email || authUser.phone || profile.username
+    : 'Түр хэрэглэгч';
 
   const savedRecipesList = RECIPES.filter((r) => savedRecipeIds.includes(r.id));
 
@@ -333,6 +338,9 @@ export const ProfileView: React.FC = () => {
             </h1>
             <p className="text-xs font-bold" style={accentStyle}>
               {profile.username}
+            </p>
+            <p className="text-[11px] font-semibold text-gray-400">
+              {accountLabel}
             </p>
           </div>
 

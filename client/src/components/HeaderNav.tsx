@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
@@ -7,8 +7,7 @@ import { AuthModal } from './AuthModal';
 import { NotificationCenter } from './NotificationCenter';
 
 export const HeaderNav: React.FC = () => {
-  const { lang, setLang, currency, setCurrency, unitSystem, setUnitSystem, isDark, toggleDarkMode, subscription, setShowSubModal, profile, setProfile, t } =
-    useApp();
+  const { lang, setLang, isDark, toggleDarkMode, subscription, profile, t } = useApp();
   const { user: authUser, isAnonymous } = useAuth();
 
   const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
@@ -26,28 +25,11 @@ export const HeaderNav: React.FC = () => {
       }
     : null;
 
-  // When a real user signs in, seed the local profile from their identity.
-  useEffect(() => {
-    if (isLoggedIn && user) {
-      const emailUsername = authUser?.email ? `@${authUser.email.split('@')[0]}` : profile.username;
-      const gName = (authUser?.user_metadata?.full_name as string) || (authUser?.user_metadata?.name as string) || user.name;
-      const gAvatar = (authUser?.user_metadata?.avatar_url as string) || (authUser?.user_metadata?.picture as string) || user.avatarUrl;
-
-      setProfile({
-        ...profile,
-        name: gName || profile.name,
-        username: emailUsername,
-        avatarUrl: gAvatar || profile.avatarUrl,
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoggedIn, authUser?.id]);
-
   return (
     <>
       <header className="pt-[calc(0.65rem+env(safe-area-inset-top,0px))] pb-3 px-3 sm:px-6 flex justify-between items-center bg-pestle-bg/95 border-b border-pestle-border/60 sticky top-0 z-30 backdrop-blur-md w-full shrink-0 transition-colors duration-300">
         {/* Brand Logo & Name */}
-        <div className="flex items-center gap-2 min-w-0 shrink">
+        <div className="flex md:hidden items-center gap-2 min-w-0 shrink">
           <div
             className={`w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-tr ${profile.coverGradient} text-white font-black rounded-xl flex items-center justify-center shadow-sm shrink-0 text-sm sm:text-base`}
           >
@@ -69,6 +51,8 @@ export const HeaderNav: React.FC = () => {
         </div>
 
         {/* Action Controls */}
+        <div className="hidden md:block" />
+
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Real-time Notification Center */}
           <NotificationCenter />
@@ -96,42 +80,6 @@ export const HeaderNav: React.FC = () => {
               {profile.name || user?.name || t('header_defaultName')}
             </span>
           </button>
-
-          {/* Subscription Upgrade Pill */}
-          {subscription === 'free' && (
-            <button
-              onClick={() => setShowSubModal(true)}
-              className="text-[10px] font-extrabold bg-mango/15 text-mango border border-mango/30 px-2 py-1.5 sm:px-3 rounded-xl hover:bg-mango hover:text-white transition-all flex items-center gap-1 active:scale-95 whitespace-nowrap shadow-xs"
-            >
-              <Sparkles size={11} />
-              <span className="hidden sm:inline">{t('upgradeBtn')}</span>
-              <span className="sm:hidden">PRO</span>
-            </button>
-          )}
-
-          {/* Global Currency Selector */}
-          <select
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value as any)}
-            className="hidden sm:block h-8 bg-pestle-card border border-pestle-border hover:border-mango/60 rounded-xl px-1.5 text-[11px] font-black text-pestle-text shadow-xs cursor-pointer focus:outline-none"
-            title={t('global_currency')}
-          >
-            <option value="MNT">🇲🇳 MNT ₮</option>
-            <option value="USD">🇺🇸 USD $</option>
-            <option value="EUR">🇪🇺 EUR €</option>
-            <option value="JPY">🇯🇵 JPY ¥</option>
-            <option value="KRW">🇰🇷 KRW ₩</option>
-          </select>
-
-          <select
-            value={unitSystem}
-            onChange={(e) => setUnitSystem(e.target.value as any)}
-            className="hidden lg:block h-8 max-w-[142px] bg-pestle-card border border-pestle-border hover:border-mango/60 rounded-xl px-1.5 text-[11px] font-black text-pestle-text shadow-xs cursor-pointer focus:outline-none"
-            title={t('global_unitSystem')}
-          >
-            <option value="metric">{t('global_metric')}</option>
-            <option value="imperial">{t('global_imperial')}</option>
-          </select>
 
           {/* Animated Language Switcher */}
           <select

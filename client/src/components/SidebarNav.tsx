@@ -1,16 +1,10 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import {
   Refrigerator,
   Calendar,
   Flame,
   Store,
   BookOpen,
-  Crown,
-  Moon,
-  Sun,
-  Globe,
-  Sparkles,
   Users,
   ChefHat,
   UserCircle,
@@ -24,44 +18,42 @@ export const SidebarNav: React.FC = () => {
   const {
     activeTab,
     setActiveTab,
-    lang,
-    setLang,
-    isDark,
-    toggleDarkMode,
     subscription,
-    setShowSubModal,
     cart,
     inventory,
     profile,
     t,
   } = useApp();
 
-  const navItems = [
+  const mainNavItems = [
     { id: 'fridge', label: t('tabFridge'), icon: Refrigerator, count: inventory.length },
-    { id: 'calendar', label: t('tabCalendar'), icon: Calendar, badge: 'AI' },
-    { id: 'cooking', label: t('tabCooking'), icon: Flame },
     { id: 'store', label: t('tabStore'), icon: Store, count: cart.length },
     { id: 'recipe', label: t('tabRecipe'), icon: BookOpen },
-    { id: 'community', label: t('sidebar_community'), icon: Users, badge: 'NEW' },
-    { id: 'dashboard', label: t('tabDashboard'), icon: LayoutDashboard, badge: 'LIVE' },
+    { id: 'dashboard', label: t('tabDashboard'), icon: LayoutDashboard },
+  ];
+
+  const secondaryNavItems = [
+    { id: 'calendar', label: t('tabCalendar'), icon: Calendar },
+    { id: 'cooking', label: t('tabCooking'), icon: Flame },
+    { id: 'community', label: t('sidebar_community'), icon: Users },
     { id: 'help', label: t('sidebar_help'), icon: HelpCircle },
   ];
 
   const expiringCount = inventory.filter((i) => i.expiryDays <= 3).length;
 
   return (
-    <aside className="hidden md:flex flex-col w-64 lg:w-72 bg-pestle-card border-r border-pestle-border p-6 justify-between shrink-0 h-full overflow-y-auto shadow-sm z-30">
+    <aside className="hidden md:flex flex-col w-56 lg:w-60 bg-pestle-card border-r border-pestle-border p-5 justify-between shrink-0 h-full overflow-y-auto shadow-sm z-30">
       {/* Brand Header */}
-      <div className="space-y-8">
+      <div className="space-y-6">
         <div className="flex items-center gap-3">
           <div
-            className={`w-11 h-11 rounded-2xl bg-gradient-to-tr ${profile.coverGradient} flex items-center justify-center text-white shadow-lg`}
+            className={`w-10 h-10 rounded-2xl bg-gradient-to-tr ${profile.coverGradient} flex items-center justify-center text-white shadow-md`}
           >
-            <ChefHat size={24} strokeWidth={2.5} />
+            <ChefHat size={22} strokeWidth={2.5} />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <h1 className="font-black text-lg text-pestle-text tracking-tight">Zity Chef</h1>
+              <h1 className="font-black text-base text-pestle-text tracking-tight">Zity Chef</h1>
               <span
                 className="text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider text-white"
                 style={{ backgroundColor: profile.accentColor }}
@@ -73,30 +65,9 @@ export const SidebarNav: React.FC = () => {
           </div>
         </div>
 
-        {/* Pro Banner Pill */}
-        <div className="bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-mango/15 border border-mango/30 p-4 rounded-2xl space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-extrabold uppercase text-mango tracking-wider flex items-center gap-1">
-              <Sparkles size={12} /> {subscription === 'free' ? t('sidebar_freeTier') : t('sidebar_proTier')}
-            </span>
-            <Crown size={16} className="text-amber-500" />
-          </div>
-          <p className="text-xs text-pestle-text font-bold">
-            {subscription === 'free' ? t('sidebar_freeDesc') : t('sidebar_proDesc')}
-          </p>
-          {subscription === 'free' && (
-            <button
-              onClick={() => setShowSubModal(true)}
-              className="w-full bg-mango text-white text-xs font-bold py-2 rounded-xl shadow-md shadow-mango/20 hover:bg-mango/90 transition-colors"
-            >
-              {t('sidebar_activate')}
-            </button>
-          )}
-        </div>
-
         {/* Main Nav Items */}
         <nav className="space-y-1.5">
-          {navItems.map((item) => {
+          {mainNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
 
@@ -104,7 +75,7 @@ export const SidebarNav: React.FC = () => {
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-bold transition-all ${
+                className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-bold transition-all ${
                   isActive
                     ? 'bg-mango text-white shadow-md shadow-mango/20'
                     : 'text-gray-500 hover:bg-pestle-bg hover:text-pestle-text'
@@ -126,11 +97,28 @@ export const SidebarNav: React.FC = () => {
                     {item.count}
                   </span>
                 )}
-                {item.badge && (
-                  <span className="text-[9px] bg-mint text-white px-2 py-0.5 rounded-full font-black uppercase">
-                    {item.badge}
-                  </span>
-                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        <nav className="space-y-1 pt-2 border-t border-pestle-border/60">
+          {secondaryNavItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[11px] font-bold transition-all ${
+                  isActive
+                    ? 'bg-mango/10 text-mango'
+                    : 'text-gray-400 hover:bg-pestle-bg hover:text-pestle-text'
+                }`}
+              >
+                <Icon size={16} />
+                <span>{item.label}</span>
               </button>
             );
           })}
