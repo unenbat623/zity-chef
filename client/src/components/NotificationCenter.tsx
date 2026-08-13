@@ -132,17 +132,17 @@ export const NotificationCenter: React.FC = () => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="absolute right-0 mt-2 w-80 sm:w-96 bg-pestle-card/95 backdrop-blur-xl border border-pestle-border rounded-3xl shadow-2xl z-[170] overflow-hidden flex flex-col"
+              className="fixed left-3 right-3 top-[calc(4.5rem+env(safe-area-inset-top,0px))] max-h-[calc(100vh-6rem)] bg-pestle-card/95 backdrop-blur-xl border border-pestle-border rounded-3xl shadow-2xl z-[170] overflow-hidden flex flex-col sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-96 sm:max-h-[80vh]"
             >
               {/* Header */}
-              <div className="p-4 border-b border-pestle-border/60 flex items-center justify-between bg-pestle-bg/50">
-                <div className="flex items-center gap-2">
+              <div className="p-4 border-b border-pestle-border/60 flex items-center justify-between gap-3 bg-pestle-bg/50">
+                <div className="flex items-center gap-2 min-w-0">
                   <Bell size={16} className="text-mango" />
-                  <h3 className="font-black text-xs text-pestle-text uppercase tracking-wider">
+                  <h3 className="font-black text-xs text-pestle-text uppercase tracking-wider truncate">
                     {t('notif_centerTitle')} ({notifications.length})
                   </h3>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 shrink-0">
                   {unreadCount > 0 && (
                     <button
                       onClick={markAllAsRead}
@@ -161,17 +161,17 @@ export const NotificationCenter: React.FC = () => {
               </div>
 
               {/* Push Permission Switcher Banner */}
-              <div className="p-3 bg-mango/10 border-b border-mango/20 flex items-center justify-between">
-                <div className="flex items-center gap-2">
+              <div className="p-3 bg-mango/10 border-b border-mango/20 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 min-w-0">
                   <ShieldCheck size={16} className="text-mango" />
-                  <div>
-                    <p className="text-[11px] font-bold text-pestle-text">{t('notif_pushTitle')}</p>
-                    <p className="text-[9px] text-gray-400 font-medium">{t('notif_pushSubtitle')}</p>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-bold text-pestle-text truncate">{t('notif_pushTitle')}</p>
+                    <p className="text-[9px] text-gray-400 font-medium truncate">{t('notif_pushSubtitle')}</p>
                   </div>
                 </div>
                 <button
                   onClick={handleTogglePush}
-                  className={`px-2.5 py-1 rounded-lg text-[10px] font-black transition-all ${
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-black transition-all shrink-0 ${
                     pushEnabled
                       ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
                       : 'bg-mango text-white hover:opacity-90'
