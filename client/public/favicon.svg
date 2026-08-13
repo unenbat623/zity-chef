@@ -1,25 +1,38 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Orange rounded square background -->
-  <rect width="64" height="64" rx="14" fill="#FF9F1C"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Zity Chef app mark — keep in sync with client/src/components/BrandLogo.tsx -->
+  <defs>
+    <linearGradient id="zc-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#34D399"/>
+      <stop offset="55%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#0D9488"/>
+    </linearGradient>
+    <linearGradient id="zc-hat" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#E6FBF2"/>
+    </linearGradient>
+    <clipPath id="zc-clip">
+      <rect width="64" height="64" rx="16"/>
+    </clipPath>
+  </defs>
 
-  <!-- Chef hat - crown part (white puff) -->
-  <ellipse cx="32" cy="22" rx="17" ry="13" fill="white"/>
+  <g clip-path="url(#zc-clip)">
+    <rect width="64" height="64" fill="url(#zc-bg)"/>
+    <ellipse cx="26" cy="2" rx="40" ry="20" fill="#FFFFFF" opacity="0.14"/>
+  </g>
 
-  <!-- Hat brim band -->
-  <rect x="15" y="33" width="34" height="8" rx="3" fill="white"/>
+  <!-- Chef hat -->
+  <g fill="url(#zc-hat)">
+    <path d="M16.6 33.8C13.4 32.1 11.2 28.8 11.2 25c0-5.5 4.4-9.9 9.9-9.9.9 0 1.8.1 2.6.4C25.5 12 28.5 10 32 10s6.5 2 8.3 5.5c.8-.3 1.7-.4 2.6-.4 5.5 0 9.9 4.4 9.9 9.9 0 3.8-2.2 7.1-5.4 8.8V42H16.6V33.8Z"/>
+    <rect x="16.6" y="44.2" width="30.8" height="9.4" rx="4.7"/>
+  </g>
 
-  <!-- Hat crown highlight -->
-  <ellipse cx="26" cy="18" rx="5" ry="4" fill="white" opacity="0.5"/>
+  <!-- Pleats + band shading -->
+  <g stroke="#047857" stroke-opacity="0.16" stroke-width="2" stroke-linecap="round">
+    <path d="M25.5 34.5v7"/>
+    <path d="M38.5 34.5v7"/>
+  </g>
+  <rect x="16.6" y="44.2" width="30.8" height="3.2" rx="1.6" fill="#047857" opacity="0.1"/>
 
-  <!-- Subtle orange shadow under hat -->
-  <rect x="15" y="38" width="34" height="3" rx="2" fill="#E8890A" opacity="0.4"/>
-
-  <!-- Fork tines (left side) -->
-  <line x1="21" y1="45" x2="21" y2="56" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
-  <line x1="25" y1="45" x2="25" y2="56" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
-  <path d="M21 45 Q23 49 25 45" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
-
-  <!-- Spoon (right side) -->
-  <ellipse cx="41" cy="48" rx="3.5" ry="4.5" fill="white"/>
-  <line x1="41" y1="52" x2="41" y2="58" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+  <!-- AI sparkle -->
+  <path d="M52 8.8l1.55 3.65L57.2 14l-3.65 1.55L52 19.2l-1.55-3.65L46.8 14l3.65-1.55L52 8.8Z" fill="#FFFFFF" opacity="0.92"/>
 </svg>

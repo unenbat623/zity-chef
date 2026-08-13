@@ -1,5 +1,7 @@
-// Zity Chef PWA Service Worker — v1.0.0
-const CACHE_NAME = 'zity-chef-v1.0.0';
+// Zity Chef PWA Service Worker — v1.1.0
+// Bump CACHE_NAME whenever a pre-cached asset changes (e.g. the app icon),
+// otherwise installed clients keep serving the old copy forever.
+const CACHE_NAME = 'zity-chef-v1.1.0';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
