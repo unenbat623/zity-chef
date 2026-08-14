@@ -63,8 +63,8 @@ const getPlanDefs = (
   {
     id: 'pro',
     name: t('subPro'),
-    price: formatPrice(7900),
-    priceRaw: 7900,
+    price: formatPrice(9900),
+    priceRaw: 9900,
     period: t('sub_perMonth'),
     tagline: t('sub_taglinePro'),
     color: 'text-amber-700 dark:text-amber-400',
@@ -86,8 +86,8 @@ const getPlanDefs = (
   {
     id: 'family',
     name: t('subFamily'),
-    price: formatPrice(14900),
-    priceRaw: 14900,
+    price: formatPrice(19900),
+    priceRaw: 19900,
     period: t('sub_perMonth'),
     tagline: t('sub_taglineFamily'),
     color: 'text-teal-600 dark:text-teal-400',

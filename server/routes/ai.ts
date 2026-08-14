@@ -57,6 +57,8 @@ const GEMINI_FALLBACK_MODELS = [GEMINI_MODEL, 'gemini-flash-lite-latest', 'gemin
 const THINKING_LEVEL = process.env.AI_THINKING_LEVEL || 'low';
 /** Hard ceiling on the answer, so one odd prompt cannot run up a large bill. */
 const MAX_OUTPUT_TOKENS = Number(process.env.AI_MAX_OUTPUT_TOKENS || 700);
+/** How long an answer stays reusable. Longer = more free capacity. */
+const AI_CACHE_TTL_MS = Number(process.env.AI_CACHE_TTL_MINUTES || 60) * 60 * 1000;
 
 function generationConfig(system: string) {
   const config: Record<string, unknown> = {
@@ -304,12 +306,19 @@ router.post('/chat', authenticateToken, async (req: AuthenticatedRequest, res) =
   // before calling the provider, not after.
   const quota = await consumeAiQuota(req);
   if (!quota.allowed) {
+    // Two different situations, and telling the user to upgrade is wrong advice
+    // for the second one — Pro would not help if the whole app is out for today.
+    const text = quota.budgetExhausted
+      ? lang === 'mn'
+        ? 'AI туслах өнөөдрийн ачааллаа дуусгалаа. Маргааш шинэ хязгаартайгаар үргэлжлүүлнэ. 🌙'
+        : 'The AI assistant has reached its capacity for today. It resets tomorrow. 🌙'
+      : lang === 'mn'
+        ? `Өнөөдрийн ${quota.limit} удаагийн AI хязгаар дууслаа. Маргааш дахин ашиглах эсвэл Pro багц идэвхжүүлээрэй. ✨`
+        : `You have used all ${quota.limit} AI requests for today. Try again tomorrow or upgrade to Pro. ✨`;
+
     return res.status(429).json({
-      error: 'AI_QUOTA_EXCEEDED',
-      text:
-        lang === 'mn'
-          ? `Өнөөдрийн ${quota.limit} удаагийн AI хязгаар дууслаа. Маргааш дахин ашиглах эсвэл Pro багц идэвхжүүлээрэй. ✨`
-          : `You have used all ${quota.limit} AI requests for today. Try again tomorrow or upgrade to Pro. ✨`,
+      error: quota.budgetExhausted ? 'AI_BUDGET_EXHAUSTED' : 'AI_QUOTA_EXCEEDED',
+      text,
       quota: { used: quota.used, limit: quota.limit, remaining: quota.remaining, tier: quota.tier },
     });
   }
@@ -335,7 +344,10 @@ router.post('/chat', authenticateToken, async (req: AuthenticatedRequest, res) =
     const text = await call;
     // Only real answers are cached — a canned failure message must never be
     // replayed for 10 minutes after the provider has already recovered.
-    await aiResponseCache.set(cacheKey, text, 10 * 60 * 1000);
+    // A long TTL is the cheapest capacity there is: a cache hit costs nothing
+    // and never touches the daily budget. Fridge contents change slowly, so an
+    // hour-old answer to the same question against the same fridge is still good.
+    await aiResponseCache.set(cacheKey, text, AI_CACHE_TTL_MS);
     return res.json({ text, fromCache: false });
   } catch (err) {
     console.error('[ai] /chat failed:', errorInfo(err).message);

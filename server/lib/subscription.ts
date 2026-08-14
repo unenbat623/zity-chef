@@ -5,10 +5,18 @@ export type Tier = 'free' | 'pro' | 'family';
 
 /** Daily AI allowance per tier. Env-tunable so pricing can change without a deploy. */
 export const DAILY_AI_LIMIT: Record<Tier, number> = {
-  free: Number(process.env.AI_FREE_DAILY_LIMIT || 5),
+  free: Number(process.env.AI_FREE_DAILY_LIMIT || 2),
   pro: Number(process.env.AI_PRO_DAILY_LIMIT || 100),
   family: Number(process.env.AI_FAMILY_DAILY_LIMIT || 300),
 };
+
+/**
+ * App-wide daily ceiling. Per-user quotas bound one person's spend; this bounds
+ * everyone's. The default sits just inside the Gemini free tier (~1,000 req/day
+ * on Flash-Lite) so the bill stays at zero until it is deliberately raised.
+ * Roughly: 231 req/day ≈ $5/month if every request were billed.
+ */
+export const GLOBAL_DAILY_LIMIT = Number(process.env.AI_GLOBAL_DAILY_LIMIT || 900);
 
 const TIER_TTL_MS = 60_000;
 const tierCache = new Map<string, { tier: Tier; at: number }>();
@@ -80,6 +88,36 @@ export interface QuotaResult {
   remaining: number;
   limit: number;
   tier: Tier;
+  /** Set when the app-wide ceiling stopped the request, not the user's own. */
+  budgetExhausted?: boolean;
+}
+
+let globalMemoryUsage = { day: '', count: 0 };
+
+/**
+ * Claims one request against the app-wide daily ceiling. Runs before the
+ * per-user claim so a blocked request never burns someone's personal quota.
+ */
+async function consumeGlobalBudget(accessToken?: string): Promise<boolean> {
+  if (GLOBAL_DAILY_LIMIT <= 0) return true; // 0 or less disables the ceiling
+
+  if (accessToken && isSupabaseConfigured) {
+    try {
+      const db = getSupabaseForUser(accessToken);
+      const { data, error } = await db.rpc('consume_global_ai_budget', { p_limit: GLOBAL_DAILY_LIMIT });
+      const row = Array.isArray(data) ? data[0] : data;
+      if (!error && row) return Boolean(row.allowed);
+      if (error) console.warn('[subscription] global budget RPC unavailable:', error.message);
+    } catch (err) {
+      console.warn('[subscription] global budget failed:', (err as Error).message);
+    }
+  }
+
+  const day = new Date().toISOString().slice(0, 10);
+  if (globalMemoryUsage.day !== day) globalMemoryUsage = { day, count: 0 };
+  if (globalMemoryUsage.count >= GLOBAL_DAILY_LIMIT) return false;
+  globalMemoryUsage.count += 1;
+  return true;
 }
 
 // Per-instance fallback for guests and for when Postgres is unreachable. Not
@@ -100,6 +138,12 @@ export async function consumeAiQuota(req: AuthenticatedRequest): Promise<QuotaRe
   const tier = await getSubscriptionTier(req);
   const limit = DAILY_AI_LIMIT[tier];
   const userId = req.user?.id || 'anonymous';
+
+  // The budget ceiling comes first: if the app is out of allowance for today,
+  // the user should not lose one of their own requests over it.
+  if (!(await consumeGlobalBudget(req.accessToken))) {
+    return { allowed: false, used: 0, remaining: 0, limit, tier, budgetExhausted: true };
+  }
 
   if (!isGuestId(userId) && req.accessToken && isSupabaseConfigured) {
     try {
