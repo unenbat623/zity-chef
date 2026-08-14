@@ -7,7 +7,8 @@ export interface FeedComment {
 }
 export interface FeedPost {
   id: string;
-  user: { name: string; avatar: string };
+  /** `id` is the author's user id — opens their profile and addresses DMs. */
+  user: { id?: string; name: string; avatar: string };
   image: string | null;
   caption: string;
   recipe: unknown;

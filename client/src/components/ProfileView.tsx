@@ -19,10 +19,14 @@ import {
   Play,
   Bookmark,
   Calculator,
+  UserPlus,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { useRecipes } from '../hooks/useRecipes';
+import { useUserProfile } from '../hooks/useUserProfile';
+import { StatRow, PostsGrid } from './ProfileParts';
+import { SmartImage } from './SmartImage';
 import { uploadImage } from '../lib/storage';
 import { ensureContrast, readableTextOn } from '../lib/contrast';
 import { FoodCostCalculatorModal } from './FoodCostCalculatorModal';
@@ -264,7 +268,7 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
 // ── MAIN PROFILE VIEW ─────────────────────────────────────────────────────────
 export const ProfileView: React.FC = () => {
-  const { profile, setActiveTab, savedRecipeIds, toggleSaveRecipe, setActiveCookingRecipe, inventory, orders, t } = useApp();
+  const { profile, setActiveTab, savedRecipeIds, toggleSaveRecipe, setActiveCookingRecipe, t } = useApp();
   const { user: authUser, isAnonymous } = useAuth();
   const { recipes } = useRecipes();
   const [showEdit, setShowEdit] = useState(false);
@@ -275,14 +279,19 @@ export const ProfileView: React.FC = () => {
     : t('profile_guestAccount');
 
   const savedRecipesList = recipes.filter((r) => savedRecipeIds.includes(r.id));
-  const personalStats = [
-    { label: t('profile_statPosts'), value: 0, icon: Grid3x3 },
-    { label: t('dashboard_products'), value: inventory.length, icon: ChefHat },
-    { label: t('dashboard_orders'), value: orders.length, icon: Heart },
+  // Posts, followers and the grid all come from the community service; the
+  // local profile object only ever held zeroes and an empty grid.
+  const { profile: social, loading: socialLoading } = useUserProfile({
+    id: 'me',
+    name: profile.name || 'Zity Chef',
+    avatar: profile.avatarUrl || undefined,
+  });
+  const stats = [
+    { label: t('profile_statPosts'), value: social?.stats.posts ?? 0, icon: Grid3x3 },
+    { label: t('userProfile_followers'), value: social?.stats.followers ?? 0, icon: Users },
+    { label: t('userProfile_following'), value: social?.stats.following ?? 0, icon: UserPlus },
     { label: t('profile_statRecipes'), value: savedRecipeIds.length, icon: BookOpen },
   ];
-
-  const stats = personalStats;
 
   // Use the contrast-adjusted ink shade, not the raw accent (2.5:1 on white).
   const accentStyle = { color: 'var(--color-accent-ink)' };
@@ -292,63 +301,65 @@ export const ProfileView: React.FC = () => {
   return (
     <div className="min-h-screen pb-24">
       {/* ── COVER / HERO SECTION ─────────────────── */}
-      <div className={`relative w-full h-52 sm:h-64 bg-gradient-to-br ${profile.coverGradient} overflow-hidden`}>
-        {/* Decorative blobs */}
-        <div className="absolute -top-12 -right-12 w-56 h-56 bg-white/10 rounded-full blur-2xl" />
-        <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-black/15 rounded-full blur-2xl" />
+      <div className={`relative w-full h-36 sm:h-44 bg-gradient-to-br ${profile.coverGradient}`}>
+        {/* Decorative blobs, clipped to the cover — the cover itself must not
+            clip, or it cuts the overlapping avatar in half. */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-12 -right-12 w-56 h-56 bg-white/12 rounded-full blur-2xl" />
+          <div className="absolute -bottom-16 -left-10 w-48 h-48 bg-black/15 rounded-full blur-2xl" />
+        </div>
 
-        {/* Edit button */}
+        {/* Avatar — doubles as the edit affordance, so the cover no longer
+            carries a second "edit" button competing with the one below. */}
         <button
           onClick={() => setShowEdit(true)}
-          className="absolute top-4 right-4 bg-white/20 hover:bg-white/35 backdrop-blur-md text-white text-[11px] font-bold px-3.5 py-2 rounded-2xl flex items-center gap-1.5 transition-all border border-white/20 shadow-sm"
+          aria-label={t('profile_editProfile')}
+          className="absolute -bottom-12 left-5 sm:left-8 group"
         >
-          <Edit3 size={13} /> {t('profile_edit')}
-        </button>
-
-        {/* Avatar – positioned to overlap the card below */}
-        <div className="absolute -bottom-12 left-6 sm:left-8">
-          <div
-            className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-pestle-card shadow-2xl overflow-hidden flex items-center justify-center"
-            style={{ background: profile.coverGradient ? undefined : profile.accentColor }}
-          >
+          <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl border-4 border-pestle-card shadow-2xl overflow-hidden">
             <div className={`w-full h-full bg-gradient-to-br ${profile.coverGradient} flex items-center justify-center`}>
               {profile.avatarUrl ? (
-                <img src={profile.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+                <SmartImage src={profile.avatarUrl} alt="" emoji="👨‍🍳" className="w-full h-full" />
               ) : (
                 <User size={42} className="text-white" />
               )}
             </div>
           </div>
-
-          {/* Online badge */}
-          <div className="absolute bottom-1 right-1 w-5 h-5 rounded-full border-2 border-pestle-card bg-emerald-600 dark:bg-emerald-400" />
-        </div>
+          <span className="absolute -bottom-1 -right-1 w-8 h-8 rounded-2xl bg-pestle-card border border-pestle-border shadow-md flex items-center justify-center text-pestle-text group-hover:border-mango transition-colors">
+            <Camera size={14} style={accentStyle} />
+          </span>
+        </button>
       </div>
 
       {/* ── PROFILE CARD ────────────────────────── */}
       <div className="px-4 sm:px-6 pt-16 space-y-5">
         {/* Name + Username */}
-        <div className="flex items-end justify-between">
-          <div className="space-y-0.5">
-            <h1 className="text-xl sm:text-2xl font-black text-pestle-text tracking-tight">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-black text-pestle-text tracking-tight truncate">
               {profile.name}
             </h1>
-            <p className="text-xs font-bold" style={accentStyle}>
-              {profile.username}
-            </p>
-            <p className="text-[11px] font-semibold text-gray-400">
-              {accountLabel}
-            </p>
+            <div className="flex items-center gap-2 flex-wrap mt-1">
+              <span className="text-xs font-bold" style={accentStyle}>
+                {profile.username}
+              </span>
+              <span
+                className="text-[10px] font-bold px-2 py-0.5 rounded-full border"
+                style={{ ...accentStyle, ...accentBgStyle, ...accentBorderStyle }}
+              >
+                {accountLabel}
+              </span>
+            </div>
           </div>
 
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowEdit(true)}
-            className="text-xs font-black py-2 px-4 rounded-2xl border transition-all"
+            className="text-xs font-black py-2.5 px-4 rounded-2xl border transition-all shrink-0 flex items-center gap-1.5"
             style={{ ...accentStyle, ...accentBgStyle, ...accentBorderStyle }}
           >
-            <Edit3 size={13} className="inline mr-1.5 -mt-0.5" />
-            {t('profile_editProfile')}
+            <Edit3 size={13} />
+            <span className="hidden sm:inline">{t('profile_editProfile')}</span>
           </motion.button>
         </div>
 
@@ -359,44 +370,34 @@ export const ProfileView: React.FC = () => {
           </p>
         )}
 
-        {/* Stats Row */}
-        <div className="grid grid-cols-4 gap-2 sm:gap-3">
-          {stats.map(({ label, value, icon: Icon }) => (
-            <motion.div
-              key={label}
-              whileHover={{ y: -2 }}
-              className="pestle-card rounded-2xl p-3 text-center space-y-1 border border-pestle-border hover:shadow-md transition-shadow cursor-default"
-              style={{ borderColor: profile.accentColor + '22' }}
-            >
-              <Icon size={16} className="mx-auto" style={accentStyle} />
-              <p className="text-base sm:text-lg font-black text-pestle-text">{value}</p>
-              <p className="text-[9px] sm:text-[10px] font-bold text-gray-400">{label}</p>
-            </motion.div>
-          ))}
-        </div>
+        {/* Stats — one card, same shape as another chef's profile sheet. */}
+        <StatRow items={stats} loading={socialLoading} />
 
         {/* Quick Action Buttons */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-3 gap-2.5">
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={() => setActiveTab('community')}
-            className="py-2.5 rounded-2xl text-xs font-black flex items-center justify-center gap-1.5 shadow-lg on-accent"
+            className="py-3 px-2 rounded-2xl text-[11px] font-black flex flex-col items-center justify-center gap-1.5 shadow-lg on-accent"
           >
-            <Users size={14} /> {t('profile_toCommunity')}
+            <Users size={16} />
+            <span className="leading-tight text-center">{t('profile_toCommunity')}</span>
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={() => setActiveTab('recipe')}
-            className="py-2.5 rounded-2xl text-xs font-black border border-pestle-border text-pestle-text hover:border-violet-400 flex items-center justify-center gap-1.5 bg-pestle-card transition-colors"
+            className="py-3 px-2 rounded-2xl text-[11px] font-black border border-pestle-border text-pestle-text hover:border-mango flex flex-col items-center justify-center gap-1.5 bg-pestle-card transition-colors shadow-xs"
           >
-            <ChefHat size={14} style={accentStyle} /> {t('profile_viewRecipes')}
+            <ChefHat size={16} style={accentStyle} />
+            <span className="leading-tight text-center">{t('profile_viewRecipes')}</span>
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={() => setShowCostCalculator(true)}
-            className="py-2.5 rounded-2xl text-xs font-black border border-amber-500/30 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 flex items-center justify-center gap-1.5 bg-pestle-card transition-colors shadow-xs"
+            className="py-3 px-2 rounded-2xl text-[11px] font-black border border-amber-500/30 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 flex flex-col items-center justify-center gap-1.5 bg-pestle-card transition-colors shadow-xs"
           >
-            <Calculator size={14} /> {t('profile_costCalculator')}
+            <Calculator size={16} />
+            <span className="leading-tight text-center">{t('profile_costCalculator')}</span>
           </motion.button>
         </div>
 
@@ -431,26 +432,37 @@ export const ProfileView: React.FC = () => {
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
-                className="pestle-card border border-pestle-border rounded-3xl py-12 px-4 text-center flex flex-col items-center gap-3"
               >
-                <div
-                  className="w-16 h-16 rounded-3xl flex items-center justify-center"
-                  style={{ backgroundColor: profile.accentColor + '18' }}
-                >
-                  <Grid3x3 size={28} style={accentStyle} />
-                </div>
-                <div>
-                  <p className="text-sm font-black text-pestle-text">{t('profile_noPostsTitle')}</p>
-                  <p className="text-xs text-gray-400 font-medium mt-1 max-w-sm">
-                    {t('profile_noPostsDesc')}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setActiveTab('community')}
-                  className="text-xs font-bold px-4 py-2 rounded-xl shadow-md on-accent"
-                >
-                  {t('profile_toCommunity')}
-                </button>
+                {/* This tab always claimed "no posts yet", even while the stat
+                    above it counted them. It now shows the real grid. */}
+                {socialLoading || (social && social.posts.length > 0) ? (
+                  <PostsGrid
+                    posts={social?.posts ?? []}
+                    loading={socialLoading}
+                    columns="grid-cols-3 lg:grid-cols-4"
+                  />
+                ) : (
+                  <div className="pestle-card border border-pestle-border rounded-3xl py-12 px-4 text-center flex flex-col items-center gap-3">
+                    <div
+                      className="w-16 h-16 rounded-3xl flex items-center justify-center"
+                      style={{ backgroundColor: profile.accentColor + '18' }}
+                    >
+                      <Grid3x3 size={28} style={accentStyle} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-black text-pestle-text">{t('profile_noPostsTitle')}</p>
+                      <p className="text-xs text-gray-400 font-medium mt-1 max-w-sm">
+                        {t('profile_noPostsDesc')}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setActiveTab('community')}
+                      className="text-xs font-bold px-4 py-2 rounded-xl shadow-md on-accent"
+                    >
+                      {t('profile_toCommunity')}
+                    </button>
+                  </div>
+                )}
               </motion.div>
             )}
 

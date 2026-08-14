@@ -110,6 +110,13 @@ export interface BankApp {
   deepLink: string;
 }
 
+/** Another chef, as the feed/stories know them. `id` is their Supabase uid. */
+export interface CommunityUser {
+  id?: string;
+  name: string;
+  avatar: string;
+}
+
 export interface UserProfile {
   name: string;
   username: string;

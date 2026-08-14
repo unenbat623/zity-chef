@@ -13,14 +13,26 @@ import {
   Camera,
   Bookmark,
   Share2,
+  ArrowLeft,
+  ChevronDown,
+  Check,
+  RotateCw,
+  Loader2,
+  UserPlus,
+  UserCheck,
+  User,
 } from 'lucide-react';
 import { SmartImage } from './SmartImage';
+import { UserProfileSheet } from './UserProfileSheet';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { useCommunity } from '../hooks/useCommunity';
 import { useToast } from './Toast';
 import { useDirectMessages } from '../hooks/useDirectMessages';
+import { useUserProfile } from '../hooks/useUserProfile';
 import { uploadDataUrl } from '../lib/storage';
 import { useRecipes } from '../hooks/useRecipes';
+import type { CommunityUser } from '../types';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface StoryItem {
@@ -57,8 +69,9 @@ const StoryViewerModal: React.FC<{
   allGroups: UserStoryGroup[];
   onClose: () => void;
   onSelectGroup: (group: UserStoryGroup) => void;
-  onChat: (userName: string, avatar: string) => void;
-}> = ({ storyGroup, allGroups, onClose, onSelectGroup, onChat }) => {
+  onChat: (user: CommunityUser, draft?: string) => void;
+  onOpenProfile: (user: CommunityUser) => void;
+}> = ({ storyGroup, allGroups, onClose, onSelectGroup, onChat, onOpenProfile }) => {
   const { t } = useApp();
   const [slideIndex, setSlideIndex] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -68,6 +81,13 @@ const StoryViewerModal: React.FC<{
 
   const stories = storyGroup.stories;
   const currentStory = stories[slideIndex] || stories[0];
+  // Story groups are keyed by the author's user id; the local "your story"
+  // group uses a placeholder, so address it as "me" instead.
+  const storyUser: CommunityUser = {
+    id: storyGroup.isOwn ? 'me' : storyGroup.id,
+    name: storyGroup.userName,
+    avatar: storyGroup.userAvatar,
+  };
 
   // Story Timer (5s duration)
   useEffect(() => {
@@ -125,8 +145,11 @@ const StoryViewerModal: React.FC<{
     }
   }, [slideIndex, allGroups, storyGroup, onSelectGroup]);
 
+  // A tapped emoji lands in the reply box (and floats up) instead of being
+  // swallowed by an animation that sent nothing to anyone.
   const handleSendReaction = (emoji: string) => {
     setFloatingHeart(true);
+    setReplyText((prev) => prev + emoji);
     setTimeout(() => setFloatingHeart(false), 1000);
   };
 
@@ -201,9 +224,15 @@ const StoryViewerModal: React.FC<{
             })}
           </div>
 
-          {/* User Info Bar */}
+          {/* User Info Bar — tapping the author opens their profile. */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => {
+                onOpenProfile(storyUser);
+                onClose();
+              }}
+              className="flex items-center gap-2.5 text-left"
+            >
               <div className="p-0.5 rounded-full bg-gradient-to-tr from-amber-400 via-rose-500 to-fuchsia-600">
                 <img
                   src={storyGroup.userAvatar}
@@ -224,7 +253,7 @@ const StoryViewerModal: React.FC<{
                   </span>
                 )}
               </div>
-            </div>
+            </button>
 
             <button
               onClick={onClose}
@@ -279,7 +308,9 @@ const StoryViewerModal: React.FC<{
             {replyText.trim() && (
               <button
                 onClick={() => {
-                  onChat(storyGroup.userName, storyGroup.userAvatar);
+                  // The typed reply used to be dropped on the floor here — the
+                  // chat opened empty and the user had to type it again.
+                  onChat(storyUser, replyText.trim());
                   onClose();
                 }}
                 className="bg-mango text-white px-4 rounded-full text-xs font-bold shadow-lg flex items-center gap-1"
@@ -467,25 +498,88 @@ const CreateStoryModal: React.FC<{
 };
 
 // ── DIRECT CHAT DRAWER ─────────────────────────────────────────────────────────
-const DirectChatDrawer: React.FC<{
-  recipient: { name: string; avatar: string };
-  onClose: () => void;
-}> = ({ recipient, onClose }) => {
-  const { t } = useApp();
-  const { messages, send } = useDirectMessages(recipient.name);
-  const [inputText, setInputText] = useState('');
 
-  const handleSend = () => {
-    if (!inputText.trim()) return;
-    send(inputText);
-    setInputText('');
+/** "Today" / "Yesterday" / "12 Mar" heading above the first message of a day. */
+function dayLabel(iso: string, t: (k: string) => string): string {
+  const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const date = new Date(iso);
+  const days = Math.round((startOfDay(new Date()) - startOfDay(date)) / 86_400_000);
+  if (days === 0) return t('chat_today');
+  if (days === 1) return t('chat_yesterday');
+  return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+}
+
+const DirectChatDrawer: React.FC<{
+  recipient: CommunityUser;
+  /** Pre-filled composer text, e.g. a reply typed on the sender's story. */
+  initialText?: string;
+  onClose: () => void;
+  onOpenProfile: (user: CommunityUser) => void;
+}> = ({ recipient, initialText = '', onClose, onOpenProfile }) => {
+  const { t } = useApp();
+  const { toastWarning } = useToast();
+  const { messages, send, retry, ready } = useDirectMessages(recipient);
+  const { profile, toggleFollow, followPending } = useUserProfile(recipient, () =>
+    toastWarning(t('userProfile_followFailedTitle'), t('userProfile_followFailedBody'))
+  );
+  const [inputText, setInputText] = useState(initialText);
+  const [atBottom, setAtBottom] = useState(true);
+  const composingRef = useRef(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const canFollow = Boolean(profile) && !profile!.isMe;
+  const isFollowing = Boolean(profile?.isFollowing);
+
+  // Close on Escape, and keep the page behind the drawer from scrolling.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    inputRef.current?.focus();
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [onClose]);
+
+  // Follow new messages, but never yank the view away from someone who has
+  // scrolled up to read the history.
+  useEffect(() => {
+    if (atBottom) bottomRef.current?.scrollIntoView({ block: 'end' });
+  }, [messages, atBottom, ready]);
+
+  const handleScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 60);
   };
+
+  const handleSend = (text?: string) => {
+    const value = (text ?? inputText).trim();
+    if (!value) return;
+    send(value);
+    setInputText('');
+    setAtBottom(true);
+    if (inputRef.current) inputRef.current.style.height = 'auto';
+    inputRef.current?.focus();
+  };
+
+  const openProfile = () => onOpenProfile(recipient);
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={recipient.name}
       className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[350] flex justify-end"
     >
       <motion.div
@@ -493,66 +587,254 @@ const DirectChatDrawer: React.FC<{
         animate={{ x: 0 }}
         exit={{ x: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-        className="w-full max-w-md h-full bg-pestle-card border-l border-pestle-border flex flex-col shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-md h-full bg-pestle-card sm:border-l border-pestle-border flex flex-col shadow-2xl"
       >
-        <div className="p-4 border-b border-pestle-border/60 flex items-center justify-between bg-pestle-bg">
-          <div className="flex items-center gap-3">
-            <img
-              src={recipient.avatar}
-              alt={recipient.name}
-              className="w-10 h-10 rounded-xl border border-pestle-border object-cover"
-            />
-            <div>
-              <h3 className="font-extrabold text-sm text-pestle-text">{recipient.name}</h3>
-              <span className="text-[10px] text-mint-ink font-bold flex items-center gap-1">
-                ● {t('online')}
-              </span>
-            </div>
-          </div>
+        {/* ── HEADER ── */}
+        <div className="px-3 py-3 border-b border-pestle-border/60 flex items-center gap-2 bg-pestle-bg/95 backdrop-blur-md shrink-0">
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full border border-pestle-border flex items-center justify-center text-gray-400 hover:text-pestle-text"
+            aria-label={t('chat_close')}
+            className="w-9 h-9 rounded-full flex items-center justify-center text-gray-400 hover:text-pestle-text hover:bg-pestle-card transition-colors shrink-0"
           >
-            <X size={16} />
+            <ArrowLeft size={18} />
           </button>
-        </div>
 
-        <div className="flex-1 p-4 overflow-y-auto space-y-3">
-          {messages.map((m) => {
-            const isMe = m.sender === 'Би';
-            return (
-              <div key={m.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                <div
-                  className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-xs font-medium shadow-sm ${
-                    isMe
-                      ? 'bg-mango text-white rounded-br-none'
-                      : 'bg-pestle-bg border border-pestle-border text-pestle-text rounded-bl-none'
-                  }`}
-                >
-                  {m.text}
-                </div>
-                <span className="text-[9px] text-gray-400 mt-1 px-1">{m.time}</span>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="p-3 border-t border-pestle-border/60 bg-pestle-bg flex gap-2 items-center">
-          <input
-            type="text"
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            aria-label={t('community_messageAria')}
-            placeholder={t('placeholderMsg')}
-            className="flex-1 bg-pestle-card border border-pestle-border rounded-xl px-4 py-2.5 text-xs text-pestle-text focus:outline-none focus:border-mango"
-          />
+          {/* The whole identity block opens the profile — the chat used to be a
+              dead end with no way through to the person you were talking to. */}
           <button
-            onClick={handleSend}
-            className="w-10 h-10 bg-mango text-white rounded-xl flex items-center justify-center shadow-md shadow-mango/20"
+            onClick={openProfile}
+            className="flex items-center gap-2.5 flex-1 min-w-0 text-left rounded-2xl p-1 -m-1 hover:bg-pestle-card transition-colors"
           >
-            <Send size={15} />
+            <SmartImage
+              src={recipient.avatar}
+              alt=""
+              emoji="👨‍🍳"
+              className="w-10 h-10 rounded-full border border-pestle-border shrink-0"
+            />
+            <div className="min-w-0">
+              <h3 className="font-extrabold text-sm text-pestle-text truncate">{recipient.name}</h3>
+              <span className="text-[10px] text-gray-400 font-bold flex items-center gap-1">
+                {profile
+                  ? t('userProfile_followerCount', { n: profile.stats.followers })
+                  : t('chat_viewProfile')}
+              </span>
+            </div>
           </button>
+
+          {canFollow && (
+            <button
+              onClick={toggleFollow}
+              disabled={followPending}
+              aria-pressed={isFollowing}
+              // The label is hidden on narrow screens, so name the button.
+              aria-label={isFollowing ? t('userProfile_unfollow') : t('userProfile_follow')}
+              title={isFollowing ? t('userProfile_unfollow') : t('userProfile_follow')}
+              className={`px-3 py-2 rounded-2xl text-[11px] font-black flex items-center gap-1.5 shrink-0 transition-all disabled:opacity-60 ${
+                isFollowing
+                  ? 'bg-pestle-card border border-pestle-border text-gray-400'
+                  : 'btn-primary shadow-md shadow-mango/20'
+              }`}
+            >
+              {followPending ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : isFollowing ? (
+                <UserCheck size={12} />
+              ) : (
+                <UserPlus size={12} />
+              )}
+              <span className="hidden sm:inline">
+                {isFollowing ? t('userProfile_unfollow') : t('userProfile_follow')}
+              </span>
+            </button>
+          )}
+        </div>
+
+        {/* ── MESSAGES ── */}
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="flex-1 px-4 py-4 overflow-y-auto relative"
+        >
+          {!ready && (
+            <div className="space-y-3">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className={`h-9 rounded-2xl bg-pestle-bg animate-pulse ${
+                    i % 2 ? 'ml-auto w-1/2' : 'w-2/3'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+
+          {ready && messages.length === 0 && (
+            <div className="h-full flex flex-col items-center justify-center text-center gap-3 px-4">
+              <SmartImage
+                src={recipient.avatar}
+                alt=""
+                emoji="👨‍🍳"
+                className="w-20 h-20 rounded-full border-2 border-pestle-border"
+              />
+              <div className="space-y-1">
+                <h4 className="text-sm font-black text-pestle-text">
+                  {t('chat_emptyTitle', { name: recipient.name })}
+                </h4>
+                <p className="text-[11px] font-medium text-gray-400 leading-relaxed max-w-[16rem]">
+                  {t('chat_emptyBody')}
+                </p>
+              </div>
+              <div className="flex flex-wrap justify-center gap-2 pt-1">
+                {[t('chat_starter1'), t('chat_starter2'), t('chat_starter3')].map((starter) => (
+                  <button
+                    key={starter}
+                    onClick={() => handleSend(starter)}
+                    className="text-[11px] font-bold px-3 py-2 rounded-full bg-pestle-bg border border-pestle-border text-pestle-text hover:border-mango transition-colors"
+                  >
+                    {starter}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-1">
+            {messages.map((m, i) => {
+              const previous = messages[i - 1];
+              const showDay = !previous || dayLabel(previous.createdAt, t) !== dayLabel(m.createdAt, t);
+              // Consecutive messages from the same person within 5 minutes read
+              // as one turn: only the last of the run carries a tail and a time.
+              const grouped =
+                !showDay &&
+                previous?.mine === m.mine &&
+                new Date(m.createdAt).getTime() - new Date(previous.createdAt).getTime() < 300_000;
+              const next = messages[i + 1];
+              const endsRun =
+                !next ||
+                next.mine !== m.mine ||
+                new Date(next.createdAt).getTime() - new Date(m.createdAt).getTime() >= 300_000;
+
+              return (
+                <React.Fragment key={m.id}>
+                  {showDay && (
+                    <div className="flex justify-center py-3">
+                      <span className="text-[9px] font-black text-gray-400 bg-pestle-bg border border-pestle-border rounded-full px-3 py-1">
+                        {dayLabel(m.createdAt, t)}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className={`flex items-end gap-2 ${m.mine ? 'justify-end' : 'justify-start'}`}>
+                    {!m.mine &&
+                      (endsRun ? (
+                        <SmartImage
+                          src={recipient.avatar}
+                          alt=""
+                          emoji="👨‍🍳"
+                          className="w-6 h-6 rounded-full shrink-0 mb-4"
+                        />
+                      ) : (
+                        <div className="w-6 shrink-0" />
+                      ))}
+
+                    <div className={`flex flex-col ${m.mine ? 'items-end' : 'items-start'} max-w-[78%]`}>
+                      <div
+                        className={`px-3.5 py-2.5 text-[13px] font-medium leading-relaxed whitespace-pre-wrap break-words shadow-sm ${
+                          m.mine
+                            ? `bg-mango text-white ${endsRun ? 'rounded-2xl rounded-br-md' : 'rounded-2xl'}`
+                            : `bg-pestle-bg border border-pestle-border text-pestle-text ${
+                                endsRun ? 'rounded-2xl rounded-bl-md' : 'rounded-2xl'
+                              }`
+                        } ${m.status === 'failed' ? 'opacity-60' : ''} ${grouped ? 'mt-0.5' : 'mt-2'}`}
+                      >
+                        {m.text}
+                      </div>
+
+                      {endsRun && m.status !== 'failed' && (
+                        <span className="text-[9px] text-gray-400 mt-1 px-1 flex items-center gap-1">
+                          {m.time}
+                          {m.status === 'sending' && <Loader2 size={9} className="animate-spin" />}
+                          {m.mine && m.status === 'sent' && <Check size={10} />}
+                        </span>
+                      )}
+
+                      {m.status === 'failed' && (
+                        <button
+                          onClick={() => retry(m.id)}
+                          className="text-[9px] font-bold text-red-500 mt-1 px-1 flex items-center gap-1 hover:underline"
+                        >
+                          <RotateCw size={9} /> {t('chat_failed')} · {t('chat_retry')}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </React.Fragment>
+              );
+            })}
+          </div>
+          <div ref={bottomRef} />
+        </div>
+
+        {/* Jump back to the newest message after scrolling up. */}
+        <AnimatePresence>
+          {!atBottom && messages.length > 0 && (
+            <motion.button
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              onClick={() => {
+                setAtBottom(true);
+                bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+              }}
+              aria-label={t('chat_scrollToLatest')}
+              className="absolute bottom-24 right-5 w-9 h-9 rounded-full bg-pestle-card border border-pestle-border shadow-lg flex items-center justify-center text-pestle-text z-10"
+            >
+              <ChevronDown size={16} />
+            </motion.button>
+          )}
+        </AnimatePresence>
+
+        {/* ── COMPOSER ── */}
+        <div className="p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-pestle-border/60 bg-pestle-bg shrink-0">
+          <div className="flex gap-2 items-end">
+            <textarea
+              ref={inputRef}
+              rows={1}
+              value={inputText}
+              onChange={(e) => {
+                setInputText(e.target.value);
+                // Grow with the text up to ~5 lines, then scroll inside.
+                e.target.style.height = 'auto';
+                e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+              }}
+              onCompositionStart={() => (composingRef.current = true)}
+              onCompositionEnd={() => (composingRef.current = false)}
+              onKeyDown={(e) => {
+                // Shift+Enter inserts a newline; a bare Enter sends. The
+                // composition guard keeps an IME's confirming Enter from
+                // firing off a half-typed word.
+                if (e.key === 'Enter' && !e.shiftKey && !composingRef.current) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              aria-label={t('community_messageAria')}
+              placeholder={t('placeholderMsg')}
+              className="flex-1 bg-pestle-card border border-pestle-border rounded-2xl px-4 py-3 text-[13px] text-pestle-text focus:outline-none focus:border-mango resize-none max-h-[120px] leading-relaxed"
+            />
+            <button
+              onClick={() => handleSend()}
+              disabled={!inputText.trim()}
+              aria-label={t('community_messageAria')}
+              className="w-11 h-11 bg-mango text-white rounded-2xl flex items-center justify-center shadow-md shadow-mango/20 shrink-0 transition-all disabled:opacity-40 disabled:shadow-none active:scale-95"
+            >
+              <Send size={16} />
+            </button>
+          </div>
+          <p className="text-[9px] text-gray-400 font-medium mt-1.5 px-1 hidden sm:block">
+            {t('chat_inputHint')}
+          </p>
         </div>
       </motion.div>
     </motion.div>
@@ -731,8 +1013,10 @@ const PostCard: React.FC<{
   onSave: () => void;
   onComment: (text: string) => void;
   onChat: () => void;
+  onOpenProfile: () => void;
   onOpenStory?: () => void;
-}> = ({ post, onLike, onSave, onComment, onChat, onOpenStory }) => {
+  isOwnPost?: boolean;
+}> = ({ post, onLike, onSave, onComment, onChat, onOpenProfile, onOpenStory, isOwnPost }) => {
   const { t } = useApp();
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState('');
@@ -762,32 +1046,46 @@ const PostCard: React.FC<{
       {/* Post Header */}
       <div className="flex items-center justify-between p-3.5">
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div
-            onClick={onOpenStory || onChat}
-            className="p-[2px] rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-fuchsia-600 cursor-pointer shrink-0"
+          {/* Avatar plays the story when there is one; otherwise it behaves like
+              the name and opens the author's profile. */}
+          <button
+            onClick={onOpenStory || onOpenProfile}
+            aria-label={post.user.name}
+            className="p-[2px] rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-fuchsia-600 shrink-0"
           >
-            <img
+            <SmartImage
               src={post.user.avatar}
-              className="w-9 h-9 rounded-full border-2 border-pestle-card object-cover"
               alt=""
+              emoji="👨‍🍳"
+              className="w-9 h-9 rounded-full border-2 border-pestle-card"
             />
-          </div>
+          </button>
           <div className="flex-1 min-w-0">
-            <h4
-              onClick={onChat}
-              className="text-xs font-black text-pestle-text truncate cursor-pointer hover:underline"
+            <button
+              onClick={onOpenProfile}
+              className="text-xs font-black text-pestle-text truncate hover:underline block max-w-full text-left"
             >
               {post.user.name}
-            </h4>
+            </button>
             <p className="text-[10px] text-gray-400 font-medium">{post.time}</p>
           </div>
         </div>
 
+        {/* No "chat" button on your own post — it opened a conversation with
+            yourself. Your own post links to your profile instead. */}
         <button
-          onClick={onChat}
+          onClick={isOwnPost ? onOpenProfile : onChat}
           className="px-3 py-1.5 rounded-xl bg-pestle-bg border border-pestle-border text-[11px] font-bold text-pestle-text hover:border-mango flex items-center gap-1.5 shadow-2xs"
         >
-          <MessageSquare size={13} className="text-mango-ink" /> {t('community_chat')}
+          {isOwnPost ? (
+            <>
+              <User size={13} className="text-mango-ink" /> {t('userProfile_title')}
+            </>
+          ) : (
+            <>
+              <MessageSquare size={13} className="text-mango-ink" /> {t('community_chat')}
+            </>
+          )}
         </button>
       </div>
 
@@ -928,6 +1226,7 @@ const PostCard: React.FC<{
 // ── MAIN COMMUNITY VIEW ────────────────────────────────────────────────────────
 export const CommunityView: React.FC = () => {
   const { profile, t } = useApp();
+  const { user: authUser } = useAuth();
   const { toastWarning } = useToast();
   const { feedPosts, feedLoading, persistLike, persistComment, persistPost, serverStoryGroups, persistStory } =
     useCommunity();
@@ -947,7 +1246,21 @@ export const CommunityView: React.FC = () => {
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [showCreateStory, setShowCreateStory] = useState(false);
   const [activeStoryGroup, setActiveStoryGroup] = useState<UserStoryGroup | null>(null);
-  const [chatUser, setChatUser] = useState<{ name: string; avatar: string } | null>(null);
+  const [chatUser, setChatUser] = useState<{ user: CommunityUser; draft?: string } | null>(null);
+  const [profileUser, setProfileUser] = useState<CommunityUser | null>(null);
+
+  const openChat = useCallback((user: CommunityUser, draft?: string) => {
+    setChatUser({ user, draft });
+  }, []);
+
+  /** The live story group belonging to a feed author, if they have one. */
+  const storyGroupFor = useCallback(
+    (user: CommunityUser): UserStoryGroup | null =>
+      stories.find(
+        (g) => g.stories.length > 0 && (user.id ? g.id === user.id : g.userName === user.name)
+      ) ?? null,
+    [stories]
+  );
 
   useEffect(() => {
     setPosts(feedPosts);
@@ -1155,20 +1468,25 @@ export const CommunityView: React.FC = () => {
             <p className="text-sm font-semibold text-gray-400">{t('community_emptyFeed')}</p>
           </div>
         )}
-        {posts.map((post) => (
-          <PostCard
-            key={post.id}
-            post={post}
-            onLike={() => handleLike(post.id)}
-            onSave={() => handleSave(post.id)}
-            onComment={(text) => handleComment(post.id, text)}
-            onChat={() => setChatUser(post.user)}
-            onOpenStory={() => {
-              const matchedGroup = stories.find((s) => s.userName.includes(post.user.name.split('-')[0]));
-              if (matchedGroup) setActiveStoryGroup(matchedGroup);
-            }}
-          />
-        ))}
+        {posts.map((post) => {
+          const authorStories = storyGroupFor(post.user);
+          return (
+            <PostCard
+              key={post.id}
+              post={post}
+              onLike={() => handleLike(post.id)}
+              onSave={() => handleSave(post.id)}
+              onComment={(text) => handleComment(post.id, text)}
+              onChat={() => openChat(post.user)}
+              onOpenProfile={() => setProfileUser(post.user)}
+              isOwnPost={Boolean(post.user.id && post.user.id === authUser?.id)}
+              // Only wired when the author actually has a live story — it used
+              // to be passed unconditionally, so the avatar was a dead tap for
+              // everyone else.
+              onOpenStory={authorStories ? () => setActiveStoryGroup(authorStories) : undefined}
+            />
+          );
+        })}
       </div>
 
       {/* MODALS & DRAWERS */}
@@ -1179,7 +1497,8 @@ export const CommunityView: React.FC = () => {
             allGroups={stories}
             onClose={() => setActiveStoryGroup(null)}
             onSelectGroup={(g) => setActiveStoryGroup(g)}
-            onChat={(name, avatar) => setChatUser({ name, avatar })}
+            onChat={openChat}
+            onOpenProfile={setProfileUser}
           />
         )}
 
@@ -1201,7 +1520,25 @@ export const CommunityView: React.FC = () => {
           />
         )}
 
-        {chatUser && <DirectChatDrawer recipient={chatUser} onClose={() => setChatUser(null)} />}
+        {chatUser && (
+          <DirectChatDrawer
+            recipient={chatUser.user}
+            initialText={chatUser.draft}
+            onClose={() => setChatUser(null)}
+            onOpenProfile={setProfileUser}
+          />
+        )}
+
+        {profileUser && (
+          <UserProfileSheet
+            target={profileUser}
+            onClose={() => setProfileUser(null)}
+            onMessage={(user) => {
+              setProfileUser(null);
+              openChat(user);
+            }}
+          />
+        )}
       </AnimatePresence>
     </div>
   );
