@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Bell, AlertTriangle, Utensils, Sparkles, Check, Trash2, ShieldCheck, X } from 'lucide-react';
 import { useApp } from '../context/AppContext';
@@ -15,8 +15,31 @@ export interface NotificationItem {
   actionTab?: string;
 }
 
+interface NotificationReadState {
+  readIds: string[];
+  cleared: boolean;
+}
+
+const DEFAULT_READ_STATE: NotificationReadState = { readIds: ['notif-3'], cleared: false };
+
+/** Read/dismissed state lives in localStorage so a refresh does not resurrect
+ *  notifications the user already went through. Scoped per account. */
+function readNotificationState(accountId: string): NotificationReadState {
+  try {
+    const raw = localStorage.getItem(`zity_notif_state:${accountId}`);
+    if (!raw) return DEFAULT_READ_STATE;
+    const parsed = JSON.parse(raw) as Partial<NotificationReadState>;
+    return {
+      readIds: Array.isArray(parsed.readIds) ? parsed.readIds : DEFAULT_READ_STATE.readIds,
+      cleared: Boolean(parsed.cleared),
+    };
+  } catch {
+    return DEFAULT_READ_STATE;
+  }
+}
+
 export const NotificationCenter: React.FC = () => {
-  const { inventory, setActiveTab, t } = useApp();
+  const { inventory, setActiveTab, accountId, t } = useApp();
   const { toastSuccess, toastInfo } = useToast();
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [pushEnabled, setPushEnabled] = useState<boolean>(() => {
@@ -31,8 +54,20 @@ export const NotificationCenter: React.FC = () => {
     return inventory.filter((item) => item.expiryDays <= 3);
   }, [inventory]);
 
-  const [readIds, setReadIds] = useState<string[]>(['notif-3']);
-  const [cleared, setCleared] = useState<boolean>(false);
+  const [readIds, setReadIds] = useState<string[]>(() => readNotificationState(accountId).readIds);
+  const [cleared, setCleared] = useState<boolean>(() => readNotificationState(accountId).cleared);
+
+  // Re-read when the account changes (sign in / sign out swaps the identity).
+  useEffect(() => {
+    const next = readNotificationState(accountId);
+    setReadIds(next.readIds);
+    setCleared(next.cleared);
+  }, [accountId]);
+
+  useEffect(() => {
+    localStorage.setItem(`zity_notif_state:${accountId}`, JSON.stringify({ readIds, cleared }));
+  }, [accountId, readIds, cleared]);
+
   const expiringNames = expiringItems.length > 0
     ? expiringItems.map((i) => i.name).slice(0, 3).join(', ')
     : t('notif_expiringFallback');

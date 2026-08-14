@@ -91,9 +91,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
-    // Keep the view in sync with real auth state (e.g. after OAuth redirect).
+    // Keep the view in sync with real auth state, in BOTH directions. Syncing
+    // only into 'profile' left the account card and its sign-out button on
+    // screen after signing out, because the modal stays mounted when closed.
     if (isLoggedIn && view !== 'profile') {
       setView('profile');
+    } else if (!isLoggedIn && view === 'profile') {
+      setView('login');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoggedIn, isOpen]);
@@ -576,7 +580,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             )}
 
             {/* 5️⃣ PROFILE VIEW */}
-            {view === 'profile' && (
+            {view === 'profile' && isLoggedIn && (
               <div className="space-y-4">
                 {/* Profile Card Header */}
                 <div className="flex items-center gap-3.5 p-4 bg-pestle-bg border border-pestle-border/80 rounded-2xl">

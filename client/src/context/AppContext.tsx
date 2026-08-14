@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { Ingredient, SubscriptionTier, CartItem, Order, Language, Recipe, UserProfile, Currency, UnitSystem } from '../types';
 import { translations } from '../lib/i18n';
 import { formatCurrency } from '../lib/currency';
@@ -67,6 +67,9 @@ interface AppContextType {
   ) => void;
   closePaymentModal: () => void;
 
+  /** Id of the signed-in (or anonymous) account, for scoping local storage. */
+  accountId: string;
+
   // Translation helper (accepts any key; falls back to mn then the key itself)
   t: (key: string, params?: Record<string, string | number>) => string;
 }
@@ -133,7 +136,10 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user: authUser, isAnonymous } = useAuth();
   const accountId = authUser?.id ?? 'local';
-  const hydratedAccountRef = useRef<string | null>(null);
+  // State, not a ref: a ref set inside the hydration effect is already equal by
+  // the time the persist effects run in the SAME commit, so they would write the
+  // outgoing account's still-unapplied state into the incoming account's keys.
+  const [hydratedAccount, setHydratedAccount] = useState<string | null>(null);
 
   const [lang, setLang] = useState<Language>(() => {
     return getStoredLanguage();
@@ -314,7 +320,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           ? readStoredJson<string[]>('zity_saved_recipes', DEFAULT_SAVED_RECIPE_IDS)
           : DEFAULT_SAVED_RECIPE_IDS
     );
-    hydratedAccountRef.current = accountId;
+    setHydratedAccount(accountId);
   }, [accountId, accountStorage, authUser, isAnonymous]);
 
   const formatPrice = useCallback((amountInMNT: number) => {
@@ -353,24 +359,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [profile?.accentColor, isDark]);
 
   useEffect(() => {
-    if (hydratedAccountRef.current !== accountId) return;
+    if (hydratedAccount !== accountId) return;
     localStorage.setItem(accountStorage.subscription, subscription);
-  }, [accountId, accountStorage.subscription, subscription]);
+  }, [accountId, hydratedAccount, accountStorage.subscription, subscription]);
 
   useEffect(() => {
-    if (hydratedAccountRef.current !== accountId) return;
+    if (hydratedAccount !== accountId) return;
     localStorage.setItem(accountStorage.cart, JSON.stringify(cart));
-  }, [accountId, accountStorage.cart, cart]);
+  }, [accountId, hydratedAccount, accountStorage.cart, cart]);
 
   useEffect(() => {
-    if (hydratedAccountRef.current !== accountId) return;
+    if (hydratedAccount !== accountId) return;
     localStorage.setItem(accountStorage.profile, JSON.stringify(profile));
-  }, [accountId, accountStorage.profile, profile]);
+  }, [accountId, hydratedAccount, accountStorage.profile, profile]);
 
   useEffect(() => {
-    if (hydratedAccountRef.current !== accountId) return;
+    if (hydratedAccount !== accountId) return;
     localStorage.setItem(accountStorage.savedRecipes, JSON.stringify(savedRecipeIds));
-  }, [accountId, accountStorage.savedRecipes, savedRecipeIds]);
+  }, [accountId, hydratedAccount, accountStorage.savedRecipes, savedRecipeIds]);
 
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
@@ -531,6 +537,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       paymentModalState,
       triggerPayment,
       closePaymentModal,
+      accountId,
       t,
     }),
     [
@@ -569,6 +576,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       paymentModalState,
       triggerPayment,
       closePaymentModal,
+      accountId,
       t,
     ]
   );
