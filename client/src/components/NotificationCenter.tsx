@@ -111,7 +111,7 @@ export const NotificationCenter: React.FC = () => {
         className="relative w-8 h-8 sm:w-9 sm:h-9 bg-pestle-card border border-pestle-border hover:border-mango/60 rounded-xl flex items-center justify-center text-pestle-text shadow-xs transition-all active:scale-95 cursor-pointer"
         title={t('notif_centerTitle')}
       >
-        <Bell size={16} className={unreadCount > 0 ? 'text-mango animate-bounce' : 'text-gray-400'} />
+        <Bell size={16} className={unreadCount > 0 ? 'text-mango-ink animate-bounce' : 'text-gray-400'} />
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white font-black text-[9px] rounded-full flex items-center justify-center shadow-md animate-pulse">
             {unreadCount}
@@ -137,7 +137,7 @@ export const NotificationCenter: React.FC = () => {
               {/* Header */}
               <div className="p-4 border-b border-pestle-border/60 flex items-center justify-between gap-3 bg-pestle-bg/50">
                 <div className="flex items-center gap-2 min-w-0">
-                  <Bell size={16} className="text-mango" />
+                  <Bell size={16} className="text-mango-ink" />
                   <h3 className="font-black text-xs text-pestle-text uppercase tracking-wider truncate">
                     {t('notif_centerTitle')} ({notifications.length})
                   </h3>
@@ -146,7 +146,7 @@ export const NotificationCenter: React.FC = () => {
                   {unreadCount > 0 && (
                     <button
                       onClick={markAllAsRead}
-                      className="text-[10px] font-bold text-mango hover:underline px-2 py-1 rounded-lg"
+                      className="text-[10px] font-bold text-mango-ink hover:underline px-2 py-1 rounded-lg"
                     >
                       {t('notif_markAllRead')}
                     </button>
@@ -163,7 +163,7 @@ export const NotificationCenter: React.FC = () => {
               {/* Push Permission Switcher Banner */}
               <div className="p-3 bg-mango/10 border-b border-mango/20 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 min-w-0">
-                  <ShieldCheck size={16} className="text-mango" />
+                  <ShieldCheck size={16} className="text-mango-ink" />
                   <div className="min-w-0">
                     <p className="text-[11px] font-bold text-pestle-text truncate">{t('notif_pushTitle')}</p>
                     <p className="text-[9px] text-gray-400 font-medium truncate">{t('notif_pushSubtitle')}</p>
@@ -173,7 +173,7 @@ export const NotificationCenter: React.FC = () => {
                   onClick={handleTogglePush}
                   className={`px-2.5 py-1 rounded-lg text-[10px] font-black transition-all shrink-0 ${
                     pushEnabled
-                      ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+                      ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400'
                       : 'bg-mango text-white hover:opacity-90'
                   }`}
                 >
@@ -199,8 +199,8 @@ export const NotificationCenter: React.FC = () => {
                       }`}
                     >
                       <div className="w-8 h-8 rounded-xl bg-pestle-bg border border-pestle-border flex items-center justify-center shrink-0 mt-0.5">
-                        {notif.type === 'warning' && <AlertTriangle size={15} className="text-amber-500" />}
-                        {notif.type === 'meal' && <Utensils size={15} className="text-mango" />}
+                        {notif.type === 'warning' && <AlertTriangle size={15} className="text-amber-700 dark:text-amber-400" />}
+                        {notif.type === 'meal' && <Utensils size={15} className="text-mango-ink" />}
                         {notif.type === 'tip' && <Sparkles size={15} className="text-purple-500" />}
                       </div>
                       <div className="flex-1 min-w-0">

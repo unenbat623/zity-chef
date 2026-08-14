@@ -155,12 +155,12 @@ export const StoreView: React.FC = () => {
               </div>
               <div>
                 <h4 className="text-xs font-bold text-pestle-text">Zity Supermarket #04</h4>
-                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold">
                   {t('store_nearestInfo')}
                 </p>
               </div>
             </div>
-            <ChevronRight size={18} className="text-emerald-600" />
+            <ChevronRight size={18} className="text-emerald-700 dark:text-emerald-400" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -181,12 +181,12 @@ export const StoreView: React.FC = () => {
             <section className="space-y-3 bg-gradient-to-r from-mango/10 via-amber-500/5 to-emerald-500/10 p-4 sm:p-5 rounded-3xl border border-mango/20">
               <div className="flex items-center justify-between gap-2">
                 <h3 className="text-sm font-black text-pestle-text flex items-center gap-2">
-                  <ChefHat size={18} className="text-mango" />
+                  <ChefHat size={18} className="text-mango-ink" />
                   <span>{t('store_recipeBundles')}</span>
                 </h3>
                 <button
                   onClick={() => setActiveTab('recipe')}
-                  className="text-[11px] font-black text-mango hover:text-amber-600 bg-mango/10 hover:bg-mango/20 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1 shrink-0"
+                  className="text-[11px] font-black text-mango-ink hover:text-amber-600 bg-mango/10 hover:bg-mango/20 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1 shrink-0"
                 >
                   {t('store_openRecipes')} <ChevronRight size={13} />
                 </button>
@@ -212,13 +212,13 @@ export const StoreView: React.FC = () => {
                       />
                       <div className="flex-1 min-w-0 space-y-1">
                         <h4 className="text-xs font-black text-pestle-text truncate">{title}</h4>
-                        <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full inline-block">
+                        <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full inline-block">
                           {t('store_bundleAvailable', {
                             matched: bundle.matched.length,
                             total: bundle.totalIngredients,
                           })}
                         </span>
-                        <span className="text-xs font-black text-mango block">
+                        <span className="text-xs font-black text-mango-ink block">
                           ≈ ₮{bundle.totalPrice.toLocaleString()}
                         </span>
                       </div>
@@ -227,7 +227,7 @@ export const StoreView: React.FC = () => {
                         disabled={isAdded}
                         className={`shrink-0 text-[10px] font-black px-3 py-2 rounded-xl flex items-center gap-1 transition-all ${
                           isAdded
-                            ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 cursor-default'
+                            ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 cursor-default'
                             : 'bg-mango text-white shadow-md shadow-mango/25 active:scale-95'
                         }`}
                       >
@@ -304,7 +304,7 @@ export const StoreView: React.FC = () => {
                     <div className="mt-2 flex items-center justify-between">
                       <div>
                         <span className="text-[9px] text-gray-400 font-bold block">{t('store_unitPrice')}</span>
-                        <span className="text-xs font-black text-mango">
+                        <span className="text-xs font-black text-mango-ink">
                           ₮{(item.pricePerUnit || 3000).toLocaleString()}
                         </span>
                       </div>
@@ -357,7 +357,7 @@ export const StoreView: React.FC = () => {
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <span className="text-xs font-black text-mango">
+                      <span className="text-xs font-black text-mango-ink">
                         ₮{item.totalPrice.toLocaleString()}
                       </span>
                       <button
@@ -374,7 +374,7 @@ export const StoreView: React.FC = () => {
               {/* Delivery Address Input */}
               <div className="space-y-2">
                 <label className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
-                  <MapPin size={14} className="text-mango" />
+                  <MapPin size={14} className="text-mango-ink" />
                   <span>{t('deliveryAddress')}</span>
                 </label>
                 <input
@@ -390,7 +390,7 @@ export const StoreView: React.FC = () => {
               <div className="bg-pestle-card border border-pestle-border p-5 rounded-2xl space-y-4">
                 <div className="flex justify-between items-center text-sm font-bold border-b border-pestle-border/60 pb-3">
                   <span className="text-pestle-text">{t('total')}</span>
-                  <span className="text-xl font-black text-mango">
+                  <span className="text-xl font-black text-mango-ink">
                     ₮{totalCartAmount.toLocaleString()}
                   </span>
                 </div>
@@ -436,7 +436,7 @@ export const StoreView: React.FC = () => {
                     <span className="text-xs font-bold text-pestle-text">{order.id}</span>
                     <span className="text-[10px] text-gray-400 block">{order.createdAt}</span>
                   </div>
-                  <span className="text-[10px] font-bold bg-mint/15 text-mint px-2.5 py-1 rounded-full flex items-center gap-1">
+                  <span className="text-[10px] font-bold bg-mint/15 text-mint-ink px-2.5 py-1 rounded-full flex items-center gap-1">
                     <CheckCircle size={10} /> {t('store_paidDelivering')}
                   </span>
                 </div>
@@ -447,7 +447,7 @@ export const StoreView: React.FC = () => {
 
                 <div className="flex justify-between items-center pt-2 border-t border-pestle-border/60 text-xs">
                   <span className="text-gray-400 font-medium">{order.address}</span>
-                  <span className="font-black text-mango">
+                  <span className="font-black text-mango-ink">
                     ₮{order.totalAmount.toLocaleString()}
                   </span>
                 </div>

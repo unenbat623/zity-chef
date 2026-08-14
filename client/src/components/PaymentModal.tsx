@@ -159,7 +159,7 @@ export const PaymentModal: React.FC = () => {
                 animate={{ scale: 1, opacity: 1 }}
                 className="py-10 text-center flex flex-col items-center justify-center"
               >
-                <div className="w-16 h-16 bg-mint/20 text-mint rounded-full flex items-center justify-center mb-4 animate-bounce">
+                <div className="w-16 h-16 bg-mint/20 text-mint-ink rounded-full flex items-center justify-center mb-4 animate-bounce">
                   <CheckCircle2 size={40} />
                 </div>
                 <h3 className="text-xl font-bold text-pestle-text mb-2">{t('paymentSuccess')}</h3>
@@ -171,7 +171,7 @@ export const PaymentModal: React.FC = () => {
                 <div className="bg-pestle-bg p-4 rounded-2xl border border-pestle-border/60 flex justify-between items-center">
                   <div>
                     <span className="text-xs text-gray-400 font-medium">{t('payAmount')}</span>
-                    <div className="text-2xl font-black text-mango">{formatPrice(amount)}</div>
+                    <div className="text-2xl font-black text-mango-ink">{formatPrice(amount)}</div>
                   </div>
                   <div className="text-right">
                     <span className="text-[10px] text-gray-400 font-medium">
@@ -275,7 +275,7 @@ export const PaymentModal: React.FC = () => {
                           onClick={() => setSelectedBank(bank.id)}
                           className={`p-2.5 rounded-xl border flex flex-col items-center gap-1.5 text-center transition-all ${
                             selectedBank === bank.id
-                              ? 'border-mango bg-mango/10 font-bold text-mango shadow-sm ring-1 ring-mango/20'
+                              ? 'border-mango bg-mango/10 font-bold text-mango-ink shadow-sm ring-1 ring-mango/20'
                               : 'border-pestle-border bg-pestle-bg text-pestle-text hover:border-gray-300 hover:shadow-sm'
                           }`}
                         >

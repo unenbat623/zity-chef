@@ -199,7 +199,7 @@ export const CalendarView: React.FC = () => {
         <div>
           <h2 className="text-2xl sm:text-3xl font-black text-pestle-text tracking-tight flex items-center gap-2">
             <span>{t('calendar_title')}</span>
-            <span className="text-xs font-black bg-mango/15 text-mango px-2.5 py-1 rounded-full uppercase tracking-wider flex items-center gap-1">
+            <span className="text-xs font-black bg-mango/15 text-mango-ink px-2.5 py-1 rounded-full uppercase tracking-wider flex items-center gap-1">
               <Sparkles size={12} /> AI Meal Planner
             </span>
           </h2>
@@ -213,7 +213,7 @@ export const CalendarView: React.FC = () => {
           disabled={isRegenerating}
           className="bg-pestle-card border border-pestle-border text-pestle-text hover:border-mango font-bold text-xs px-3.5 py-2.5 rounded-2xl flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer hover:shadow-md shrink-0"
         >
-          <RotateCw size={14} className={`text-mango ${isRegenerating ? 'animate-spin' : ''}`} />
+          <RotateCw size={14} className={`text-mango-ink ${isRegenerating ? 'animate-spin' : ''}`} />
           <span>{isRegenerating ? t('calendar_planning') : t('calendar_regenerateWithAi')}</span>
         </button>
       </header>
@@ -248,12 +248,12 @@ export const CalendarView: React.FC = () => {
       <div className="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-mango/15 border border-mango/25 p-4 rounded-3xl space-y-3 shadow-xs">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <TrendingUp size={16} className="text-mango" />
+            <TrendingUp size={16} className="text-mango-ink" />
             <span className="text-xs font-black text-pestle-text">
               {t('calendar_dailyCaloriesNutrition')}
             </span>
           </div>
-          <span className="text-xs font-black text-mango">
+          <span className="text-xs font-black text-mango-ink">
             {dailyNutrition.totalCals} / {activeDaySchedule.targetCalories} kcal
           </span>
         </div>
@@ -350,7 +350,7 @@ export const CalendarView: React.FC = () => {
           {/* Badges */}
           <div className="absolute top-4 left-4 flex items-center gap-2">
             <div className="bg-black/60 backdrop-blur-md px-3 py-1 rounded-xl text-xs font-bold text-white flex items-center gap-1.5 border border-white/10">
-              <Clock size={13} className="text-mango" /> {activeRecipe.time}
+              <Clock size={13} className="text-emerald-300" /> {activeRecipe.time}
             </div>
             <div className="bg-black/60 backdrop-blur-md px-3 py-1 rounded-xl text-xs font-bold text-white flex items-center gap-1.5 border border-white/10">
               <ChefHat size={13} className="text-amber-400" /> {activeRecipe.difficulty}
@@ -386,7 +386,7 @@ export const CalendarView: React.FC = () => {
           <div className="grid grid-cols-4 gap-2 bg-pestle-bg p-3 rounded-2xl border border-pestle-border/60 text-center">
             <div>
               <span className="text-[9px] font-bold text-gray-400 uppercase">{t('calendar_calories')}</span>
-              <p className="text-xs sm:text-sm font-black text-mango">{activeRecipe.nutrition.calories} kcal</p>
+              <p className="text-xs sm:text-sm font-black text-mango-ink">{activeRecipe.nutrition.calories} kcal</p>
             </div>
             <div>
               <span className="text-[9px] font-bold text-gray-400 uppercase">{t('calendar_protein')}</span>
@@ -414,14 +414,14 @@ export const CalendarView: React.FC = () => {
             {/* Available Ingredients */}
             {ingredientStatus.available.length > 0 && (
               <div className="space-y-1.5">
-                <p className="text-[10px] font-extrabold text-mint uppercase tracking-wider flex items-center gap-1">
+                <p className="text-[10px] font-extrabold text-mint-ink uppercase tracking-wider flex items-center gap-1">
                   <CheckCircle2 size={12} /> {t('calendar_availableIngredients', { n: ingredientStatus.available.length })}
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {ingredientStatus.available.map((ing, idx) => (
                     <span
                       key={idx}
-                      className="bg-mint/10 border border-mint/25 text-mint text-xs font-bold px-2.5 py-1 rounded-xl flex items-center gap-1.5"
+                      className="bg-mint/10 border border-mint/25 text-mint-ink text-xs font-bold px-2.5 py-1 rounded-xl flex items-center gap-1.5"
                     >
                       <Check size={12} /> {ing}
                     </span>
@@ -433,7 +433,7 @@ export const CalendarView: React.FC = () => {
             {/* Missing Ingredients */}
             {ingredientStatus.missing.length > 0 && (
               <div className="space-y-2 pt-1">
-                <p className="text-[10px] font-extrabold text-amber-500 uppercase tracking-wider flex items-center gap-1">
+                <p className="text-[10px] font-extrabold text-amber-700 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
                   <AlertCircle size={12} /> {t('calendar_missingIngredients', { n: ingredientStatus.missing.length })}
                 </p>
 
@@ -447,7 +447,7 @@ export const CalendarView: React.FC = () => {
                         <span className="w-2 h-2 rounded-full bg-amber-500" />
                         {item.name}
                       </span>
-                      <span className="text-mango font-mono font-black">
+                      <span className="text-mango-ink font-mono font-black">
                         ₮{item.estimatedPrice.toLocaleString()}
                       </span>
                     </div>

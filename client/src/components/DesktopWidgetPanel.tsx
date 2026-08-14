@@ -136,15 +136,15 @@ export const DesktopWidgetPanel: React.FC = () => {
       <div className="space-y-3.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-mango/15 text-mango flex items-center justify-center font-bold text-sm shadow-sm">
+            <div className="w-8 h-8 rounded-xl bg-mango/15 text-mango-ink flex items-center justify-center font-bold text-sm shadow-sm">
               👩‍🍳
             </div>
             <div>
               <h3 className="font-extrabold text-xs text-pestle-text">{t('assistantName')}</h3>
-              <p className="text-[10px] text-mint font-bold">Gemini 3 Flash • {t('online')}</p>
+              <p className="text-[10px] text-mint-ink font-bold">Gemini 3 Flash • {t('online')}</p>
             </div>
           </div>
-          <span className="text-[9px] bg-mint/15 text-mint font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
+          <span className="text-[9px] bg-mint/15 text-mint-ink font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
             <Sparkles size={10} /> {t('widget_active')}
           </span>
         </div>
@@ -164,7 +164,7 @@ export const DesktopWidgetPanel: React.FC = () => {
             </div>
           ))}
           {loading && (
-            <div className="text-[10px] text-mango font-bold animate-pulse p-2">
+            <div className="text-[10px] text-mango-ink font-bold animate-pulse p-2">
               ✨ {t('widget_preparing')}
             </div>
           )}
@@ -174,13 +174,13 @@ export const DesktopWidgetPanel: React.FC = () => {
         <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
           <button
             onClick={() => handleSendText(t('widget_promptExpiring'))}
-            className="text-[10px] font-bold bg-pestle-bg border border-pestle-border px-2.5 py-1.5 rounded-lg text-gray-500 hover:text-mango hover:border-mango transition-colors whitespace-nowrap"
+            className="text-[10px] font-bold bg-pestle-bg border border-pestle-border px-2.5 py-1.5 rounded-lg text-gray-500 hover:text-mango-ink hover:border-mango transition-colors whitespace-nowrap"
           >
             💡 {t('widget_chipExpiring')}
           </button>
           <button
             onClick={() => handleSendText(t('widget_promptBreakfast'))}
-            className="text-[10px] font-bold bg-pestle-bg border border-pestle-border px-2.5 py-1.5 rounded-lg text-gray-500 hover:text-mango hover:border-mango transition-colors whitespace-nowrap"
+            className="text-[10px] font-bold bg-pestle-bg border border-pestle-border px-2.5 py-1.5 rounded-lg text-gray-500 hover:text-mango-ink hover:border-mango transition-colors whitespace-nowrap"
           >
             ⚡ {t('widget_chipBreakfast')}
           </button>
@@ -193,7 +193,7 @@ export const DesktopWidgetPanel: React.FC = () => {
             className={`w-9 h-9 rounded-xl flex items-center justify-center border transition-all shrink-0 ${
               isListening
                 ? 'bg-red-500 text-white border-red-500 animate-pulse'
-                : 'bg-pestle-bg border-pestle-border text-gray-400 hover:text-mango'
+                : 'bg-pestle-bg border-pestle-border text-gray-400 hover:text-mango-ink'
             }`}
             title={t('widget_micTitle')}
           >
@@ -224,14 +224,14 @@ export const DesktopWidgetPanel: React.FC = () => {
       <div className="bg-pestle-bg border border-pestle-border rounded-2xl p-3.5 space-y-3">
         <div className="flex justify-between items-center gap-2 text-xs font-bold">
           <span className="text-pestle-text flex items-center gap-1.5 min-w-0">
-            <Flame size={14} className="text-mango shrink-0" />
+            <Flame size={14} className="text-mango-ink shrink-0" />
             <span className="truncate">{t('widget_dailyLog')}</span>
           </span>
           {(dailyLog.calories > 0 || dailyLog.waterGlasses > 0) && (
             <button
               onClick={resetLog}
               title={t('widget_resetDay')}
-              className="text-gray-400 hover:text-mango p-0.5 rounded-md transition-colors shrink-0"
+              className="text-gray-400 hover:text-mango-ink p-0.5 rounded-md transition-colors shrink-0"
             >
               <RotateCcw size={12} />
             </button>
@@ -240,7 +240,7 @@ export const DesktopWidgetPanel: React.FC = () => {
 
         <div className="flex justify-between items-center text-xs font-bold">
           <span className="text-gray-400">{t('calories')}</span>
-          <span className="text-mango font-black">
+          <span className="text-mango-ink font-black">
             {dailyLog.calories.toLocaleString()} / {CALORIE_GOAL.toLocaleString()} kcal
           </span>
         </div>
@@ -255,7 +255,7 @@ export const DesktopWidgetPanel: React.FC = () => {
         {activeCookingRecipe && (
           <button
             onClick={logActiveRecipe}
-            className="w-full text-[10px] font-bold bg-mango/10 text-mango border border-mango/25 px-2 py-1.5 rounded-xl hover:bg-mango hover:text-white transition-colors flex items-center justify-center gap-1"
+            className="w-full text-[10px] font-bold bg-mango/10 text-mango-ink border border-mango/25 px-2 py-1.5 rounded-xl hover:bg-mango hover:text-white transition-colors flex items-center justify-center gap-1"
           >
             <Plus size={12} />
             {t('widget_logRecipe', {
@@ -267,12 +267,12 @@ export const DesktopWidgetPanel: React.FC = () => {
         {/* Water Tracker */}
         <div className="pt-2 border-t border-pestle-border/60 flex items-center justify-between gap-2 text-xs">
           <span className="font-bold text-pestle-text flex items-center gap-1 min-w-0">
-            <Droplets size={14} className="text-sky-500 shrink-0" /> {t('widget_water')}:{' '}
-            <strong className="text-sky-500">{dailyLog.waterGlasses * GLASS_ML}ml</strong>
+            <Droplets size={14} className="text-sky-700 dark:text-sky-400 shrink-0" /> {t('widget_water')}:{' '}
+            <strong className="text-sky-700 dark:text-sky-400">{dailyLog.waterGlasses * GLASS_ML}ml</strong>
           </span>
           <button
             onClick={addWater}
-            className="text-[10px] font-bold bg-sky-500/10 text-sky-500 border border-sky-500/20 px-2.5 py-2 rounded-lg hover:bg-sky-500 hover:text-white transition-colors shrink-0"
+            className="text-[10px] font-bold bg-sky-500/10 text-sky-700 dark:text-sky-400 border border-sky-500/20 px-2.5 py-2 rounded-lg hover:bg-sky-500 hover:text-white transition-colors shrink-0"
           >
             +{GLASS_ML}ml
           </button>
@@ -298,7 +298,7 @@ export const DesktopWidgetPanel: React.FC = () => {
             <span className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
               <ShoppingBag size={14} className="text-teal-600" /> {t('widget_cart', { n: cart.length })}
             </span>
-            <span className="text-xs font-black text-mango">
+            <span className="text-xs font-black text-mango-ink">
               ₮{totalCartAmount.toLocaleString()}
             </span>
           </div>
@@ -317,11 +317,11 @@ export const DesktopWidgetPanel: React.FC = () => {
 
       {/* System Health / Cache Savings Badge — reflects the real health check */}
       <div className="pt-2 border-t border-pestle-border/60 flex items-center justify-between text-[10px] text-gray-400 font-bold">
-        <span className={`flex items-center gap-1 ${healthData ? 'text-mint' : 'text-gray-400'}`}>
+        <span className={`flex items-center gap-1 ${healthData ? 'text-mint-ink' : 'text-gray-400'}`}>
           <CheckCircle2 size={12} /> {healthData ? t('widget_connected') : t('widget_connecting')}
         </span>
         {healthData?.cache?.totalCacheHits > 0 && (
-          <span className="text-mango">Cache hits: {healthData.cache.totalCacheHits}</span>
+          <span className="text-mango-ink">Cache hits: {healthData.cache.totalCacheHits}</span>
         )}
       </div>
     </aside>

@@ -163,7 +163,7 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
 
         <div className="absolute bottom-6 left-6 right-6 text-white space-y-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[11px] font-extrabold uppercase text-mango tracking-widest bg-black/60 px-3 py-1 rounded-full backdrop-blur-md border border-mango/30">
+            <span className="text-[11px] font-extrabold uppercase text-mango-ink tracking-widest bg-black/60 px-3 py-1 rounded-full backdrop-blur-md border border-mango/30">
               {recipe.category || recipe.cuisine || 'Healthy'}
             </span>
             {recipe.rating && (
@@ -184,17 +184,17 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
         {/* Stats Grid */}
         <div className="grid grid-cols-3 gap-3 bg-pestle-card p-4 rounded-2xl border border-pestle-border text-center shadow-md">
           <div className="flex flex-col items-center gap-1">
-            <Clock size={20} className="text-mango" />
+            <Clock size={20} className="text-mango-ink" />
             <span className="text-[10px] text-gray-400 font-extrabold uppercase">{t('recipe_timeLabel')}</span>
             <span className="text-xs sm:text-sm font-black text-pestle-text">{recipe.time}</span>
           </div>
           <div className="flex flex-col items-center gap-1 border-x border-pestle-border/60">
-            <Flame size={20} className="text-mint" />
+            <Flame size={20} className="text-mint-ink" />
             <span className="text-[10px] text-gray-400 font-extrabold uppercase">{t('recipe_levelLabel')}</span>
             <span className="text-xs sm:text-sm font-black text-pestle-text">{recipe.difficulty}</span>
           </div>
           <div className="flex flex-col items-center gap-1">
-            <Utensils size={20} className="text-amber-500" />
+            <Utensils size={20} className="text-amber-700 dark:text-amber-400" />
             <span className="text-[10px] text-gray-400 font-extrabold uppercase">{t('calories')}</span>
             <span className="text-xs sm:text-sm font-black text-pestle-text">
               {recipe.nutrition.calories} kcal
@@ -205,10 +205,10 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
         {/* Fridge Availability Box */}
         <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/5 p-4 rounded-2xl border border-emerald-500/20 space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+            <span className="text-xs font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
               <ChefHat size={16} /> {t('recipe_fridgeReadiness', { count: matchDetails.count, total: matchDetails.total })}
             </span>
-            <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-300">
+            <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
               {t('recipe_percentReady', { n: Math.round((matchDetails.count / matchDetails.total) * 100) })}
             </span>
           </div>
@@ -277,7 +277,7 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
                   {!isPresent && (
                     <button
                       onClick={() => handleAddMissingToCart(ing)}
-                      className="text-[10px] bg-mango/15 hover:bg-mango text-mango hover:text-white px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 font-bold shrink-0"
+                      className="text-[10px] bg-mango/15 hover:bg-mango text-mango-ink hover:text-white px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 font-bold shrink-0"
                       title={
                         storeProduct
                           ? t('recipe_inStoreAs', { name: storeProduct.name })
@@ -301,16 +301,16 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
             <div className="bg-mango/8 border border-mango/25 rounded-2xl p-4 space-y-3">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-black text-pestle-text flex items-center gap-1.5">
-                  <ShoppingBag size={15} className="text-mango" />
+                  <ShoppingBag size={15} className="text-mango-ink" />
                   {t('recipe_missingFromStore', { n: matchDetails.missing.length })}
                 </span>
-                <span className="text-xs font-black text-mango">
+                <span className="text-xs font-black text-mango-ink">
                   ≈ ₮{missingTotalPrice.toLocaleString()}
                 </span>
               </div>
               {missingAdded ? (
                 <div className="flex flex-col sm:flex-row gap-2">
-                  <span className="flex-1 text-center text-xs font-black text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 rounded-xl py-2.5">
+                  <span className="flex-1 text-center text-xs font-black text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 rounded-xl py-2.5">
                     ✓ {t('recipe_missingAdded')}
                   </span>
                   <button
@@ -345,7 +345,7 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
                 className="bg-pestle-card border border-pestle-border rounded-2xl p-4 space-y-2 shadow-xs"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-mango bg-mango/10 px-3 py-1 rounded-full">
+                  <span className="text-xs font-black text-mango-ink bg-mango/10 px-3 py-1 rounded-full">
                     {t('step')} {idx + 1}
                   </span>
                   <span className="text-xs font-bold text-pestle-text">
@@ -357,7 +357,7 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
                 </p>
                 {step.sisterTip && (
                   <div className="bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl text-[11px] text-amber-700 dark:text-amber-300 flex items-start gap-2 font-medium">
-                    <Sparkles size={14} className="text-amber-500 shrink-0 mt-0.5" />
+                    <Sparkles size={14} className="text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
                     <span>
                       <strong>{t('sisterTip')}</strong>{' '}
                       {lang === 'mn' ? step.sisterTip : step.sisterTipEn || step.sisterTip}
@@ -519,7 +519,7 @@ export const RecipeView: React.FC = () => {
         <div>
           <h2 className="text-2xl sm:text-3xl font-black text-pestle-text tracking-tight flex items-center gap-2">
             <span>{t('tabRecipe')}</span>
-            <span className="text-xs bg-mango/15 text-mango px-2.5 py-1 rounded-full font-bold">
+            <span className="text-xs bg-mango/15 text-mango-ink px-2.5 py-1 rounded-full font-bold">
               {t('recipe_recipeCount', { n: recipes.length })}
             </span>
           </h2>
@@ -548,7 +548,7 @@ export const RecipeView: React.FC = () => {
       {/* SEARCH BAR WITH LIVE AUTOCOMPLETE DROPDOWN */}
       <div ref={searchRef} className="relative z-30">
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-mango" size={18} />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-mango-ink" size={18} />
           <input
             type="text"
             value={search}
@@ -577,7 +577,7 @@ export const RecipeView: React.FC = () => {
               exit={{ opacity: 0, y: 6 }}
               className="absolute top-full left-0 right-0 mt-2 bg-pestle-card border border-pestle-border rounded-2xl shadow-2xl overflow-hidden z-50 max-h-80 overflow-y-auto divide-y divide-pestle-border/40"
             >
-              <div className="p-2 bg-mango/5 text-[11px] font-bold text-mango uppercase tracking-wider px-4 flex justify-between items-center">
+              <div className="p-2 bg-mango/5 text-[11px] font-bold text-mango-ink uppercase tracking-wider px-4 flex justify-between items-center">
                 <span>{t('recipe_searchResults', { n: searchSuggestions.length })}</span>
                 <span className="text-gray-400 text-[10px]">{t('recipe_clickToView')}</span>
               </div>
@@ -611,7 +611,7 @@ export const RecipeView: React.FC = () => {
                       <span>•</span>
                       <span>{rec.time}</span>
                       <span>•</span>
-                      <span className="text-emerald-500 font-bold">
+                      <span className="text-emerald-700 dark:text-emerald-400 font-bold">
                         {t('recipe_ingredientsReady', { matched: rec.matchedCount, total: rec.totalIngredients })}
                       </span>
                     </div>
@@ -668,7 +668,7 @@ export const RecipeView: React.FC = () => {
         {(selectedCategory !== 'all' || selectedDifficulty !== 'all' || search) && (
           <button
             onClick={resetFilters}
-            className="flex items-center justify-center gap-1.5 text-xs font-bold text-mango hover:text-amber-600 bg-mango/10 hover:bg-mango/20 px-3 py-2 rounded-xl transition-colors shrink-0"
+            className="flex items-center justify-center gap-1.5 text-xs font-bold text-mango-ink hover:text-amber-600 bg-mango/10 hover:bg-mango/20 px-3 py-2 rounded-xl transition-colors shrink-0"
           >
             <RotateCcw size={14} /> {t('recipe_clear')}
           </button>
@@ -701,10 +701,10 @@ export const RecipeView: React.FC = () => {
         <section className="space-y-3 bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-mango/10 p-4 sm:p-5 rounded-3xl border border-emerald-500/20 relative overflow-hidden">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-black text-pestle-text flex items-center gap-2">
-              <Sparkles size={18} className="text-emerald-500 animate-pulse" />
+              <Sparkles size={18} className="text-emerald-700 dark:text-emerald-400 animate-pulse" />
               <span>{t('recipe_fridgeRecommendations')}</span>
             </h3>
-            <span className="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest bg-emerald-500/15 px-2.5 py-1 rounded-full">
+            <span className="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest bg-emerald-500/15 px-2.5 py-1 rounded-full">
               AI Smart Suggest
             </span>
           </div>
@@ -723,7 +723,7 @@ export const RecipeView: React.FC = () => {
                   className="w-16 h-16 rounded-xl object-cover shrink-0"
                 />
                 <div className="flex-1 min-w-0">
-                  <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full inline-block">
+                  <span className="text-[9px] font-black text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full inline-block">
                     ✓ {t('recipe_ingredientsReady', { matched: recipe.matchedCount, total: recipe.totalIngredients })}
                   </span>
                   <h4 className="text-xs font-black text-pestle-text truncate mt-1">
@@ -749,7 +749,7 @@ export const RecipeView: React.FC = () => {
 
         {filteredRecipes.length === 0 ? (
           <div className="bg-pestle-card border border-pestle-border rounded-3xl p-10 text-center space-y-4 shadow-sm">
-            <div className="w-16 h-16 bg-mango/10 text-mango rounded-full flex items-center justify-center mx-auto text-2xl">
+            <div className="w-16 h-16 bg-mango/10 text-mango-ink rounded-full flex items-center justify-center mx-auto text-2xl">
               🔍
             </div>
             <div className="space-y-1">
@@ -820,14 +820,14 @@ export const RecipeView: React.FC = () => {
                   {/* Fridge Match Badge */}
                   <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
                     <div className="space-y-1">
-                      <h3 className="text-base font-black text-white leading-tight drop-shadow-sm group-hover:text-mango transition-colors">
+                      <h3 className="text-base font-black text-white leading-tight drop-shadow-sm group-hover:text-emerald-300 transition-colors">
                         {lang === 'mn' ? recipe.title : recipe.titleEn || recipe.title}
                       </h3>
                       <div className="flex items-center gap-2">
                         <span
                           className={`text-[10px] font-bold px-2 py-0.5 rounded-md backdrop-blur-md border ${
                             recipe.matchedCount > 0
-                              ? 'bg-emerald-500/80 text-white border-emerald-400/40'
+                              ? 'bg-emerald-700/90 text-white border-emerald-500/40'
                               : 'bg-black/50 text-gray-300 border-white/10'
                           }`}
                         >
@@ -841,15 +841,15 @@ export const RecipeView: React.FC = () => {
                 {/* Recipe Footer Details */}
                 <div className="p-4 bg-pestle-card flex items-center justify-between border-t border-pestle-border/40 text-xs font-bold text-gray-500 dark:text-gray-400">
                   <div className="flex items-center gap-1.5">
-                    <Clock size={13} className="text-mango" />
+                    <Clock size={13} className="text-mango-ink" />
                     <span>{recipe.time}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Flame size={13} className="text-mint" />
+                    <Flame size={13} className="text-mint-ink" />
                     <span>{recipe.difficulty}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Utensils size={13} className="text-amber-500" />
+                    <Utensils size={13} className="text-amber-700 dark:text-amber-400" />
                     <span>{recipe.nutrition.calories} kcal</span>
                   </div>
                 </div>

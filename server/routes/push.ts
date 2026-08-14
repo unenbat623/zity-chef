@@ -1,6 +1,6 @@
 import express from 'express';
 import webpush from 'web-push';
-import { AuthenticatedRequest, authenticateToken, GUEST_ID } from '../middleware/auth.js';
+import { AuthenticatedRequest, authenticateToken, isGuestId } from '../middleware/auth.js';
 import { isSupabaseConfigured, getSupabaseForUser } from '../supabase.js';
 
 const router = express.Router();
@@ -18,7 +18,7 @@ if (isPushConfigured) {
 const memorySubs = new Map<string, any[]>();
 
 function usesDb(req: AuthenticatedRequest): boolean {
-  return Boolean(isSupabaseConfigured && req.accessToken && req.user?.id !== GUEST_ID);
+  return Boolean(isSupabaseConfigured && req.accessToken && !isGuestId(req.user?.id));
 }
 
 // ── GET /api/push/vapid-public-key ────────────────────────────────────────────

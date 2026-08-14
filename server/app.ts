@@ -86,6 +86,7 @@ export function createApp(): Express {
         }
       },
       credentials: true,
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Guest-Id'],
     })
   );
 

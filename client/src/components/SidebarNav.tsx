@@ -51,8 +51,7 @@ export const SidebarNav: React.FC = () => {
             <div className="flex items-center gap-1.5">
               <h1 className="font-black text-base text-pestle-text tracking-tight">Zity Chef</h1>
               <span
-                className="text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider text-white"
-                style={{ backgroundColor: profile.accentColor }}
+                className="text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider on-accent"
               >
                 PRO
               </span>
@@ -87,7 +86,7 @@ export const SidebarNav: React.FC = () => {
                     className={`text-[10px] px-2 py-0.5 rounded-full font-extrabold ${
                       isActive
                         ? 'bg-white/20 text-white'
-                        : 'bg-pestle-bg text-mango border border-pestle-border'
+                        : 'bg-pestle-bg text-mango-ink border border-pestle-border'
                     }`}
                   >
                     {item.count}
@@ -109,7 +108,7 @@ export const SidebarNav: React.FC = () => {
                 onClick={() => setActiveTab(item.id)}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[11px] font-bold transition-all ${
                   isActive
-                    ? 'bg-mango/10 text-mango'
+                    ? 'bg-mango/10 text-mango-ink'
                     : 'text-gray-400 hover:bg-pestle-bg hover:text-pestle-text'
                 }`}
               >
@@ -154,7 +153,7 @@ export const SidebarNav: React.FC = () => {
             <p className="text-[11px] font-black text-pestle-text truncate">{profile.name}</p>
             <p className="text-[9px] text-gray-400 font-medium truncate">{profile.username}</p>
           </div>
-          <UserCircle size={15} className="text-emerald-500 shrink-0" />
+          <UserCircle size={15} className="text-emerald-700 dark:text-emerald-400 shrink-0" />
         </button>
       </div>
     </aside>

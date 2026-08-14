@@ -86,7 +86,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
   if (!recipe) {
     return (
       <div className="p-6 flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
-        <div className="w-20 h-20 bg-mango/10 text-mango rounded-full flex items-center justify-center shadow-lg">
+        <div className="w-20 h-20 bg-mango/10 text-mango-ink rounded-full flex items-center justify-center shadow-lg">
           <Flame size={40} />
         </div>
         <h3 className="text-xl font-bold text-pestle-text">{t('noRecipeSelected')}</h3>
@@ -250,7 +250,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
         <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
           <button
             onClick={() => setActiveTab('recipe')}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-extrabold bg-pestle-bg border border-pestle-border text-pestle-text hover:border-mango hover:text-mango transition-all cursor-pointer shadow-xs shrink-0"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-extrabold bg-pestle-bg border border-pestle-border text-pestle-text hover:border-mango hover:text-mango-ink transition-all cursor-pointer shadow-xs shrink-0"
             title={t('cooking_backToRecipesTitle')}
           >
             <ChevronLeft size={18} />
@@ -259,7 +259,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
 
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-extrabold text-mango uppercase tracking-widest bg-mango/10 px-2.5 py-0.5 rounded-full">
+              <span className="text-[10px] font-extrabold text-mango-ink uppercase tracking-widest bg-mango/10 px-2.5 py-0.5 rounded-full">
                 {recipe.cuisine || 'International'}
               </span>
               <span className="text-[10px] font-bold text-gray-400">
@@ -303,7 +303,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
           </button>
 
           <div className="flex items-center gap-1.5 bg-pestle-bg border border-pestle-border px-3 py-2 rounded-xl text-xs font-bold text-pestle-text">
-            <Clock size={15} className="text-mango" />
+            <Clock size={15} className="text-mango-ink" />
             <span>{recipe.time}</span>
           </div>
         </div>
@@ -337,7 +337,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
           animate={{ scale: 1, opacity: 1 }}
           className="py-14 text-center bg-pestle-card border border-pestle-border rounded-[32px] p-8 shadow-2xl space-y-5"
         >
-          <div className="w-24 h-24 bg-mint/20 text-mint rounded-full flex items-center justify-center mx-auto shadow-xl animate-bounce">
+          <div className="w-24 h-24 bg-mint/20 text-mint-ink rounded-full flex items-center justify-center mx-auto shadow-xl animate-bounce">
             <Award size={54} />
           </div>
           <div className="space-y-2">
@@ -385,10 +385,10 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
           <div className="bg-pestle-card border border-pestle-border p-3 rounded-2xl shadow-xs space-y-2">
             <div className="flex justify-between items-center text-xs font-bold px-1">
               <span className="text-pestle-text flex items-center gap-1.5">
-                <Layers size={15} className="text-mango" />
+                <Layers size={15} className="text-mango-ink" />
                 <span>{t('cooking_stepOf', { current: currentStep + 1, total: steps.length })}</span>
               </span>
-              <span className="text-mango font-black">
+              <span className="text-mango-ink font-black">
                 {t('cooking_percentComplete', { n: Math.round(((currentStep + 1) / steps.length) * 100) })}
               </span>
             </div>
@@ -412,7 +412,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
                     idx === currentStep
                       ? 'bg-mango text-white border-mango shadow-sm scale-102'
                       : idx < currentStep
-                      ? 'bg-mint/15 text-mint border-mint/30'
+                      ? 'bg-mint/15 text-mint-ink border-mint/30'
                       : 'bg-pestle-bg text-gray-400 border-pestle-border hover:border-gray-400'
                   }`}
                 >
@@ -475,7 +475,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
                     {step.stepIngredients && step.stepIngredients.length > 0 && (
                       <div className="bg-pestle-bg border border-pestle-border/80 p-3.5 rounded-2xl space-y-2">
                         <span className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
-                          <Utensils size={14} className="text-mango" />
+                          <Utensils size={14} className="text-mango-ink" />
                           <span>{t('cooking_stepIngredients')}</span>
                         </span>
                         <div className="space-y-1.5">
@@ -492,7 +492,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
                                 }`}
                               >
                                 {isChecked ? (
-                                  <CheckSquare size={14} className="text-mint shrink-0" />
+                                  <CheckSquare size={14} className="text-mint-ink shrink-0" />
                                 ) : (
                                   <Square size={14} className="text-gray-400 shrink-0" />
                                 )}
@@ -508,7 +508,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
                     {step.toolsNeeded && step.toolsNeeded.length > 0 && (
                       <div className="bg-pestle-bg border border-pestle-border/80 p-3.5 rounded-2xl space-y-2">
                         <span className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
-                          <Wrench size={14} className="text-amber-500" />
+                          <Wrench size={14} className="text-amber-700 dark:text-amber-400" />
                           <span>{t('cooking_toolsNeeded')}</span>
                         </span>
                         <div className="flex flex-wrap gap-1.5 pt-1">
@@ -535,7 +535,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
                       <Clock size={24} />
                     </div>
                     <div>
-                      <span className="text-[10px] font-black uppercase tracking-wider text-mango">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-mango-ink">
                         {t('cooking_stepTimer')}
                       </span>
                       <h4 className="text-2xl font-black text-pestle-text font-mono">

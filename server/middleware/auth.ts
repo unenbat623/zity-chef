@@ -4,6 +4,19 @@ import { supabaseAuth } from '../supabase.js';
 
 export const GUEST_ID = 'guest-user-00000000-0000-0000-0000-000000000000';
 
+/** Prefix for per-device guest identities derived from the X-Guest-Id header. */
+const GUEST_PREFIX = 'guest:';
+const GUEST_HEADER_RE = /^[0-9a-fA-F-]{16,64}$/;
+
+/**
+ * True for any unauthenticated identity — the legacy shared guest id as well as
+ * the per-device ones. Routes must use this rather than comparing to GUEST_ID,
+ * or a per-device guest would be mistaken for a real signed-in user.
+ */
+export function isGuestId(id: string | undefined | null): boolean {
+  return !id || id === GUEST_ID || id.startsWith(GUEST_PREFIX);
+}
+
 export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
@@ -17,9 +30,18 @@ export interface AuthenticatedRequest extends Request {
 
 const SUPABASE_JWT_SECRET = process.env.SUPABASE_JWT_SECRET || '';
 
+/**
+ * Guests get a per-device identity from the client-generated X-Guest-Id header
+ * so two logged-out visitors never share one fridge. Falls back to the legacy
+ * shared id when the header is absent or malformed.
+ */
 function assignGuest(req: AuthenticatedRequest) {
+  const raw = req.headers['x-guest-id'];
+  const header = Array.isArray(raw) ? raw[0] : raw;
+  const id = header && GUEST_HEADER_RE.test(header) ? `${GUEST_PREFIX}${header}` : GUEST_ID;
+
   req.user = {
-    id: GUEST_ID,
+    id,
     email: 'guest@zitychef.mn',
     subscriptionTier: 'free',
     isAnonymous: true,

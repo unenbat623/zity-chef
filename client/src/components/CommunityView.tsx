@@ -341,7 +341,7 @@ const CreateStoryModal: React.FC<{
       >
         <div className="flex justify-between items-center">
           <h3 className="text-sm font-black text-pestle-text flex items-center gap-2">
-            <Camera size={18} className="text-mango" /> {t('community_createStoryTitle')}
+            <Camera size={18} className="text-mango-ink" /> {t('community_createStoryTitle')}
           </h3>
           <button
             onClick={onClose}
@@ -404,7 +404,7 @@ const CreateStoryModal: React.FC<{
               onClick={() => fileInputRef.current?.click()}
               className="flex-1 bg-pestle-bg border border-pestle-border py-2 px-3 rounded-xl text-xs font-bold text-pestle-text hover:border-mango flex items-center justify-center gap-2"
             >
-              <Camera size={15} className="text-mango" />
+              <Camera size={15} className="text-mango-ink" />
               <span>{t('community_addPhoto')}</span>
             </button>
 
@@ -503,7 +503,7 @@ const DirectChatDrawer: React.FC<{
             />
             <div>
               <h3 className="font-extrabold text-sm text-pestle-text">{recipient.name}</h3>
-              <span className="text-[10px] text-mint font-bold flex items-center gap-1">
+              <span className="text-[10px] text-mint-ink font-bold flex items-center gap-1">
                 ● {t('online')}
               </span>
             </div>
@@ -664,7 +664,7 @@ const CreatePostModal: React.FC<{
                 <img src={imageBase64} alt="" className="w-full h-full object-cover" />
               ) : (
                 <div className="text-center space-y-2">
-                  <div className="w-12 h-12 bg-mango/15 text-mango rounded-full flex items-center justify-center mx-auto">
+                  <div className="w-12 h-12 bg-mango/15 text-mango-ink rounded-full flex items-center justify-center mx-auto">
                     <Image size={24} />
                   </div>
                   <span className="text-xs font-bold text-pestle-text block">
@@ -786,7 +786,7 @@ const PostCard: React.FC<{
           onClick={onChat}
           className="px-3 py-1.5 rounded-xl bg-pestle-bg border border-pestle-border text-[11px] font-bold text-pestle-text hover:border-mango flex items-center gap-1.5 shadow-2xs"
         >
-          <MessageSquare size={13} className="text-mango" /> {t('community_chat')}
+          <MessageSquare size={13} className="text-mango-ink" /> {t('community_chat')}
         </button>
       </div>
 
@@ -820,10 +820,10 @@ const PostCard: React.FC<{
       {post.recipe && (
         <div className="px-4 py-2.5 bg-gradient-to-r from-mango/15 via-amber-500/10 to-transparent border-b border-pestle-border/60 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <ChefHat size={15} className="text-mango" />
+            <ChefHat size={15} className="text-mango-ink" />
             <span className="text-xs font-black text-pestle-text">{post.recipe.title}</span>
           </div>
-          <span className="text-[10px] font-bold text-mango bg-mango/10 px-2 py-0.5 rounded-full">
+          <span className="text-[10px] font-bold text-mango-ink bg-mango/10 px-2 py-0.5 rounded-full">
             {post.recipe.time}
           </span>
         </div>
@@ -845,7 +845,7 @@ const PostCard: React.FC<{
 
           <button
             onClick={() => setShowComments(!showComments)}
-            className="flex items-center gap-1.5 text-xs font-bold text-pestle-text hover:text-mango transition-colors"
+            className="flex items-center gap-1.5 text-xs font-bold text-pestle-text hover:text-mango-ink transition-colors"
           >
             <MessageCircle size={20} />
             <span className="text-xs font-extrabold">{post.comments.length}</span>
@@ -862,7 +862,7 @@ const PostCard: React.FC<{
               }
             }}
             aria-label={t('community_shareAria')}
-            className="text-pestle-text hover:text-mango transition-colors"
+            className="text-pestle-text hover:text-mango-ink transition-colors"
           >
             <Share2 size={19} />
           </button>
@@ -870,7 +870,7 @@ const PostCard: React.FC<{
 
         <button
           onClick={onSave}
-          className={`transition-colors ${post.saved ? 'text-mango' : 'text-pestle-text hover:text-mango'}`}
+          className={`transition-colors ${post.saved ? 'text-mango-ink' : 'text-pestle-text hover:text-mango-ink'}`}
         >
           <Bookmark size={20} fill={post.saved ? 'currentColor' : 'none'} />
         </button>
@@ -1057,7 +1057,7 @@ export const CommunityView: React.FC = () => {
             onClick={() => setShowCreateStory(true)}
             className="bg-pestle-card border border-pestle-border py-2.5 px-3.5 rounded-2xl text-xs font-bold text-pestle-text hover:border-mango flex items-center gap-1.5 shadow-xs transition-all shrink-0 whitespace-nowrap"
           >
-            <Camera size={16} className="text-mango shrink-0" />
+            <Camera size={16} className="text-mango-ink shrink-0" />
             <span className="hidden sm:inline">{t('community_addStory')}</span>
           </button>
 

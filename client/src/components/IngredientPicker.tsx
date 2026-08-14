@@ -201,7 +201,7 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                       <h4 className="font-bold text-xs text-pestle-text line-clamp-1">
                         {item.name}
                       </h4>
-                      <span className="text-[10px] text-mango font-semibold block mt-0.5">
+                      <span className="text-[10px] text-mango-ink font-semibold block mt-0.5">
                         {item.category}
                       </span>
                     </div>
@@ -218,7 +218,7 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                   }}
                   className="w-full bg-pestle-bg border border-pestle-border py-3 rounded-2xl flex items-center justify-center gap-2 text-xs font-bold text-pestle-text hover:border-mango transition-colors"
                 >
-                  <Scan size={16} className="text-mango" />
+                  <Scan size={16} className="text-mango-ink" />
                   <span>{t('scanReceipt')}</span>
                 </button>
               </div>
@@ -232,7 +232,7 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-pestle-text flex items-center justify-between">
                   <span>{t('picker_ingredientImageOptional')}</span>
-                  <span className="text-[10px] text-mango font-medium">
+                  <span className="text-[10px] text-mango-ink font-medium">
                     {t('picker_takePhotoOrSelectFile')}
                   </span>
                 </label>
@@ -262,7 +262,7 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                     </>
                   ) : (
                     <div className="text-center space-y-1 p-4">
-                      <div className="w-10 h-10 bg-mango/15 text-mango rounded-full flex items-center justify-center mx-auto mb-1">
+                      <div className="w-10 h-10 bg-mango/15 text-mango-ink rounded-full flex items-center justify-center mx-auto mb-1">
                         <Upload size={20} />
                       </div>
                       <span className="text-xs font-bold text-pestle-text block">
@@ -352,7 +352,7 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                     type="number"
                     value={quantity}
                     onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                    className="flex-1 text-center font-black text-lg bg-pestle-bg border border-pestle-border rounded-xl py-2 text-mango"
+                    className="flex-1 text-center font-black text-lg bg-pestle-bg border border-pestle-border rounded-xl py-2 text-mango-ink"
                   />
                   <button
                     type="button"
@@ -399,13 +399,13 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
               </div>
               <div className="text-center">
                 <h3 className="text-lg font-black text-pestle-text">{selectedIngredient.name}</h3>
-                <span className="text-xs text-mango font-bold">{selectedIngredient.category}</span>
+                <span className="text-xs text-mango-ink font-bold">{selectedIngredient.category}</span>
               </div>
 
               <div className="w-full space-y-3 bg-pestle-bg p-4 rounded-2xl border border-pestle-border">
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-bold text-gray-400">{t('picker_amountToAdd')}</span>
-                  <span className="text-lg font-black text-mango">
+                  <span className="text-lg font-black text-mango-ink">
                     {formatQuantity(quantity, unit, unitSystem)}
                   </span>
                 </div>

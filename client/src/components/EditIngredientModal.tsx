@@ -92,7 +92,7 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-pestle-text flex justify-between">
               <span>{t('edit_ingredientImage')}</span>
-              <span className="text-[10px] text-mango font-semibold">{t('edit_tapToChange')}</span>
+              <span className="text-[10px] text-mango-ink font-semibold">{t('edit_tapToChange')}</span>
             </label>
 
             <input
@@ -197,7 +197,7 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
                 type="number"
                 value={quantity}
                 onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                className="flex-1 text-center font-black text-lg bg-pestle-bg border border-pestle-border rounded-xl py-2 text-mango"
+                className="flex-1 text-center font-black text-lg bg-pestle-bg border border-pestle-border rounded-xl py-2 text-mango-ink"
               />
               <button
                 type="button"

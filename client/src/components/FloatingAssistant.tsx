@@ -66,7 +66,7 @@ export const FloatingAssistant: React.FC = () => {
               <button
                 onClick={() => setShowBubble(false)}
                 aria-label={t('close')}
-                className="absolute -top-1.5 -right-1.5 w-7 h-7 rounded-full bg-pestle-card border border-pestle-border text-gray-400 hover:text-pestle-text flex items-center justify-center transition-colors shadow-sm"
+                className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-pestle-card border border-pestle-border text-gray-400 hover:text-pestle-text flex items-center justify-center transition-colors shadow-sm"
               >
                 <X size={12} />
               </button>

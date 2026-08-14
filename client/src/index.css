@@ -1,22 +1,43 @@
 @import "tailwindcss";
 
+/* The app toggles a .dark class on <html>; without this, Tailwind v4 compiles
+   every `dark:` utility to @media (prefers-color-scheme: dark) instead, so the
+   in-app theme switch would leave all 50+ of them following the OS setting. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
-  --color-mango: var(--color-accent, #10B981);
-  --color-mint: #10B981;
+  /* Filled accent surfaces (bg-mango, border-mango) — dark enough that white
+     text on top clears WCAG AA. `text-mango-ink` is the text/icon counterpart. */
+  --color-mango: var(--color-accent, #047857);
+  --color-mango-ink: var(--color-accent-ink, #047857);
+  /* Same split for the secondary green: `bg-mint` is a filled surface behind
+     white text, `text-mint-ink` is the readable text/icon shade. */
+  --color-mint: #047857;
+  --color-mint-ink: #047857;
+
   --color-pestle-bg: #F8FAFB;
   --color-pestle-card: #FFFFFF;
   --color-pestle-text: #0F172A;
   --color-pestle-border: #E2E8F0;
 
+  /* Tailwind's gray-400 (#9CA3AF) is only 2.6:1 on white, and this project uses
+     it for secondary text everywhere — retuning the token beats editing ~190
+     call sites. gray-500 moves with it so the two tiers stay distinguishable;
+     the dark theme flips both to their light-on-dark counterparts below. */
+  --color-gray-400: #6B7280;
+  --color-gray-500: #4B5563;
+
   --radius-xl: 18px;
 }
 
 :root {
-  --color-accent: #10B981;
-  --color-accent-shadow: rgba(16, 185, 129, 0.32);
-  --color-accent-light: rgba(16, 185, 129, 0.12);
+  --color-accent: #047857;
+  --color-accent-ink: #047857;
+  --color-accent-fg: #FFFFFF;
+  --color-accent-shadow: rgba(4, 120, 87, 0.32);
+  --color-accent-light: rgba(4, 120, 87, 0.12);
 }
 
 @layer base {
@@ -62,6 +83,14 @@
   --color-pestle-card: #131A26;
   --color-pestle-text: #F1F5F9;
   --color-pestle-border: #1E293B;
+  /* Light-on-dark counterparts. gray-400 stays the brighter of the two so the
+     tier ordering matches the light theme. */
+  --color-gray-400: #9CA3AF;
+  --color-gray-500: #7C8BA1;
+  /* A deep green is unreadable as text on a near-black page — brighten the ink
+     shades only. Filled surfaces keep the darker green + white text. */
+  --color-accent-ink: #34D399;
+  --color-mint-ink: #34D399;
 }
 
 /* Custom scrollbar for minimalist feel */
@@ -89,8 +118,8 @@
 }
 
 .btn-primary {
-  background-color: var(--color-accent, #10B981) !important;
-  color: #FFFFFF !important;
+  background-color: var(--color-accent, #047857) !important;
+  color: var(--color-accent-fg, #FFFFFF) !important;
   font-weight: 700;
   padding: 0.875rem 1.5rem;
   border-radius: 0.75rem;
@@ -104,6 +133,14 @@
   filter: brightness(1.08);
   transform: translateY(-1px);
   box-shadow: 0 6px 20px var(--color-accent-shadow, rgba(16, 185, 129, 0.4));
+}
+
+/* Filled accent surface with a foreground picked for contrast. Use this rather
+   than pairing a raw accent background with text-white — the bright brand green
+   only reaches 2.5:1 against white. */
+.on-accent {
+  background-color: var(--color-accent, #047857);
+  color: var(--color-accent-fg, #FFFFFF);
 }
 
 .btn-secondary {

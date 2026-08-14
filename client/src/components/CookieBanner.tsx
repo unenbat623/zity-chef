@@ -31,17 +31,17 @@ export const CookieBanner: React.FC = () => {
             className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] left-3 right-3 md:bottom-4 md:left-auto md:right-6 md:max-w-md z-[180] bg-pestle-card/95 backdrop-blur-xl border border-pestle-border p-2 sm:p-4 rounded-2xl shadow-2xl flex flex-col gap-2 sm:gap-3"
           >
             <div className="flex items-start gap-3">
-              <div className="hidden sm:flex w-10 h-10 bg-mango/15 text-mango rounded-2xl items-center justify-center shrink-0">
+              <div className="hidden sm:flex w-10 h-10 bg-mango/15 text-mango-ink rounded-2xl items-center justify-center shrink-0">
                 <Cookie size={18} />
               </div>
               <div className="flex-1 min-w-0">
                 <h4 className="text-xs font-black text-pestle-text flex items-center gap-1.5 pr-6">
-                  <ShieldCheck size={14} className="text-emerald-500" /> GDPR & Cookie Notice
+                  <ShieldCheck size={14} className="text-emerald-700 dark:text-emerald-400" /> GDPR & Cookie Notice
                 </h4>
                 <p className="hidden sm:block text-[11px] text-gray-500 font-medium mt-1 leading-relaxed line-clamp-2">
                   {t('cookieNotice')}
                 </p>
-                <div className="hidden sm:flex items-center gap-1 text-[10px] font-bold text-mango mt-1 -ml-1.5">
+                <div className="hidden sm:flex items-center gap-1 text-[10px] font-bold text-mango-ink mt-1 -ml-1.5">
                   <button
                     onClick={() => setShowModal('privacy')}
                     className="hover:underline px-1.5 py-1.5 rounded-md"
@@ -115,11 +115,11 @@ export const CookieBanner: React.FC = () => {
                 <p>
                   Welcome to Zity Chef! We are committed to protecting your privacy and ensuring your personal data is handled safely in compliance with international standards (GDPR, CCPA).
                 </p>
-                <h4 className="font-bold text-mango">1. Data Collection</h4>
+                <h4 className="font-bold text-mango-ink">1. Data Collection</h4>
                 <p>
                   We only store essential data (pantry items, meal plans, and account preferences) to provide intelligent culinary recommendations.
                 </p>
-                <h4 className="font-bold text-mango">2. AI & Data Security</h4>
+                <h4 className="font-bold text-mango-ink">2. AI & Data Security</h4>
                 <p>
                   All vision receipt scans and AI chat queries are processed securely via encrypted proxies. We do not sell your personal data to third parties.
                 </p>

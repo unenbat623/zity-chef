@@ -114,7 +114,7 @@ export const ReceiptScannerModal: React.FC = () => {
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <div>
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-mint bg-mint/15 px-2.5 py-1 rounded-full flex items-center gap-1 w-max mb-1">
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-mint-ink bg-mint/15 px-2.5 py-1 rounded-full flex items-center gap-1 w-max mb-1">
                 <Sparkles size={12} /> Gemini Vision AI Scanner
               </span>
               <h2 className="text-xl font-bold text-pestle-text">{t('scanReceipt')}</h2>
@@ -134,7 +134,7 @@ export const ReceiptScannerModal: React.FC = () => {
 
           {isDone ? (
             <div className="py-12 text-center flex flex-col items-center">
-              <div className="w-16 h-16 bg-mint/20 text-mint rounded-full flex items-center justify-center mb-4 animate-bounce">
+              <div className="w-16 h-16 bg-mint/20 text-mint-ink rounded-full flex items-center justify-center mb-4 animate-bounce">
                 <CheckCircle2 size={40} />
               </div>
               <h3 className="text-xl font-bold text-pestle-text mb-1">
@@ -147,7 +147,7 @@ export const ReceiptScannerModal: React.FC = () => {
               {!selectedImage ? (
                 <div className="flex flex-col gap-3">
                   <label className="border-2 border-dashed border-pestle-border rounded-2xl p-8 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-mango transition-colors bg-pestle-bg">
-                    <div className="w-14 h-14 bg-mango/10 text-mango rounded-2xl flex items-center justify-center">
+                    <div className="w-14 h-14 bg-mango/10 text-mango-ink rounded-2xl flex items-center justify-center">
                       <Camera size={28} />
                     </div>
                     <div className="text-center">
@@ -168,7 +168,7 @@ export const ReceiptScannerModal: React.FC = () => {
 
                   <button
                     onClick={handleSimulatePresetSample}
-                    className="w-full bg-pestle-bg border border-pestle-border py-3 rounded-xl text-xs font-bold text-mango hover:bg-mango/10 transition-colors flex items-center justify-center gap-2"
+                    className="w-full bg-pestle-bg border border-pestle-border py-3 rounded-xl text-xs font-bold text-mango-ink hover:bg-mango/10 transition-colors flex items-center justify-center gap-2"
                   >
                     <Sparkles size={16} />
                     <span>{t('scan_tryDemo')}</span>
@@ -181,7 +181,7 @@ export const ReceiptScannerModal: React.FC = () => {
                     <img src={selectedImage} alt="Receipt" className="w-full h-full object-cover" />
                     {isAnalyzing && (
                       <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center text-white p-4">
-                        <Loader2 size={32} className="animate-spin text-mango mb-2" />
+                        <Loader2 size={32} className="animate-spin text-mango-ink mb-2" />
                         <span className="text-xs font-bold">{t('scan_analyzing')}</span>
                       </div>
                     )}
@@ -194,7 +194,7 @@ export const ReceiptScannerModal: React.FC = () => {
                         <span className="text-xs font-bold text-pestle-text">
                           {t('scan_detectedItems', { n: detectedItems.length })}
                         </span>
-                        <span className="text-[10px] text-mint font-bold uppercase tracking-wider">
+                        <span className="text-[10px] text-mint-ink font-bold uppercase tracking-wider">
                           Auto-Categorized
                         </span>
                       </div>
@@ -216,7 +216,7 @@ export const ReceiptScannerModal: React.FC = () => {
                                 </span>
                               </div>
                             </div>
-                            <span className="text-xs font-mono font-bold text-mango">
+                            <span className="text-xs font-mono font-bold text-mango-ink">
                               {item.quantity} {item.unit}
                             </span>
                           </div>

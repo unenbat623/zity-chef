@@ -54,7 +54,7 @@ export const FridgeView: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowScanModal(true)}
-            className="w-full sm:w-auto justify-center bg-mint/15 text-mint border border-mint/30 px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 hover:bg-mint hover:text-white transition-all active:scale-95 shadow-sm"
+            className="w-full sm:w-auto justify-center bg-mint/15 text-mint-ink border border-mint/30 px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 hover:bg-mint hover:text-white transition-all active:scale-95 shadow-sm"
           >
             <Scan size={16} />
             <span>{t('scanReceipt')}</span>
@@ -200,7 +200,7 @@ export const FridgeView: React.FC = () => {
               <h3 className="font-bold text-xs text-pestle-text tracking-tight mb-1 line-clamp-1 w-full text-center">
                 {item.name}
               </h3>
-              <span className="text-[11px] font-mono font-semibold text-mango mb-2">
+              <span className="text-[11px] font-mono font-semibold text-mango-ink mb-2">
                 {formatQuantity(item.quantity, item.unit, unitSystem)}
               </span>
 
@@ -212,7 +212,7 @@ export const FridgeView: React.FC = () => {
                       ? 'bg-red-500'
                       : item.expiryDays <= 5
                         ? 'bg-amber-400'
-                        : 'bg-mint'
+                        : 'bg-emerald-600 dark:bg-emerald-400'
                   }`}
                   style={{ width: `${Math.min(100, (item.expiryDays / 14) * 100)}%` }}
                 />
@@ -233,7 +233,7 @@ export const FridgeView: React.FC = () => {
 
       {!inventoryLoading && !inventoryError && filteredInventory.length === 0 && (
         <div className="text-center py-14 bg-pestle-card border border-pestle-border rounded-3xl p-6">
-          <div className="w-12 h-12 rounded-2xl bg-mango/10 text-mango mx-auto flex items-center justify-center mb-3">
+          <div className="w-12 h-12 rounded-2xl bg-mango/10 text-mango-ink mx-auto flex items-center justify-center mb-3">
             <Plus size={22} />
           </div>
           <p className="text-sm font-black text-pestle-text">{t('fridge_noItems')}</p>

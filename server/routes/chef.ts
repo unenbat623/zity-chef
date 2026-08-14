@@ -1,5 +1,5 @@
 import express from 'express';
-import { AuthenticatedRequest, authenticateToken, GUEST_ID } from '../middleware/auth.js';
+import { AuthenticatedRequest, authenticateToken, isGuestId } from '../middleware/auth.js';
 import { supabaseAdmin, isSupabaseConfigured } from '../supabase.js';
 
 const router = express.Router();
@@ -29,7 +29,7 @@ function allowedAdminEmails(): string[] {
 
 function isChefAdmin(req: AuthenticatedRequest): boolean {
   const admins = allowedAdminEmails();
-  if (!admins.length || req.user?.id === GUEST_ID || req.user?.isAnonymous) return false;
+  if (!admins.length || isGuestId(req.user?.id) || req.user?.isAnonymous) return false;
   return admins.includes((req.user?.email || '').toLowerCase());
 }
 

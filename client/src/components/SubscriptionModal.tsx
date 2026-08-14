@@ -66,18 +66,18 @@ const getPlanDefs = (
     priceRaw: 7900,
     period: t('sub_perMonth'),
     tagline: t('sub_taglinePro'),
-    color: 'text-amber-500',
+    color: 'text-amber-700 dark:text-amber-400',
     bgClass: 'bg-gradient-to-br from-amber-500/8 to-orange-500/10',
     borderClass: 'border-amber-400/60',
     icon: <Crown size={20} className="text-amber-400" />,
     badge: t('sub_badgePopular'),
     features: [
-      { icon: <Zap size={13} className="text-mango" />, text: t('sub_featPro1') },
-      { icon: <Camera size={13} className="text-mango" />, text: t('sub_featPro2') },
-      { icon: <BarChart3 size={13} className="text-mango" />, text: t('sub_featPro3') },
-      { icon: <BookOpen size={13} className="text-mango" />, text: t('sub_featPro4') },
-      { icon: <ShoppingCart size={13} className="text-mango" />, text: t('sub_featPro5') },
-      { icon: <Star size={13} className="text-mango" />, text: t('sub_featPro6') },
+      { icon: <Zap size={13} className="text-mango-ink" />, text: t('sub_featPro1') },
+      { icon: <Camera size={13} className="text-mango-ink" />, text: t('sub_featPro2') },
+      { icon: <BarChart3 size={13} className="text-mango-ink" />, text: t('sub_featPro3') },
+      { icon: <BookOpen size={13} className="text-mango-ink" />, text: t('sub_featPro4') },
+      { icon: <ShoppingCart size={13} className="text-mango-ink" />, text: t('sub_featPro5') },
+      { icon: <Star size={13} className="text-mango-ink" />, text: t('sub_featPro6') },
     ],
     ctaLabel: t('sub_ctaActivatePro'),
     ctaClass: 'btn-primary shadow-lg shadow-mango/25',
@@ -173,7 +173,7 @@ const PlanCard: React.FC<{
       {isCurrent ? (
         <div className={`w-full py-2.5 rounded-xl text-xs font-extrabold text-center ${
           plan.id === 'pro'
-            ? 'bg-mango/15 text-mango border border-mango/30'
+            ? 'bg-mango/15 text-mango-ink border border-mango/30'
             : plan.id === 'family'
             ? 'bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30'
             : 'bg-pestle-bg text-gray-400 border border-pestle-border'
@@ -234,7 +234,7 @@ export const SubscriptionModal: React.FC = () => {
           {/* Header */}
           <div className="px-6 pt-5 pb-4 flex items-start justify-between">
             <div className="space-y-1">
-              <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-widest text-mango bg-mango/15 px-3 py-1 rounded-full">
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-widest text-mango-ink bg-mango/15 px-3 py-1 rounded-full">
                 <Sparkles size={11} /> Zity Premium
               </span>
               <h2 className="text-xl font-black text-pestle-text">{t('sub_membershipPlans')}</h2>

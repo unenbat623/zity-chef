@@ -130,13 +130,13 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-mango/15 text-mango rounded-2xl flex items-center justify-center font-bold">
+            <div className="w-10 h-10 bg-mango/15 text-mango-ink rounded-2xl flex items-center justify-center font-bold">
               <Calculator size={22} />
             </div>
             <div>
               <h3 className="text-lg font-black text-pestle-text flex items-center gap-1.5">
                 <span>{t('cost_title')}</span>
-                <span className="text-[10px] bg-amber-500/15 text-amber-500 px-2 py-0.5 rounded-full font-bold">
+                <span className="text-[10px] bg-amber-500/15 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-bold">
                   {t('cost_badge')}
                 </span>
               </h3>
@@ -186,14 +186,14 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
             </p>
           </div>
           <div className="bg-mango/10 border border-mango/25 p-3 rounded-2xl text-center">
-            <span className="text-[9px] font-extrabold text-mango uppercase">{t('cost_perPortion')}</span>
-            <p className="text-sm sm:text-base font-black text-mango mt-0.5">
+            <span className="text-[9px] font-extrabold text-mango-ink uppercase">{t('cost_perPortion')}</span>
+            <p className="text-sm sm:text-base font-black text-mango-ink mt-0.5">
               {formatPrice(Math.round(costPerPortion))}
             </p>
           </div>
           <div className="bg-mint/10 border border-mint/25 p-3 rounded-2xl text-center">
-            <span className="text-[9px] font-extrabold text-mint uppercase">{t('cost_suggestedPrice')}</span>
-            <p className="text-sm sm:text-base font-black text-mint mt-0.5">
+            <span className="text-[9px] font-extrabold text-mint-ink uppercase">{t('cost_suggestedPrice')}</span>
+            <p className="text-sm sm:text-base font-black text-mint-ink mt-0.5">
               {formatPrice(Math.round(recommendedSellingPrice))}
             </p>
           </div>
@@ -203,9 +203,9 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
         <div className="space-y-2 bg-pestle-bg p-3.5 rounded-2xl border border-pestle-border/60">
           <div className="flex justify-between items-center text-xs font-bold">
             <span className="text-pestle-text flex items-center gap-1.5">
-              <TrendingUp size={14} className="text-mint" /> {t('cost_targetMargin')}
+              <TrendingUp size={14} className="text-mint-ink" /> {t('cost_targetMargin')}
             </span>
-            <span className="text-mint font-black font-mono">{targetMargin}% ({t('cost_foodCost')}: {foodCostPercentage}%)</span>
+            <span className="text-mint-ink font-black font-mono">{targetMargin}% ({t('cost_foodCost')}: {foodCostPercentage}%)</span>
           </div>
           <input
             type="range"
@@ -346,7 +346,7 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
                       {item.quantity.toLocaleString()} {unitLabel} × ₮{shownPrice.toLocaleString()}/{basisLabel}
                       {item.wastePercentage > 0 && ` + ${item.wastePercentage}% ${t('cost_wasteShort')}`}
                     </span>
-                    <span className="font-mono font-black text-mango">
+                    <span className="font-mono font-black text-mango-ink">
                       = ₮{lineTotal.toLocaleString()}
                     </span>
                   </div>

@@ -24,6 +24,7 @@ import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { useRecipes } from '../hooks/useRecipes';
 import { uploadImage } from '../lib/storage';
+import { ensureContrast, readableTextOn } from '../lib/contrast';
 import { FoodCostCalculatorModal } from './FoodCostCalculatorModal';
 
 // ── Theme Gradient Options ───────────────────────────────────────────────────
@@ -76,6 +77,9 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   };
 
   const selectedTheme = THEME_GRADIENTS.find((t) => t.value === form.coverGradient) || THEME_GRADIENTS[0];
+  // The save button previews the theme being picked, so it cannot use the
+  // global accent token — derive a contrast-safe pair from the selection.
+  const saveBg = ensureContrast(selectedTheme.accent, '#FFFFFF', 4.5);
 
   return (
     <motion.div
@@ -241,8 +245,8 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           <button
             onClick={handleSave}
             disabled={saving}
-            style={{ background: selectedTheme.accent }}
-            className="flex-1 py-3 text-xs font-bold text-white rounded-2xl shadow-lg flex items-center justify-center gap-1.5 hover:opacity-90 transition-opacity disabled:opacity-60"
+            style={{ background: saveBg, color: readableTextOn(saveBg) }}
+            className="flex-1 py-3 text-xs font-bold rounded-2xl shadow-lg flex items-center justify-center gap-1.5 hover:opacity-90 transition-opacity disabled:opacity-60"
           >
             {saving ? (
               <Sparkles size={15} className="animate-spin" />
@@ -280,7 +284,8 @@ export const ProfileView: React.FC = () => {
 
   const stats = personalStats;
 
-  const accentStyle = { color: profile.accentColor };
+  // Use the contrast-adjusted ink shade, not the raw accent (2.5:1 on white).
+  const accentStyle = { color: 'var(--color-accent-ink)' };
   const accentBgStyle = { backgroundColor: profile.accentColor + '18' };
   const accentBorderStyle = { borderColor: profile.accentColor + '55' };
 
@@ -316,7 +321,7 @@ export const ProfileView: React.FC = () => {
           </div>
 
           {/* Online badge */}
-          <div className="absolute bottom-1 right-1 w-5 h-5 rounded-full border-2 border-pestle-card bg-mint" />
+          <div className="absolute bottom-1 right-1 w-5 h-5 rounded-full border-2 border-pestle-card bg-emerald-600 dark:bg-emerald-400" />
         </div>
       </div>
 
@@ -375,8 +380,7 @@ export const ProfileView: React.FC = () => {
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={() => setActiveTab('community')}
-            className="py-2.5 rounded-2xl text-xs font-black text-white flex items-center justify-center gap-1.5 shadow-lg"
-            style={{ backgroundColor: profile.accentColor }}
+            className="py-2.5 rounded-2xl text-xs font-black flex items-center justify-center gap-1.5 shadow-lg on-accent"
           >
             <Users size={14} /> {t('profile_toCommunity')}
           </motion.button>
@@ -390,7 +394,7 @@ export const ProfileView: React.FC = () => {
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={() => setShowCostCalculator(true)}
-            className="py-2.5 rounded-2xl text-xs font-black border border-amber-500/30 text-amber-500 hover:bg-amber-500/10 flex items-center justify-center gap-1.5 bg-pestle-card transition-colors shadow-xs"
+            className="py-2.5 rounded-2xl text-xs font-black border border-amber-500/30 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 flex items-center justify-center gap-1.5 bg-pestle-card transition-colors shadow-xs"
           >
             <Calculator size={14} /> {t('profile_costCalculator')}
           </motion.button>
@@ -408,7 +412,7 @@ export const ProfileView: React.FC = () => {
                     ? 'text-pestle-text'
                     : 'text-gray-400 border-transparent'
                 }`}
-                style={activeGrid === tab ? { borderColor: profile.accentColor, color: profile.accentColor } : {}}
+                style={activeGrid === tab ? { borderColor: 'var(--color-accent-ink)', color: 'var(--color-accent-ink)' } : {}}
               >
                 {tab === 'posts' ? (
                   <><Grid3x3 size={14} /> {t('profile_tabPosts')}</>
@@ -443,8 +447,7 @@ export const ProfileView: React.FC = () => {
                 </div>
                 <button
                   onClick={() => setActiveTab('community')}
-                  className="text-xs font-bold px-4 py-2 rounded-xl text-white shadow-md"
-                  style={{ backgroundColor: profile.accentColor }}
+                  className="text-xs font-bold px-4 py-2 rounded-xl shadow-md on-accent"
                 >
                   {t('profile_toCommunity')}
                 </button>
@@ -476,7 +479,7 @@ export const ProfileView: React.FC = () => {
                               <h4 className="text-xs font-black text-pestle-text truncate">{r.title}</h4>
                               <button
                                 onClick={() => toggleSaveRecipe(r.id)}
-                                className="text-mango hover:scale-110 transition-transform p-0.5"
+                                className="text-mango-ink hover:scale-110 transition-transform p-0.5"
                                 title={t('recipe_removeBookmark')}
                               >
                                 <Bookmark size={15} className="fill-mango" />
@@ -518,8 +521,7 @@ export const ProfileView: React.FC = () => {
                     </p>
                     <button
                       onClick={() => setActiveTab('recipe')}
-                      className="text-xs font-bold px-4 py-2 rounded-xl text-white shadow-md"
-                      style={{ backgroundColor: profile.accentColor }}
+                      className="text-xs font-bold px-4 py-2 rounded-xl shadow-md on-accent"
                     >
                       {t('profile_searchRecipes')}
                     </button>

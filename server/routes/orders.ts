@@ -1,5 +1,5 @@
 import express from 'express';
-import { AuthenticatedRequest, authenticateToken, GUEST_ID } from '../middleware/auth.js';
+import { AuthenticatedRequest, authenticateToken, isGuestId } from '../middleware/auth.js';
 import { isSupabaseConfigured, getSupabaseForUser } from '../supabase.js';
 
 const router = express.Router();
@@ -8,7 +8,7 @@ router.use(authenticateToken);
 const memoryOrders = new Map<string, any[]>();
 
 function usesDb(req: AuthenticatedRequest): boolean {
-  return Boolean(isSupabaseConfigured && req.accessToken && req.user?.id !== GUEST_ID);
+  return Boolean(isSupabaseConfigured && req.accessToken && !isGuestId(req.user?.id));
 }
 
 function rowToOrder(r: Record<string, unknown>) {

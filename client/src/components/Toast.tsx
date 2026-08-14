@@ -39,7 +39,7 @@ const TOAST_CONFIG: Record<
     icon: <CheckCircle2 size={18} />,
     bg: 'bg-emerald-500/12',
     border: 'border-emerald-500/30',
-    iconColor: 'text-emerald-500',
+    iconColor: 'text-emerald-700 dark:text-emerald-400',
     titleColor: 'text-emerald-700 dark:text-emerald-300',
   },
   error: {
@@ -53,14 +53,14 @@ const TOAST_CONFIG: Record<
     icon: <AlertTriangle size={18} />,
     bg: 'bg-amber-500/12',
     border: 'border-amber-500/30',
-    iconColor: 'text-amber-500',
+    iconColor: 'text-amber-700 dark:text-amber-400',
     titleColor: 'text-amber-700 dark:text-amber-300',
   },
   info: {
     icon: <Info size={18} />,
     bg: 'bg-sky-500/12',
     border: 'border-sky-500/30',
-    iconColor: 'text-sky-500',
+    iconColor: 'text-sky-700 dark:text-sky-400',
     titleColor: 'text-sky-700 dark:text-sky-300',
   },
 };

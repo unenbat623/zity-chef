@@ -6,3 +6,6 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Local scratch harnesses (playwright probes)
+*.tmp.mjs

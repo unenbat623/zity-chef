@@ -50,7 +50,7 @@ export const BottomNav: React.FC = () => {
                   size={20}
                   className={`transition-colors ${
                     isActive
-                      ? 'text-mango'
+                      ? 'text-mango-ink'
                       : 'text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300'
                   }`}
                 />
@@ -63,9 +63,8 @@ export const BottomNav: React.FC = () => {
             </div>
             <span
               className={`text-[9px] sm:text-[10px] tracking-tight whitespace-nowrap truncate max-w-[52px] ${
-                isActive ? 'font-black' : 'text-gray-400'
+                isActive ? 'font-black text-mango-ink' : 'text-gray-400'
               }`}
-              style={isActive ? { color: profile.accentColor } : {}}
             >
               {tab.label}
             </span>

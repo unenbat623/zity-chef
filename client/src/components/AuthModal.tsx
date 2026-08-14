@@ -297,7 +297,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               </div>
             )}
             {successMsg && (
-              <div className="p-3 bg-mint/15 border border-mint/30 text-mint text-xs font-bold rounded-xl flex items-center gap-2">
+              <div className="p-3 bg-mint/15 border border-mint/30 text-mint-ink text-xs font-bold rounded-xl flex items-center gap-2">
                 <CheckCircle2 size={16} />
                 <span>{successMsg}</span>
               </div>
@@ -308,7 +308,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               <form onSubmit={handleLoginSubmit} className="space-y-3">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
-                    <Mail size={14} className="text-mango" /> {t('auth_emailLabel')}
+                    <Mail size={14} className="text-mango-ink" /> {t('auth_emailLabel')}
                   </label>
                   <input
                     type="email"
@@ -324,12 +324,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 <div className="space-y-1">
                   <div className="flex justify-between items-center">
                     <label className="text-xs font-bold text-pestle-text flex items-center gap-1">
-                      <Lock size={12} className="text-mango" /> {t('auth_passwordLabel')}
+                      <Lock size={12} className="text-mango-ink" /> {t('auth_passwordLabel')}
                     </label>
                     <button
                       type="button"
                       onClick={() => setView('forgot')}
-                      className="text-[11px] font-bold text-mango hover:underline"
+                      className="text-[11px] font-bold text-mango-ink hover:underline"
                     >
                       {t('auth_forgotQ')}
                     </button>
@@ -380,7 +380,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                       setErrorMsg('');
                       setView('register');
                     }}
-                    className="text-xs font-bold text-mango hover:underline"
+                    className="text-xs font-bold text-mango-ink hover:underline"
                   >
                     {t('auth_registerBtn')}
                   </button>
@@ -393,7 +393,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               <form onSubmit={handleRegisterSubmit} className="space-y-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
-                    <User size={14} className="text-mango" /> {t('auth_fullNameLabel')}
+                    <User size={14} className="text-mango-ink" /> {t('auth_fullNameLabel')}
                   </label>
                   <input
                     type="text"
@@ -408,7 +408,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
-                    <Mail size={14} className="text-mango" /> {t('auth_emailLabel')}
+                    <Mail size={14} className="text-mango-ink" /> {t('auth_emailLabel')}
                   </label>
                   <input
                     type="email"
@@ -422,7 +422,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
-                    <Lock size={14} className="text-mango" /> {t('auth_createPasswordLabel')}
+                    <Lock size={14} className="text-mango-ink" /> {t('auth_createPasswordLabel')}
                   </label>
                   <input
                     type="password"
@@ -461,7 +461,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                       setErrorMsg('');
                       setView('login');
                     }}
-                    className="text-xs font-bold text-mango hover:underline"
+                    className="text-xs font-bold text-mango-ink hover:underline"
                   >
                     {t('auth_loginBtn')}
                   </button>
@@ -472,7 +472,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             {/* 3️⃣ OTP VIEW */}
             {view === 'otp' && (
               <div className="space-y-4 text-center">
-                <div className="w-12 h-12 bg-mango/15 text-mango rounded-2xl flex items-center justify-center mx-auto">
+                <div className="w-12 h-12 bg-mango/15 text-mango-ink rounded-2xl flex items-center justify-center mx-auto">
                   <KeyRound size={24} />
                 </div>
                 <div>
@@ -481,7 +481,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   </h4>
                   <p className="text-xs text-gray-400 mt-1">
                     {t('auth_otpSentPrefix')}{' '}
-                    <span className="font-bold text-mango">{email}</span>{' '}
+                    <span className="font-bold text-mango-ink">{email}</span>{' '}
                     {t('auth_otpSentSuffix')}
                   </p>
                 </div>
@@ -518,12 +518,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 <div className="text-xs text-gray-400 font-medium">
                   {otpTimer > 0 ? (
                     <span>
-                      {t('auth_resendIn')} <strong className="text-mango">{otpTimer}s</strong>
+                      {t('auth_resendIn')} <strong className="text-mango-ink">{otpTimer}s</strong>
                     </span>
                   ) : (
                     <button
                       onClick={handleResendOtp}
-                      className="text-mango font-bold hover:underline"
+                      className="text-mango-ink font-bold hover:underline"
                     >
                       {t('auth_resendCode')}
                     </button>
@@ -540,7 +540,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 </p>
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
-                    <Mail size={14} className="text-mango" /> {t('auth_emailLabel')}
+                    <Mail size={14} className="text-mango-ink" /> {t('auth_emailLabel')}
                   </label>
                   <input
                     type="email"
@@ -597,12 +597,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   <div className="flex-1 min-w-0">
                     <h4 className="font-extrabold text-sm text-pestle-text flex items-center gap-1.5 truncate">
                       <span>{profile.name || user?.name || t('auth_yourName')}</span>
-                      <ShieldCheck size={16} className="text-mint shrink-0" />
+                      <ShieldCheck size={16} className="text-mint-ink shrink-0" />
                     </h4>
                     <p className="text-xs text-gray-400 font-medium truncate">
                       {profile.username || user?.email || '@chef_mongolia'}
                     </p>
-                    <span className="inline-block mt-1 text-[9px] font-black bg-mango/15 text-mango px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-mango/20">
+                    <span className="inline-block mt-1 text-[9px] font-black bg-mango/15 text-mango-ink px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-mango/20">
                       {subscription.toUpperCase()} CHEF TIER
                     </span>
                   </div>
@@ -618,7 +618,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     className="w-full bg-pestle-bg border border-pestle-border p-3.5 rounded-2xl text-xs font-bold text-pestle-text flex items-center justify-between hover:border-mango transition-all cursor-pointer shadow-xs active:scale-[0.98]"
                   >
                     <span className="flex items-center gap-2.5">
-                      <User size={16} className="text-mango" />
+                      <User size={16} className="text-mango-ink" />
                       <span>{t('auth_goToProfile')}</span>
                     </span>
                     <ArrowRight size={14} className="text-gray-400" />
@@ -632,10 +632,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     className="w-full bg-pestle-bg border border-pestle-border p-3.5 rounded-2xl text-xs font-bold text-pestle-text flex items-center justify-between hover:border-mango transition-all cursor-pointer shadow-xs active:scale-[0.98]"
                   >
                     <span className="flex items-center gap-2.5">
-                      <Sparkles size={16} className="text-amber-500" />
+                      <Sparkles size={16} className="text-amber-700 dark:text-amber-400" />
                       <span>{t('auth_subscriptionStatus')}</span>
                     </span>
-                    <span className="text-[10px] font-black bg-amber-500/15 text-amber-500 px-2 py-0.5 rounded-lg uppercase">
+                    <span className="text-[10px] font-black bg-amber-500/15 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-lg uppercase">
                       {subscription}
                     </span>
                   </button>

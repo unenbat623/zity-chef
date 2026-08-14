@@ -114,7 +114,7 @@ export const ChefDashboardView: React.FC = () => {
       <section className="pestle-card rounded-3xl p-4 sm:p-5 border-emerald-500/20 bg-emerald-500/5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            <p className="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
               {t('dashboard_storePipeline')}
             </p>
             <h3 className="mt-1 text-base font-black text-pestle-text">{t('dashboard_storePipelineTitle')}</h3>
@@ -122,7 +122,7 @@ export const ChefDashboardView: React.FC = () => {
           </div>
           <button
             onClick={() => setActiveTab('store')}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-xs font-black text-white shadow-md shadow-emerald-600/15"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-700 px-4 py-3 text-xs font-black text-white shadow-md shadow-emerald-600/15"
           >
             <Store size={16} />
             {t('dashboard_openStore')}
@@ -151,7 +151,7 @@ export const ChefDashboardView: React.FC = () => {
             </div>
             <button
               onClick={() => setActiveTab('store')}
-              className="rounded-xl bg-emerald-600 px-3 py-2 text-[11px] font-black text-white shadow-md shadow-emerald-600/15"
+              className="rounded-xl bg-emerald-700 px-3 py-2 text-[11px] font-black text-white shadow-md shadow-emerald-600/15"
             >
               {t('dashboard_openStore')}
             </button>
@@ -179,8 +179,8 @@ export const ChefDashboardView: React.FC = () => {
                       <p className="text-xs font-bold text-pestle-text truncate">{order.customerName}</p>
                       <p className="text-[10px] text-gray-400 truncate">{order.address}</p>
                     </div>
-                    <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">{formatMoney(order.totalAmount)}</span>
-                    <span className="inline-flex items-center justify-center gap-1 rounded-full bg-emerald-500/10 px-2 py-1 text-[10px] font-black text-emerald-600 dark:text-emerald-400">
+                    <span className="text-xs font-black text-emerald-700 dark:text-emerald-400">{formatMoney(order.totalAmount)}</span>
+                    <span className="inline-flex items-center justify-center gap-1 rounded-full bg-emerald-500/10 px-2 py-1 text-[10px] font-black text-emerald-700 dark:text-emerald-400">
                       <Clock3 size={10} />
                       {order.status}
                     </span>
@@ -198,7 +198,7 @@ export const ChefDashboardView: React.FC = () => {
                 <h3 className="text-sm font-black text-pestle-text">{t('dashboard_customersTitle')}</h3>
                 <p className="text-[11px] text-gray-400 font-semibold">{t('dashboard_customersSub')}</p>
               </div>
-              <UserPlus size={18} className="text-emerald-600 dark:text-emerald-400" />
+              <UserPlus size={18} className="text-emerald-700 dark:text-emerald-400" />
             </div>
             <div className="space-y-2">
               {recentCustomers.length === 0 ? (
@@ -208,7 +208,7 @@ export const ChefDashboardView: React.FC = () => {
               ) : (
                 recentCustomers.slice(0, 5).map((customer) => (
                   <div key={customer.id} className="flex items-center gap-3 rounded-xl bg-pestle-bg/60 p-3">
-                    <div className="h-9 w-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black">
+                    <div className="h-9 w-9 rounded-xl bg-emerald-700 text-white flex items-center justify-center font-black">
                       {customer.name.slice(0, 1).toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">

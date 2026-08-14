@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { Ingredient, SubscriptionTier, CartItem, Order, Language, Recipe, UserProfile, Currency, UnitSystem } from '../types';
 import { translations } from '../lib/i18n';
 import { formatCurrency } from '../lib/currency';
+import { ensureContrast, readableTextOn } from '../lib/contrast';
 import { useInventory } from '../hooks/useInventory';
 import { useOrders } from '../hooks/useOrders';
 import { useAuth } from './AuthContext';
@@ -329,20 +330,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [isDark]);
 
+  // Derive accessible shades from the (user-picked) accent. The accent plays two
+  // roles that need opposite adjustments: a filled surface behind white text,
+  // and a text/icon colour on the page background — so each gets its own token.
   useEffect(() => {
-    if (profile?.accentColor) {
-      document.documentElement.style.setProperty('--color-accent', profile.accentColor);
-      document.documentElement.style.setProperty('--color-mango', profile.accentColor);
-      document.documentElement.style.setProperty(
-        '--color-accent-shadow',
-        profile.accentColor + '55'
-      );
-      document.documentElement.style.setProperty(
-        '--color-accent-light',
-        profile.accentColor + '18'
-      );
-    }
-  }, [profile?.accentColor]);
+    const accent = profile?.accentColor;
+    if (!accent) return;
+
+    // Check the ink against the worst-case surface it actually lands on: in dark
+    // mode that is the card (#131A26), which is lighter than the page; in light
+    // mode it is the page (#F8FAFB), which is darker than the white card.
+    const inkBg = isDark ? '#131A26' : '#F8FAFB';
+    const surface = ensureContrast(accent, '#FFFFFF', 4.5);
+    const ink = ensureContrast(accent, inkBg, 4.5);
+    const root = document.documentElement.style;
+
+    root.setProperty('--color-accent', surface);
+    root.setProperty('--color-accent-ink', ink);
+    root.setProperty('--color-accent-fg', readableTextOn(surface));
+    root.setProperty('--color-accent-shadow', accent + '55');
+    root.setProperty('--color-accent-light', accent + '18');
+  }, [profile?.accentColor, isDark]);
 
   useEffect(() => {
     if (hydratedAccountRef.current !== accountId) return;

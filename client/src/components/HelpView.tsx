@@ -82,7 +82,7 @@ const FaqItem: React.FC<{ faq: FAQ; isOpen: boolean; onToggle: () => void }> = (
         onClick={onToggle}
         className="w-full flex items-center justify-between p-4 text-left bg-pestle-card hover:bg-pestle-bg transition-colors cursor-pointer gap-3"
       >
-        <span className={`text-sm font-bold leading-snug ${isOpen ? 'text-mango' : 'text-pestle-text'}`}>
+        <span className={`text-sm font-bold leading-snug ${isOpen ? 'text-mango-ink' : 'text-pestle-text'}`}>
           {t(faq.questionKey)}
         </span>
         <div className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors ${isOpen ? 'bg-mango text-white' : 'bg-pestle-bg border border-pestle-border text-gray-400'}`}>
@@ -102,7 +102,7 @@ const FaqItem: React.FC<{ faq: FAQ; isOpen: boolean; onToggle: () => void }> = (
           >
             <div className="px-4 pb-4 pt-1 border-t border-pestle-border/60 bg-pestle-card">
               <div className="flex gap-2.5 pt-3">
-                <CheckCircle2 size={16} className="text-mint shrink-0 mt-0.5" />
+                <CheckCircle2 size={16} className="text-mint-ink shrink-0 mt-0.5" />
                 <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed font-medium">
                   {t(faq.answerKey)}
                 </p>
@@ -138,7 +138,7 @@ export const HelpView: React.FC = () => {
       <div className="relative bg-gradient-to-br from-mango/15 via-amber-500/8 to-transparent border border-mango/20 rounded-3xl p-6 sm:p-8 overflow-hidden">
         <div className="absolute -right-8 -top-8 w-32 h-32 bg-mango/10 rounded-full blur-2xl" />
         <div className="relative space-y-2">
-          <div className="flex items-center gap-2 text-mango">
+          <div className="flex items-center gap-2 text-mango-ink">
             <HelpCircle size={22} />
             <span className="text-xs font-extrabold uppercase tracking-widest">{t('help_center')}</span>
           </div>
@@ -175,7 +175,7 @@ export const HelpView: React.FC = () => {
               className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap border transition-all cursor-pointer shrink-0 ${
                 isActive
                   ? 'bg-mango text-white border-mango shadow-md shadow-mango/20'
-                  : 'bg-pestle-card border-pestle-border text-gray-500 hover:border-mango hover:text-mango'
+                  : 'bg-pestle-card border-pestle-border text-gray-500 hover:border-mango hover:text-mango-ink'
               }`}
             >
               <Icon size={13} />
@@ -203,7 +203,7 @@ export const HelpView: React.FC = () => {
           </>
         ) : (
           <div className="text-center py-16 space-y-4">
-            <div className="w-16 h-16 bg-mango/10 text-mango rounded-2xl flex items-center justify-center mx-auto">
+            <div className="w-16 h-16 bg-mango/10 text-mango-ink rounded-2xl flex items-center justify-center mx-auto">
               <Search size={28} />
             </div>
             <div>
@@ -225,7 +225,7 @@ export const HelpView: React.FC = () => {
       {/* Quick Links Grid */}
       <div>
         <h2 className="text-base font-black text-pestle-text mb-3 flex items-center gap-2">
-          <Lightbulb size={18} className="text-mango" />
+          <Lightbulb size={18} className="text-mango-ink" />
           {t('help_quickLinks')}
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -257,7 +257,7 @@ export const HelpView: React.FC = () => {
       {/* Contact Support CTA */}
       <div className="bg-gradient-to-br from-pestle-card to-pestle-bg border border-pestle-border rounded-3xl p-6 space-y-4">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 bg-mango/15 text-mango rounded-2xl flex items-center justify-center">
+          <div className="w-11 h-11 bg-mango/15 text-mango-ink rounded-2xl flex items-center justify-center">
             <MessageCircle size={22} />
           </div>
           <div>
@@ -278,7 +278,7 @@ export const HelpView: React.FC = () => {
             href="mailto:support@zitychef.mn"
             className="flex items-center justify-center gap-2 bg-pestle-bg border border-pestle-border py-3 px-4 rounded-xl text-xs font-bold text-pestle-text hover:border-mango transition-all cursor-pointer"
           >
-            <Mail size={15} className="text-mango" />
+            <Mail size={15} className="text-mango-ink" />
             <span>{t('help_emailContact')}</span>
             <ExternalLink size={11} className="text-gray-400" />
           </a>
