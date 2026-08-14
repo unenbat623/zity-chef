@@ -30,7 +30,7 @@ export function sendExpiryNotification(expiringItems: Ingredient[]) {
 
   const names = expiringItems.map((i) => i.name).join(', ');
   const title = `⚠️ Zity Chef: Муудах дөхсөн орц байна! (${expiringItems.length})`;
-  const body = `${names} орцуудын хугацаа 3 ба түүнээс бага хоног үлдлээ. Амттай хоол хийж идээрэй! 🍳`;
+  const body = `${names} зэрэг орцын хугацаа 3 ба түүнээс бага хоног үлдлээ. Амттай хоол хийж идээрэй! 🍳`;
 
   try {
     new Notification(title, {

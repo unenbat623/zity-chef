@@ -105,7 +105,7 @@ export async function parseReceiptImage(
     // Demo fallback for offline / server down
     return [
       {
-        name: 'Шинэ Сүү 1L',
+        name: 'Шинэ сүү',
         category: '🥛 Сүү, өндөг',
         quantity: 1,
         unit: 'л',
@@ -113,7 +113,7 @@ export async function parseReceiptImage(
         pricePerUnit: 3900,
       },
       {
-        name: 'Үхрийн Гуяны Мах',
+        name: 'Үхрийн гуяны мах',
         category: '🥩 Мах',
         quantity: 800,
         unit: 'гр',

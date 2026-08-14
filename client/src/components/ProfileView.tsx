@@ -268,7 +268,7 @@ export const ProfileView: React.FC = () => {
   const [activeGrid, setActiveGrid] = useState<'posts' | 'recipes'>('posts');
   const accountLabel = authUser && !isAnonymous
     ? authUser.email || authUser.phone || profile.username
-    : 'Түр хэрэглэгч';
+    : t('profile_guestAccount');
 
   const savedRecipesList = recipes.filter((r) => savedRecipeIds.includes(r.id));
   const personalStats = [
@@ -392,7 +392,7 @@ export const ProfileView: React.FC = () => {
             onClick={() => setShowCostCalculator(true)}
             className="py-2.5 rounded-2xl text-xs font-black border border-amber-500/30 text-amber-500 hover:bg-amber-500/10 flex items-center justify-center gap-1.5 bg-pestle-card transition-colors shadow-xs"
           >
-            <Calculator size={14} /> Хоолны Өртөг 🧮
+            <Calculator size={14} /> {t('profile_costCalculator')}
           </motion.button>
         </div>
 

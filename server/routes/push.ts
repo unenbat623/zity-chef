@@ -57,7 +57,7 @@ router.post('/subscribe', async (req: AuthenticatedRequest, res) => {
 router.post('/send-test', async (req: AuthenticatedRequest, res) => {
   if (!isPushConfigured) return res.status(503).json({ error: 'Push not configured (VAPID keys unset)' });
   const uid = req.user!.id;
-  const { title = '🍳 Zity Chef', body = 'Push notification амжилттай!' } = req.body || {};
+  const { title = '🍳 Zity Chef', body = 'Туршилтын мэдэгдэл амжилттай ирлээ!' } = req.body || {};
 
   let subs: any[] = [];
   if (usesDb(req)) {

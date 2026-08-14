@@ -933,7 +933,7 @@ export const CommunityView: React.FC = () => {
   // Build own story group from profile
   const ownStoryGroup: UserStoryGroup = {
     id: 'user-me',
-    userName: profile.name || 'Таны Story',
+    userName: profile.name || t('community_yourStory'),
     userAvatar: profile.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile.name || 'Zity Chef')}`,
     isOwn: true,
     seen: true,
@@ -1028,7 +1028,7 @@ export const CommunityView: React.FC = () => {
       return [
         {
           id: `user-me-${Date.now()}`,
-          userName: profile.name || 'Миний Story',
+          userName: profile.name || t('community_yourStory'),
           userAvatar: profile.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile.name || 'Zity Chef')}`,
           isOwn: true,
           seen: false,

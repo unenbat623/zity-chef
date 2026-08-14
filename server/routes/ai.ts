@@ -186,8 +186,8 @@ router.post('/chat', async (req, res) => {
   }
 
   const systemInstruction = `
-    Та бол "Zity Chef" апп-ын ухаалаг тогооч туслах "Zity Тогооч" юм.
-    Хэрэглэгчийн хөргөгчинд байгаа материалууд: ${inventoryContext}
+    Та бол "Zity Chef" аппын ухаалаг тогооч туслах "Zity Тогооч" юм.
+    Хэрэглэгчийн хөргөгчид байгаа материалууд: ${inventoryContext}
     Хэрэглэгчийн хэл: ${lang === 'mn' ? 'Монгол' : 'English'}
 
     ДҮРЭМ:
@@ -231,7 +231,7 @@ router.post('/ocr', async (req, res) => {
   }
 
   const fallback = [
-    { name: 'Шинэ Сүү', category: '🥛 Сүү, өндөг', quantity: 1, unit: 'л', expiryDays: 4, pricePerUnit: 3900 },
+    { name: 'Шинэ сүү', category: '🥛 Сүү, өндөг', quantity: 1, unit: 'л', expiryDays: 4, pricePerUnit: 3900 },
     { name: 'Сонгино', category: '🥦 Ногоо', quantity: 3, unit: 'ш', expiryDays: 14, pricePerUnit: 1800 },
   ];
 
@@ -243,9 +243,9 @@ router.post('/ocr', async (req, res) => {
 
   try {
     const prompt = `
-      Зураг/баримтаас хүнсний материалуудыг задла. JSON массив буцаа:
+      Зураг/баримтаас хүнсний материалуудыг ялгаж таниул. JSON массив буцаа:
       [{"name":"Монгол нэр","category":"🥦 Ногоо|🥩 Мах|🥛 Сүү, өндөг|🧂 Амтлагч|🍎 Жимс",
-        "quantity":500,"unit":"гр|l|ш","expiryDays":7,"pricePerUnit":3000}]
+        "quantity":500,"unit":"гр|л|ш","expiryDays":7,"pricePerUnit":3000}]
       Зөвхөн JSON массив буцаа. Markdown оруулахгүй.
     `;
 

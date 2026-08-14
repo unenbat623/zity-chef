@@ -7,7 +7,7 @@ export const MOCK_RECIPES: Recipe[] = [
     title: 'Шүүслэг Мөнгөн Хуушуур',
     titleEn: 'Juicy Silver Mongolian Huushuur',
     image: 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&w=800&q=80',
-    time: '8 мин',
+    time: '35 мин',
     difficulty: 'Medium',
     cuisine: 'Mongolian Traditional',
     category: 'Үндсэн хоол',
@@ -21,10 +21,10 @@ export const MOCK_RECIPES: Recipe[] = [
       {
         title: 'Гурил зуурах ба амраах',
         titleEn: 'Knead & Rest Dough',
-        description: 'Гурилдаа 1 чимх давс хийж бүлээн усаар дунд хатуулагтай зуурна. Гялгар уутанд боож 20 минут амраана. Зуурсаны дараа дотроо агаарын бөмбөлөг байхгүйг хянаарай.',
+        description: 'Гурилдаа 1 чимх давс хийж бүлээн усаар дунд хатуулагтай зуурна. Гялгар уутанд боож 20 минут амраана. Зуурсны дараа дотроо агаарын бөмбөлөггүй болсныг шалгаарай.',
         descriptionEn: 'Add a pinch of salt to flour and knead with warm water to medium-firm. Cover in plastic wrap and rest 20 minutes.',
         image: 'https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?auto=format&fit=crop&w=800&q=80',
-        sisterTip: 'Гурилаа хэт хатуу бөгөөд хэт зөөлөн зуурсан бол элдхэд урагдах аюултай. Дунд зэрэг хатуулаг нь хамгийн зөв!',
+        sisterTip: 'Гурилаа хэт хатуу эсвэл хэт зөөлөн зуурвал элдэхэд урагдах аюултай. Дунд зэргийн хатуулагтай зуурсан нь хамгийн зөв!',
         sisterTipEn: 'The dough should feel like soft clay — too stiff tears, too soft sticks.',
         timerMinutes: 20,
         stepIngredients: ['Гурил (500 гр)', 'Бүлээн ус (150-180 мл)', 'Давс (1 чимх)'],
@@ -36,10 +36,10 @@ export const MOCK_RECIPES: Recipe[] = [
         description: 'Мах, сонгино, сармисыг нарийн жижиглэнэ. Давс, хар перец нэмж сайн холино. Бүлээн ус 2-3 хоолны халбага бага багаар нэмж шингэтэл нь базан холино.',
         descriptionEn: 'Finely chop meat, onion, garlic. Season with salt and pepper. Gradually fold in 2-3 tbsp warm water until absorbed.',
         image: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=800&q=80',
-        sisterTip: 'Маханд бүлээн ус шингээж базвал шарсаны дараа шүүс нь гадагшлахгүй дотроо үлдэж хуушуур нэн шүүслэг болдог!',
+        sisterTip: 'Маханд бүлээн ус шингээж базвал шарсны дараа шүүс нь гадагшлахгүй дотроо үлдэж хуушуур нэн шүүслэг болдог!',
         sisterTipEn: 'Massaging warm water into filling locks moisture inside — the real secret to juicy huushuur.',
         timerMinutes: 5,
-        stepIngredients: ['Үхрийн мах (500 гр жижиглэсэн)', 'Сонгино (2 ш нарийн хэрчсэн)', 'Сармис (2 хүүш)', 'Давс, Хар перец', 'Бүлээн ус (3 хоолны халбага)'],
+        stepIngredients: ['Үхрийн мах (500 гр жижиглэсэн)', 'Сонгино (2 ш нарийн хэрчсэн)', 'Сармис (2 хумс)', 'Давс, Хар перец', 'Бүлээн ус (3 хоолны халбага)'],
         toolsNeeded: ['Мах жижиглэх хутга', 'Холих аяга']
       },
       {
@@ -48,7 +48,7 @@ export const MOCK_RECIPES: Recipe[] = [
         description: 'Амарсан гурилыг 30-35 гр-аар тасалж, тойрог хэлбэрт элдэнэ. Дунд хэсэг нь бага зэрэг зузаан, захыг нь нимгэн элдэх нь чимхэлтийг бат бэх болгоно.',
         descriptionEn: 'Divide dough into 30-35g portions. Roll into rounds — edges thinner than the center for strong crimping.',
         image: 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&w=800&q=80',
-        sisterTip: 'Захыг нимгэн элдэхгүй бол чимхэлтийн хэсэгт гурил давхардаж шарахад болоогүй хочигдоно.',
+        sisterTip: 'Захыг нимгэн элдэхгүй бол чимхэлтийн хэсэгт гурил давхардаж, шарахад болоогүй түүхий үлдэнэ.',
         sisterTipEn: 'Thin edges are critical — thick seams create raw doughy crimps that never cook through.',
         stepIngredients: ['Амарсан Гурилан Бөмбөлөг'],
         toolsNeeded: ['Гурил элдэх бариул', 'Гурилын шороо']
@@ -56,7 +56,7 @@ export const MOCK_RECIPES: Recipe[] = [
       {
         title: 'Мах хийж чимхэх',
         titleEn: 'Fill & Crimp Tightly',
-        description: 'Гурилан тойрогны нэг талд 1 хоолны халбага мах тавьж нугалаад, дотор агаар гаргахгүйгээр сонгодог монгол чимхэлтээр сайн чимхэнэ.',
+        description: 'Гурилан тойргийн нэг талд 1 хоолны халбага мах тавьж нугалаад, дотор агаар гаргахгүйгээр сонгодог монгол чимхэлтээр сайн чимхэнэ.',
         descriptionEn: 'Place 1 tablespoon of filling on one half. Fold and press out all air. Crimp tightly using traditional Mongolian pinch pattern.',
         image: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=800&q=80',
         sisterTip: 'Агаар дотор үлдвэл шарах үед хуушуур дэлбэрэх аюултай — чимхэхийн өмнө дотроос сайн дарж агаарыг гарга!',
@@ -67,7 +67,7 @@ export const MOCK_RECIPES: Recipe[] = [
       {
         title: 'Тосонд шарах (170-180°C)',
         titleEn: 'Deep Fry at 170-180°C',
-        description: 'Тосоо 170-180°C хүртэл халааж хуушуурыг 4-5 аар нэг дор хийнэ. Тал бүрийг 3-4 минут алтан шар, шаржигнасан болтол шарна. Цаасан алчуур дээр тавьж илүүдэл тосыг шингээнэ.',
+        description: 'Тосоо 170-180°C хүртэл халааж хуушуураа 4-5-аар нь нэг дор хийнэ. Тал бүрийг 3-4 минут алтан шар, шаржигнасан болтол шарна. Цаасан алчуур дээр тавьж илүүдэл тосыг шингээнэ.',
         descriptionEn: 'Heat oil to 170-180°C. Fry in batches of 4-5 for 3-4 mins per side until golden brown. Drain on paper towels.',
         image: 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&w=800&q=80',
         sisterTip: 'Хэт олон нэг дор хийвэл тосны дулаан буурч тос сордог — 4-5-аас хэтрүүлэхгүй байгаарай.',
@@ -81,7 +81,7 @@ export const MOCK_RECIPES: Recipe[] = [
   },
   {
     id: 'nomad-tsuivan',
-    title: 'Уламжлалт Нүүдэлчний Цүйван',
+    title: 'Уламжлалт Нүүдэлчний Цуйван',
     titleEn: 'Traditional Nomad Tsuivan',
     image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=800&q=80',
     time: '25 мин',
@@ -89,7 +89,7 @@ export const MOCK_RECIPES: Recipe[] = [
     cuisine: 'Mongolian Traditional',
     category: 'Үндсэн хоол',
     rating: 5.0,
-    tags: ['Монгол хоол', 'Цүйван', 'Нүүдэлчин'],
+    tags: ['Монгол хоол', 'Цуйван', 'Нүүдэлчин'],
     ingredients: ['Үхрийн мах', 'Гурил', 'Сонгино', 'Лууван', 'Сармис', 'Давс', 'Хар перец', 'Тос'],
     ingredientsEn: ['Beef/Mutton', 'Wheat Flour', 'Onion', 'Carrot', 'Garlic', 'Salt', 'Black Pepper', 'Oil'],
     nutrition: { calories: 580, protein: 32, carbs: 58, fat: 22 },
@@ -98,39 +98,39 @@ export const MOCK_RECIPES: Recipe[] = [
       {
         title: 'Гурил зуурч, хайруулын тавагт хайрах',
         titleEn: 'Knead, Sear & Slice Dough',
-        description: 'Гурилыг давс, бүлээн усаар чангавтар зуурч 10 минут амраана. Нимгэн (2-3мм) элдэж нэг талыг бага тосолж, хуурай халаасан тавагт хоёр талыг тус бүр 45 секунд хайраад, 5-7мм зурааснуудад нарийн хэрчинэ.',
+        description: 'Гурилыг давс, бүлээн усаар чангавтар зуурч 10 минут амраана. Нимгэн (2-3мм) элдэж нэг талыг бага тосолж, хуурай халаасан тавагт хоёр талыг тус бүр 45 секунд хайраад, 5-7 мм-ийн нарийн зураас болгон хэрчинэ.',
         descriptionEn: 'Knead firm dough, rest 10 mins. Roll thin (2-3mm), oil one side, sear 45 sec per side in a dry hot pan, then slice into 5-7mm thin noodles.',
         image: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=800&q=80',
-        sisterTip: 'Гурилаа хайрч хэрчвэл жигнэх үед нэг нэгэндээ наалдахгүй салж гүйлтэй хөвсгөр болдог — энэ бол цүйвангийн гол нууц!',
+        sisterTip: 'Гурилаа хайрч хэрчвэл жигнэх үед нэг нэгэндээ наалдахгүй салж гүйлтэй хөвсгөр болдог — энэ бол цуйвангийн гол нууц!',
         sisterTipEn: 'Searing before slicing is the Mongolian trick that keeps noodles perfectly separate and fluffy.',
         timerMinutes: 15,
-        stepIngredients: ['Гурил (400 гр)', 'Давстай бүлээн ус (130 мл)', 'Шарах тос (1 цааны халбага)'],
+        stepIngredients: ['Гурил (400 гр)', 'Давстай бүлээн ус (130 мл)', 'Шарах тос (1 цайны халбага)'],
         toolsNeeded: ['Гурил элдэх бариул', 'Хайруулын таваг', 'Хутга']
       },
       {
         title: 'Мах нарийн зурааслан шарах',
         titleEn: 'Sear Beef Strips',
-        description: 'Үхрийн мах нарийн, урт зуранд хэрчнэ. Тосоо 1 хоолны халбага хийж утаа гарах хүртэл халааж, махаа нэг давхаргаар хийж тогтмол хөдөлгөлгүй 2 минут шаргалдуулна.',
+        description: 'Үхрийн махаа нарийн, урт зурааслан хэрчинэ. Тосоо 1 хоолны халбага хийж утаа гарах хүртэл халааж, махаа нэг давхаргаар хийж тогтмол хөдөлгөлгүй 2 минут шаргалдуулна.',
         descriptionEn: 'Slice beef into thin strips. Heat 1 tbsp oil until smoking, sear strips in a single layer for 2 mins without stirring.',
         image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',
-        sisterTip: 'Махаа хольж хутгахгүйгээр нэг талыг нь шаргалдуулах нь Maillard реакц үүсгэж цүйвангийн амтыг гүнзгийрүүлдэг!',
+        sisterTip: 'Махаа хольж хутгахгүйгээр нэг талыг нь шаргалдуулах нь Maillard реакц үүсгэж цуйвангийн амтыг гүнзгийрүүлдэг!',
         sisterTipEn: 'Do NOT stir the meat — let it sear undisturbed for the Maillard reaction and deep rich flavor.',
         timerMinutes: 5,
         heatLevel: 'High',
-        stepIngredients: ['Үхрийн/Хонины мах (400 гр нарийн зуранд)', 'Тос (1 хоолны халбага)'],
+        stepIngredients: ['Үхрийн/хонины мах (400 гр нарийн зурааслан хэрчсэн)', 'Тос (1 хоолны халбага)'],
         toolsNeeded: ['Таваг/Вок', 'Модон хутгуур']
       },
       {
         title: 'Ногоо нэмж хуурах',
         titleEn: 'Add Vegetables & Stir-Fry',
-        description: 'Шаржигнасан маханд сонгино, сармис, луувангаа нэмж дунд гал дээр 3-4 минут хуурна. Давс, хар перецэр амтлаад, халуун ус 1/2 аяга нэмж жигнэх суурь бий болгоно.',
+        description: 'Шаржигнасан маханд сонгино, сармис, луувангаа нэмж дунд гал дээр 3-4 минут хуурна. Давс, хар перецээр амтлаад, халуун ус 1/2 аяга нэмж жигнэх суурь бий болгоно.',
         descriptionEn: 'Add onions, garlic, carrot strips. Stir-fry 3-4 mins on medium. Season with salt and pepper. Add ½ cup hot water.',
         image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=800&q=80',
-        sisterTip: 'Луувангаа мах шиг нимгэн зурааслан хэрчвэл жигнэгдэх хугацаа ижил болж хоол хоорондоо тэгш болдог.',
+        sisterTip: 'Луувангаа мах шиг нимгэн зурааслан хэрчвэл жигнэгдэх хугацаа ижил болж хоол жигд болдог.',
         sisterTipEn: 'Cut carrots in thin julienne strips matching the meat size for even, synchronized cooking.',
         timerMinutes: 4,
         heatLevel: 'Medium',
-        stepIngredients: ['Сонгино (2 ш зурааслан)', 'Лууван (2 ш нарийн зурааслан)', 'Сармис (3 хүүш)', 'Давс & Хар перец', 'Халуун ус (1/2 аяга)'],
+        stepIngredients: ['Сонгино (2 ш зурааслан)', 'Лууван (2 ш нарийн зурааслан)', 'Сармис (3 хумс)', 'Давс & Хар перец', 'Халуун ус (1/2 аяга)'],
         toolsNeeded: ['Модон хутгуур', 'Таглаа бүхий гүн таваг']
       },
       {
@@ -152,7 +152,7 @@ export const MOCK_RECIPES: Recipe[] = [
         description: 'Тагийг авч 2 сэрээгээр гурилыг доороос нь өргөж, агаар оруулж, 1-2 минут хурдан сугалан хутгана. Гурил тус тусдаа салж, мах-ногоо хооронд жигд хуваарилагдсан байх хэрэгтэй.',
         descriptionEn: 'Uncover and toss vigorously with two forks for 1-2 mins until noodles separate and puff up with meat evenly distributed.',
         image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=800&q=80',
-        sisterTip: '2 сэрээгээр зэрэг өргөж хутгах нь ресторан чанартай цүйвангийн нууц — нэг сэрээгээр тэр амт гардаггүй шүү!',
+        sisterTip: '2 сэрээгээр зэрэг өргөж хутгах нь ресторан чанартай цуйвангийн нууц — нэг сэрээгээр тэр амт гардаггүй шүү!',
         sisterTipEn: 'Two forks simultaneously = restaurant-grade fluffy tsuivan. One fork just doesn\'t cut it!',
         timerMinutes: 2,
         toolsNeeded: ['2 ширхэг сэрээ', 'Халуун хоолны аяга']
@@ -185,7 +185,7 @@ export const MOCK_RECIPES: Recipe[] = [
         sisterTipEn: 'Soaking dried beef releases deep umami into the milk tea.'
       },
       {
-        title: 'Цай сүлдэх ба борц сойх',
+        title: 'Цай сүүлэх ба борц хуурах',
         titleEn: 'Brew Milk Tea & Sauté Bortts',
         description: 'Ногоон цайгаа чанаж шүүгээд, дээр нь сүү, давс нэмж сүүлэн самрна. Шар тосонд дэвтээсэн борцоо нэмж 2-3 минут хөнгөн хуурна.',
         descriptionEn: 'Brew green tea, add milk and salt, churn well. Sauté soaked dried beef in yellow butter.',
@@ -196,10 +196,10 @@ export const MOCK_RECIPES: Recipe[] = [
       {
         title: 'Чанаж гүйцээх',
         titleEn: 'Simmer Tea & Cook Dumplings',
-        description: 'Хуурсан борц дээрээ сүүлсэн цайгаа хийж буцалгана. Цай буцалмагц баншаа нэмж, тагийг таглан 8-10 минут буцалгахад банш босно.',
+        description: 'Хуурсан борц дээрээ сүүлсэн цайгаа хийж буцалгана. Цай буцалмагц баншаа хийж, тагийг нь таглаад 8-10 минут буцалгахад банш хөвж гарна.',
         descriptionEn: 'Pour milk tea into the pot with sautéed bortts, bring to boil, drop in dumplings and simmer 8-10 mins.',
         image: 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=800&q=80',
-        sisterTip: 'Банш хөвж гараад цайны дээж буцалмагц халуунаар нь таваглаарай.',
+        sisterTip: 'Банш хөвж гармагц халуун дулаанаар нь таваглаарай.',
         sisterTipEn: 'Serve steaming hot as soon as the dumplings float.'
       }
     ]
@@ -207,7 +207,7 @@ export const MOCK_RECIPES: Recipe[] = [
   // ================= 1. ӨГЛӨӨНИЙ ЦАЙ БА БРАНЧ =================
   {
     id: 'avocado-toast',
-    title: 'Авокадотой Бүрээн Үрийн Тост ба Шэглэсэн Өндөг',
+    title: 'Авокадотой Бүрэн Үрийн Тост ба Шингэн Шартай Өндөг',
     titleEn: 'Avocado Toast & Poached Egg',
     image: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=800&q=80',
     time: '10 мин',
@@ -216,7 +216,7 @@ export const MOCK_RECIPES: Recipe[] = [
     category: 'Өглөөний цай',
     rating: 4.9,
     tags: ['Өглөөний цай', 'Эрүүл', 'Протеин'],
-    ingredients: ['Гурил', 'Өндөг', 'Авокадо', 'Оливын тос', 'Давс', 'Хар перец'],
+    ingredients: ['Бүрэн үрийн талх', 'Өндөг', 'Авокадо', 'Оливын тос', 'Давс', 'Хар перец'],
     ingredientsEn: ['Whole Grain Bread', 'Eggs', 'Avocado', 'Olive Oil', 'Salt', 'Black Pepper'],
     nutrition: { calories: 320, protein: 14, carbs: 28, fat: 18 },
     isPremium: false,
@@ -233,17 +233,17 @@ export const MOCK_RECIPES: Recipe[] = [
       {
         title: 'Өндөг чанах (Poached Egg)',
         titleEn: 'Poach Eggs',
-        description: 'Буцалж буй усанд уксас нэмж, өндгөө 3 минут чанаж зөөлөн шар үлдээнэ.',
+        description: 'Бага зэрэг буцалж буй усанд цуу нэмээд өндгөө 3 минут чанаж, шарыг нь зөөлөн үлдээнэ.',
         descriptionEn: 'Poach eggs in simmering water with vinegar for 3 minutes until yolk remains runny.',
         image: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=800&q=80',
-        sisterTip: 'Усаа эргүүлж хуйлруулж байгаад өндгөө дунд нь хийвэл хэлбэр нь төгс гардаг шүү.',
+        sisterTip: 'Усаа эргүүлж хуй үүсгээд өндгөө яг дунд нь хийвэл хэлбэр нь төгс гардаг шүү.',
         sisterTipEn: 'Create a whirlpool in the water before dropping the egg in.'
       }
     ]
   },
   {
     id: 'overnight-oats',
-    title: 'Овьёосны Шөнө Хоносон Пуддинг (Chia Overnight Oats)',
+    title: 'Овъёосны Шөнө Хоносон Пудинг (Chia Overnight Oats)',
     titleEn: 'Chia Overnight Oats with Berries',
     image: 'https://images.unsplash.com/photo-1517673132405-a56a62b18caf?auto=format&fit=crop&w=800&q=80',
     time: '5 мин',
@@ -251,8 +251,8 @@ export const MOCK_RECIPES: Recipe[] = [
     cuisine: 'Global',
     category: 'Өглөөний цай',
     rating: 4.8,
-    tags: ['Овьёос', 'Детокс', 'Түргэн'],
-    ingredients: ['Овьёос', 'Сүү', 'Чиа үр', 'Зөгийн балы', 'Жимс', 'Самрын тос'],
+    tags: ['Овъёос', 'Детокс', 'Түргэн'],
+    ingredients: ['Овъёос', 'Сүү', 'Чиа үр', 'Зөгийн бал', 'Жимс', 'Самрын тос'],
     ingredientsEn: ['Rolled Oats', 'Milk', 'Chia Seeds', 'Honey', 'Berries', 'Peanut Butter'],
     nutrition: { calories: 280, protein: 11, carbs: 42, fat: 8 },
     isPremium: false,
@@ -260,7 +260,7 @@ export const MOCK_RECIPES: Recipe[] = [
       {
         title: 'Хольж бэлтгэх',
         titleEn: 'Mix Ingredients',
-        description: 'Шилэн саванд овьёос, чиа үр, сүү, зөгийн балаа сайтар хутгаж хөргөгчинд хонуулна.',
+        description: 'Шилэн саванд овъёос, чиа үр, сүү, зөгийн балаа сайтар хутгаж хөргөгчид хонуулна.',
         descriptionEn: 'Combine oats, chia seeds, milk, and honey in a jar. Chill overnight.',
         image: 'https://images.unsplash.com/photo-1517673132405-a56a62b18caf?auto=format&fit=crop&w=800&q=80',
         sisterTip: 'Өглөө нь шинэхэн бөөрөлзгөнө, самрын тос нэмж амтлаарай!',
@@ -270,24 +270,24 @@ export const MOCK_RECIPES: Recipe[] = [
   },
   {
     id: 'green-smoothie-bowl',
-    title: 'Шпинат ба Бууцайтай Ногоон Смузи Боул',
-    titleEn: 'Green Spinach & Mango Smoothie Bowl',
+    title: 'Шпинат ба Кивитэй Ногоон Смузи Боул',
+    titleEn: 'Green Spinach & Kiwi Smoothie Bowl',
     image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80',
     time: '8 мин',
     difficulty: 'Easy',
     cuisine: 'Healthy',
     category: 'Өглөөний цай',
     rating: 4.7,
-    tags: ['Смузи', 'Ногооны', 'Бага калори'],
+    tags: ['Смузи', 'Ногоон', 'Бага илчлэг'],
     ingredients: ['Шпинат', 'Банан', 'Киви', 'Кокосын ус', 'Гранола'],
     ingredientsEn: ['Spinach', 'Banana', 'Kiwi', 'Coconut Water', 'Granola'],
     nutrition: { calories: 210, protein: 6, carbs: 45, fat: 3 },
     isPremium: false,
     steps: [
       {
-        title: 'Блендерт миксдэх',
+        title: 'Блендерээр холих',
         titleEn: 'Blend Smoothie',
-        description: 'Шпинат, хөлдөөсөн банан, киви ба кокосын усыг блендерт өтгөн болтол блендердэнэ.',
+        description: 'Шпинат, хөлдөөсөн банан, киви, кокосын усыг блендерт хийж өтгөн болтол сайтар нухна.',
         descriptionEn: 'Blend spinach, frozen banana, kiwi, and coconut water until smooth and thick.',
         image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80',
         sisterTip: 'Мөсний оронд хөлдөөсөн банан хэрэглэвэл илүү крем шиг зөөлөн болно.',
@@ -305,7 +305,7 @@ export const MOCK_RECIPES: Recipe[] = [
     cuisine: 'Mediterranean',
     category: 'Өглөөний цай',
     rating: 4.9,
-    tags: ['Омлет', 'Үхрийн/Өндөг', 'High Protein'],
+    tags: ['Омлет', 'Өндөг', 'High Protein'],
     ingredients: ['Өндөг', 'Грек тараг', 'Черри томат', 'Шпинат', 'Оливын тос'],
     ingredientsEn: ['Eggs', 'Greek Yogurt', 'Cherry Tomatoes', 'Spinach', 'Olive Oil'],
     nutrition: { calories: 310, protein: 26, carbs: 7, fat: 19 },
@@ -314,7 +314,7 @@ export const MOCK_RECIPES: Recipe[] = [
       {
         title: 'Өндөг хутгах',
         titleEn: 'Whisk & Fry',
-        description: 'Өндгөө Грек тарагтай сайтар миксдэж, бага тосонд зөөлөн галаар шарж гурвалжин нугална.',
+        description: 'Өндгөө Грек тарагтай сайтар хутгаж, бага тосонд зөөлөн галаар шараад гурвалжин нугална.',
         descriptionEn: 'Whisk eggs with Greek yogurt for extra fluffiness and fry gently in olive oil.',
         image: 'https://images.unsplash.com/photo-1510693206972-df098062cb71?auto=format&fit=crop&w=800&q=80',
         sisterTip: 'Грек тараг нэмснээр омлет өндөр уурагтай бөгөөд хөвсгөр зөөлөн болно.',
@@ -335,13 +335,13 @@ export const MOCK_RECIPES: Recipe[] = [
     category: 'Салат ба Хөнгөн зууш',
     rating: 4.9,
     tags: ['Сэлмон', 'Салат', 'Омега3'],
-    ingredients: ['Сэлмон загас', 'Өндөг', 'Черри томат', 'Оливтой соус', 'Ногоон салат'],
+    ingredients: ['Сэлмон загас', 'Өндөг', 'Черри томат', 'Олив', 'Ногоон салат'],
     ingredientsEn: ['Salmon Fillet', 'Boiled Eggs', 'Cherry Tomatoes', 'Olives', 'Salad Greens'],
     nutrition: { calories: 380, protein: 32, carbs: 12, fat: 22 },
     isPremium: false,
     steps: [
       {
-        title: 'Загас шарах ба цуглуулах',
+        title: 'Загас шарж таваглах',
         titleEn: 'Sear Salmon & Assemble',
         description: 'Сэлмон загасаа оливын тос, нимбэгээр амталж 5 минут шараад чанасан өндөг, черри томаттай таваглана.',
         descriptionEn: 'Pan-sear salmon, slice eggs, toss with fresh greens, cherry tomatoes and Dijon vinaigrette.',
@@ -362,7 +362,7 @@ export const MOCK_RECIPES: Recipe[] = [
     category: 'Салат ба Хөнгөн зууш',
     rating: 4.8,
     tags: ['Киноа', 'Вегетариан', 'Грек'],
-    ingredients: ['Киноа', 'Дөнгөж хэрчсэн өргөст хэмх', 'Фета бяслаг', 'Олив', 'Улаан сонгино'],
+    ingredients: ['Киноа', 'Өргөст хэмх', 'Фета бяслаг', 'Олив', 'Улаан сонгино'],
     ingredientsEn: ['Quinoa', 'Cucumber', 'Feta Cheese', 'Kalamata Olives', 'Red Onion'],
     nutrition: { calories: 310, protein: 12, carbs: 36, fat: 14 },
     isPremium: false,
@@ -380,7 +380,7 @@ export const MOCK_RECIPES: Recipe[] = [
   },
   {
     id: 'chicken-kale-caesar',
-    title: 'Тахианы Цээж Малтай Кейл Цезарь Салат',
+    title: 'Тахианы Цээж Махтай Кейл Цезарь Салат',
     titleEn: 'Chicken Kale Caesar Salad',
     image: 'https://images.unsplash.com/photo-1550304943-4f24f54ddde9?auto=format&fit=crop&w=800&q=80',
     time: '20 мин',
@@ -389,15 +389,15 @@ export const MOCK_RECIPES: Recipe[] = [
     category: 'Салат ба Хөнгөн зууш',
     rating: 4.9,
     tags: ['Тахиа', 'Цезарь', 'Кейл'],
-    ingredients: ['Тахианы цээж мах', 'Кейл / Романо салат', 'Пармезан бяслаг', 'Сухари', 'Цезарь соус'],
+    ingredients: ['Тахианы цээж мах', 'Кейл / Ромэн салат', 'Пармезан бяслаг', 'Сухари', 'Цезарь соус'],
     ingredientsEn: ['Chicken Breast', 'Kale Leaves', 'Parmesan Cheese', 'Croutons', 'Caesar Dressing'],
     nutrition: { calories: 390, protein: 35, carbs: 16, fat: 20 },
     isPremium: false,
     steps: [
       {
-        title: 'Тахиа гриллдэх',
+        title: 'Тахианы мах шарах',
         titleEn: 'Grill Chicken & Toss',
-        description: 'Тахианы цээж махаа амталж гриллдээд, кейл навч, пармезан, хөнгөн соустай цуг таваглана.',
+        description: 'Тахианы цээж махаа амталж грилл дээр шараад кейл навч, пармезан, хөнгөн соустай хамт таваглана.',
         descriptionEn: 'Grill seasoned chicken breast, slice thinly, and toss with massaged kale and Parmesan.',
         image: 'https://images.unsplash.com/photo-1550304943-4f24f54ddde9?auto=format&fit=crop&w=800&q=80',
         sisterTip: 'Кейл навчаа оливын тосоор 1 минут базвал зөөлөн бөгөөд амттай болно.',
@@ -416,7 +416,7 @@ export const MOCK_RECIPES: Recipe[] = [
     category: 'Салат ба Хөнгөн зууш',
     rating: 4.7,
     tags: ['Хумус', 'Веган', 'Снэк'],
-    ingredients: ['Гурвалжин нут шош', 'Лууван', 'Өргөст хэмх', 'Чипс / Пита талх', 'Оливын тос'],
+    ingredients: ['Нут шош (хумус)', 'Лууван', 'Өргөст хэмх', 'Чипс / Пита талх', 'Оливын тос'],
     ingredientsEn: ['Chickpeas Hummus', 'Carrots', 'Cucumbers', 'Pita Chips', 'Olive Oil'],
     nutrition: { calories: 250, protein: 9, carbs: 32, fat: 10 },
     isPremium: false,
@@ -427,7 +427,7 @@ export const MOCK_RECIPES: Recipe[] = [
         description: 'Лууван, өргөст хэмхийг урт нарийн хэрчиж, хумус болон паприка, оливын тостой хамт дэлгэнэ.',
         descriptionEn: 'Slice fresh carrots, cucumbers, and celery into sticks. Serve around fresh hummus.',
         image: 'https://images.unsplash.com/photo-1541529086526-db283c563270?auto=format&fit=crop&w=800&q=80',
-        sisterTip: 'Хумус дээрээ чимх паприка дуслуулж чихэрлэг тос нэмээрэй.',
+        sisterTip: 'Хумус дээрээ чимх паприка цацаж, оливын тос дуслуулаарай.',
         sisterTipEn: 'Drizzle extra virgin olive oil and paprika over the hummus.'
       }
     ]
@@ -451,29 +451,29 @@ export const MOCK_RECIPES: Recipe[] = [
     isPremium: false,
     steps: [
       {
-        title: 'Сонгино & Сармис сотолж бэлтгэх',
+        title: 'Сонгино & Сармис хуурч бэлтгэх',
         titleEn: 'Sauté Onions & Garlic',
-        description: 'Гүн хайруулын тавгаа дунд гал дээр халааж, 2 хоолны халбага оливын тосонд нарийн жижиглэсэн сонгино, сармисаа алтан шар өнгөтэй, анхилуун үнэртэй болтол 4-5 минут сотолно.',
+        description: 'Гүн хайруулын тавгаа дунд гал дээр халааж, 2 хоолны халбага оливын тосонд нарийн жижиглэсэн сонгино, сармисаа алтан шар өнгөтэй, анхилуун үнэртэй болтол 4-5 минут хуурна.',
         descriptionEn: 'Heat olive oil in a deep pan, sauté finely chopped onions and garlic until translucent and fragrant.',
         image: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=800&q=80',
         sisterTip: 'Сонгиноо зөөлөн гал дээр карамельжуулбал соусны амт байгалийн чихэрлэг бөгөөд тансаг болдог.',
         sisterTipEn: 'Slowly caramelizing onions creates a naturally sweet flavor base.',
         timerMinutes: 5,
         heatLevel: 'Medium',
-        stepIngredients: ['Сонгино (1 ш жижиглэсэн)', 'Сармис (3 хүүш)', 'Оливын тос (2 хоолны халбага)'],
+        stepIngredients: ['Сонгино (1 ш жижиглэсэн)', 'Сармис (3 хумс)', 'Оливын тос (2 хоолны халбага)'],
         toolsNeeded: ['Гүн хайруулын таваг', 'Модон хутгуур']
       },
       {
         title: 'Үхрийн мах & Болоньез соус бэлтгэх',
         titleEn: 'Bolognese Meat Sauce',
-        description: 'Сотолсон сонгино дээр үхрийн татсан махаа нэмж бөөгнөрүүлэхгүй задартал хуурна. Дараа нь томат паста, орегано, давс, хар перец нэмж 12 минут зөөлөн гал дээр самран буцалгана.',
+        description: 'Хуурсан сонгино дээрээ үхрийн татсан махаа нэмж, бөөгнөрөхгүйгээр задартал хуурна. Дараа нь томат паста, орегано, давс, хар перец нэмж 12 минут зөөлөн гал дээр самран буцалгана.',
         descriptionEn: 'Add minced beef, cook until browned. Stir in tomato sauce, oregano, salt, and pepper. Simmer for 12 mins.',
         image: 'https://images.unsplash.com/photo-1546549032-9571cd6b27df?auto=format&fit=crop&w=800&q=80',
         sisterTip: 'Соус буцалж байхад 1 чимх саахар нэмбэл томатын хүчиллэг чанарыг зөөллөж амтыг нь тэнцвэржүүлнэ.',
         sisterTipEn: 'Adding a pinch of sugar balances the acidity of the tomatoes.',
         timerMinutes: 12,
         heatLevel: 'Low',
-        stepIngredients: ['Үхрийн татсан мах (500 гр)', 'Томат паста (300 мл)', 'Орегано амтлагч (1 цааны халбага)', 'Давс & Хар перец'],
+        stepIngredients: ['Үхрийн татсан мах (500 гр)', 'Томат паста (300 мл)', 'Орегано амтлагч (1 цайны халбага)', 'Давс & Хар перец'],
         toolsNeeded: ['Модон хутгуур', 'Таглаа']
       },
       {
@@ -486,13 +486,13 @@ export const MOCK_RECIPES: Recipe[] = [
         sisterTipEn: 'Whisk continuously while pouring warm milk to achieve a silky smooth texture.',
         timerMinutes: 8,
         heatLevel: 'Low',
-        stepIngredients: ['Шар тос / Маргарин (50 гр)', 'Гурил (2 хоолны халбага)', 'Бүлээн сүү (500 мл)', 'Задь жимс (1 чимх)'],
+        stepIngredients: ['Шар тос / Маргарин (50 гр)', 'Гурил (2 хоолны халбага)', 'Бүлээн сүү (500 мл)', 'Мускат самар (1 чимх)'],
         toolsNeeded: ['Шөлний жижиг сав', 'Гар хутгуур (Whisk)']
       },
       {
         title: 'Лазанья гоймон чанах ба зөөлрүүлэх',
         titleEn: 'Boil Lasagna Sheets',
-        description: 'Том тогоонд усаа сайн буцалгаж 1 чимх давс нэмнэ. Гоймонгийн хуудаснуудыг 5-6 минут чанаж зөөлрүүлээд шүүж, наалдуулахгүйн тулд цэвэр алчуур дээр дэлгэн тавина.',
+        description: 'Том тогоонд усаа сайн буцалгаж 1 чимх давс нэмнэ. Гоймоны хуудсуудыг 5-6 минут чанаж зөөлрүүлээд шүүж, наалдуулахгүйн тулд цэвэр алчуур дээр дэлгэн тавина.',
         descriptionEn: 'Boil lasagna sheets in salted water for 5-6 mins. Drain and lay flat on a clean cloth to prevent sticking.',
         image: 'https://images.unsplash.com/photo-1621996346565-e3d5d6281318?auto=format&fit=crop&w=800&q=80',
         sisterTip: 'Чанах усандаа хэдэн дусал оливын тос дусгавал гоймон чанах үед бие биедээ наалдахгүй.',
@@ -505,10 +505,10 @@ export const MOCK_RECIPES: Recipe[] = [
       {
         title: 'Хэвэнд давхарлан угсрах (Layering)',
         titleEn: 'Assemble Lasagna Layers',
-        description: 'Дөрвөлжин шилэн хэвний ёроолд бешамель соус тонгоруулж түрхэнэ. Гоймон -> Болоньез махны соус -> Бешамель цагаан соус -> Моцарелла бяслаг гэх дарааллаар 3-4 үе давхарлана.',
+        description: 'Дөрвөлжин шилэн хэвний ёроолд бешамель соусыг нимгэн түрхэнэ. Гоймон -> Болоньез махны соус -> Бешамель цагаан соус -> Моцарелла бяслаг гэх дарааллаар 3-4 үе давхарлана.',
         descriptionEn: 'Spread béchamel on baking dish bottom. Layer sheets, meat sauce, béchamel, and mozzarella cheese.',
         image: 'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?auto=format&fit=crop&w=800&q=80',
-        sisterTip: 'Хамгийн дээд талын үе дээр бешамель соус болон Моцарелла бяслагаа маш сайн зузаан бүрж цацаарай.',
+        sisterTip: 'Хамгийн дээд үе дээр бешамель соус болон Моцарелла бяслагаа зузаан бүрж цацаарай.',
         sisterTipEn: 'Top with a rich layer of béchamel and shredded mozzarella for maximum cheesiness.',
         timerMinutes: 5,
         stepIngredients: ['Моцарелла бяслаг (250 гр хэрчсэн)', 'Үрсэн Пармезан бяслаг (50 гр)'],
@@ -520,7 +520,7 @@ export const MOCK_RECIPES: Recipe[] = [
         description: '190°C хүртэл халаасан шарах шүүгээнд фольга цаасаар таглаж 20 минут, дараа нь цаасыг авч бяслагийг алтан бор шаржигнасан болтол 8 минут шарна. Гаргаад 10 минут амраасны дараа зүснэ.',
         descriptionEn: 'Cover with foil and bake at 190°C for 20 mins. Uncover and bake 8 mins until cheese is golden brown. Rest 10 mins.',
         image: 'https://images.unsplash.com/photo-1546549032-9571cd6b27df?auto=format&fit=crop&w=800&q=80',
-        sisterTip: 'Шарах шүүгэнээс гарсан дор нь шууд зүсэлгүй 10 минут амраавал давхаргууд нь нурахгүй тэгш сайхан зүсэгдэнэ.',
+        sisterTip: 'Шарах шүүгээнээс гарсан дор нь шууд зүсэлгүй 10 минут амраавал давхаргууд нь нурахгүй, тэгш сайхан зүсэгдэнэ.',
         sisterTipEn: 'Letting the lasagna rest for 10 mins sets the layers perfectly for neat slicing.',
         timerMinutes: 28,
         heatLevel: 'Medium',
@@ -548,20 +548,20 @@ export const MOCK_RECIPES: Recipe[] = [
       {
         title: 'Спагетти гоймон чанах',
         titleEn: 'Boil Spaghetti Al Dente',
-        description: 'Том тогоонд ус буцалгаж 1 хоолны халбага давс нэмнэ. Спагетти гоймонгоо хийж сав дахь заавар дагуу (ихэвчлэн 9-10 мин) al dente буюу хэсэгчлэн зуурдаг болтол чанана. Чанасан уснаас 1 аяга нөөцлөж авна.',
+        description: 'Том тогоонд ус буцалгаж 1 хоолны халбага давс нэмнэ. Спагетти гоймонгоо хийж сав дахь зааврын дагуу (ихэвчлэн 9-10 мин) al dente буюу шүдэнд бага зэрэг зууртай болтол чанана. Чанасан уснаас 1 аяга нөөцлөж авна.',
         descriptionEn: 'Boil pasta in heavily salted water for 9-10 mins until al dente. Reserve 1 cup of pasta water before draining.',
         image: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=800&q=80',
-        sisterTip: 'Гоймон чанасан давстай усыг заавал нөөцлөж аваарай — энэ бол карбонарагийн соусыг хамгийн торгомсог, кремлэг болгодог нууц зэвсэг!',
+        sisterTip: 'Гоймон чанасан давстай усыг заавал нөөцөлж аваарай — энэ бол карбонарын соусыг хамгийн торгомсог, кремлэг болгодог нууц зэвсэг!',
         sisterTipEn: 'Pasta water is liquid gold for carbonara — its starch makes the sauce unbelievably silky and emulsified.',
         timerMinutes: 10,
         heatLevel: 'High',
         stepIngredients: ['Спагетти гоймон (400 гр)', 'Давстай буцалсан ус (4 л)', 'Нөөцлөх ус (1 аяга)'],
-        toolsNeeded: ['Том тогоо', 'Аяга (уснд нөөцлөхөд)', 'Шүүгч сэрээ']
+        toolsNeeded: ['Том тогоо', 'Гоймоны ус нөөцлөх аяга', 'Шүүгч сэрээ']
       },
       {
         title: 'Гуанчале / Бекон шарах',
         titleEn: 'Render Guanciale / Bacon',
-        description: 'Хайруулын тавагт тос хийлгүй гуанчале буюу бекон мах нарийн зурааслан хэрчсэнийг тавьж зөөлөн гал дээр 4-5 минут тосоо гаргах ба шаржигнасан болтол хуурна.',
+        description: 'Хайруулын тавагт тос хийлгүй гуанчале буюу бекон мах нарийн зурааслан хэрчсэнийг тавьж зөөлөн гал дээр 4-5 минут тосыг нь гаргаж, шаржигнатал хуурна.',
         descriptionEn: 'Without any added oil, render guanciale/bacon strips in pan on medium-low for 4-5 mins until crispy fat renders out.',
         image: 'https://images.unsplash.com/photo-1621996346565-e3d5d6288307?auto=format&fit=crop&w=800&q=80',
         sisterTip: 'Тос нэмэхгүйгээр өөрийн тосыг нь гаргах нь бекон/гуанчале-г маш шаржигнасан, дотор нь хайлмаг болгодог шүү.',
@@ -574,31 +574,31 @@ export const MOCK_RECIPES: Recipe[] = [
       {
         title: 'Өндөг & Бяслагны холимог бэлтгэх',
         titleEn: 'Whisk Egg & Cheese Mixture',
-        description: 'Том аяганд өндгийн 3 шар, Пармезан (эсвэл Пекорино) бяслаг сайн үрж хийж, хар перец сайтар нэмнэ. Сугалан зорч сайн холино. Энэ холимог нь галд тусахгүй — зөвхөн гоймоны дулааноор зуурагдана.',
+        description: 'Том аяганд өндгийн 3 шар, Пармезан (эсвэл Пекорино) бяслаг сайн үрж хийж, хар перец сайтар нэмнэ. Сайтар хутгаж жигд холино. Энэ холимог галд огт хүрэхгүй — зөвхөн гоймоны дулаанаар зуурагдана.',
         descriptionEn: 'In a bowl, whisk 3 egg yolks with finely grated parmesan and generous black pepper. This MUST never touch direct heat.',
         image: 'https://images.unsplash.com/photo-1612874742237-6526221588e3?auto=format&fit=crop&w=800&q=80',
-        sisterTip: 'Өндгийг галд шууд тавивал хурдан гурвалжин хатаж сэлгэлдэнэ — Scrambled Eggs болно! Бүх зоригоороо галаас холдоорой.',
+        sisterTip: 'Өндгийг шууд галд тавивал тэр дороо бүлэгнэж хатна — Scrambled Eggs болчихно! Заавал галаас нь холдуулаарай.',
         sisterTipEn: 'NEVER put eggs near heat — they WILL scramble instantly. The only heat they need is from the warm pasta itself.',
-        stepIngredients: ['Өндгийн шар (3 ширхэг)', 'Пармезан бяслаг (80 гр нарийн үрсэн)', 'Хар перец (1 цааны халбага шинэ бутарсан)'],
-        toolsNeeded: ['Холих аяга', 'Хутгуур', 'Бяслаг үрэх утасны шүүр']
+        stepIngredients: ['Өндгийн шар (3 ширхэг)', 'Пармезан бяслаг (80 гр нарийн үрсэн)', 'Хар перец (1 цайны халбага шинэ бутарсан)'],
+        toolsNeeded: ['Холих аяга', 'Хутгуур', 'Бяслаг үрэгч']
       },
       {
         title: 'Бүх зүйлийг нэгтгэх — Галаас гаргасны дараа!',
         titleEn: 'Combine Off Heat — This Step is Sacred',
-        description: 'Гоймонг шүүж беконтой хайруулын тавагт хийнэ. ГАЛААС ГАРГА. Өндгийн холимогоо хийж хурдан хутгана. Нөөцлөсөн гоймоны усны 2-3 хоолны халбагыг нэмэн сугалан торгомсог кремлэг болтол хутгана.',
+        description: 'Гоймоныг шүүж беконтой хайруулын тавагт хийнэ. ГАЛААС ГАРГА. Өндгийн холимогоо хийж хурдан хутгана. Нөөцөлсөн гоймоны уснаас 2-3 хоолны халбага нэмж, торгомсог кремлэг болтол хурдан хутгана.',
         descriptionEn: 'Drain pasta into bacon pan. REMOVE FROM HEAT. Add egg mixture immediately. Toss rapidly. Add pasta water 1 tbsp at a time until glossy and creamy.',
         image: 'https://images.unsplash.com/photo-1612874742237-6526221588e3?auto=format&fit=crop&w=800&q=80',
-        sisterTip: 'Гоймоны ус нэмэх нь өндгийг тогтвортой эмульс болгодог — хэт их нэмэлгүй 1-2 хоолны халбагаар тохируулж сугал.',
+        sisterTip: 'Гоймоны ус нэмэх нь өндгийг тогтвортой эмульс болгодог — хэт их нэмэлгүй 1-2 хоолны халбагаар тохируулаарай.',
         sisterTipEn: 'Add pasta water one spoon at a time — it emulsifies the eggs into glossy silk. This is the soul of real carbonara.',
         timerMinutes: 3,
-        stepIngredients: ['Чанасан Спагетти', 'Шаржигнасан Бекон', 'Өндөг-Бяслагны Холимог', 'Нөөцлөсөн Гоймоны Ус (2-4 хоолны халбага)'],
+        stepIngredients: ['Чанасан Спагетти', 'Шаржигнасан Бекон', 'Өндөг-Бяслагны Холимог', 'Нөөцөлсөн Гоймоны Ус (2-4 хоолны халбага)'],
         toolsNeeded: ['2 халбага (хурдан хутгахад)', 'Дулаан хоолны аяга']
       }
     ]
   },
   {
     id: 'lemon-herb-grilled-salmon',
-    title: 'Нимбэг ба Ургамалтай Гриллдсэн Сэлмон Загас',
+    title: 'Нимбэг, Анхилуун Ургамлаар Амталсан Шарсан Сэлмон',
     titleEn: 'Lemon Herb Grilled Salmon with Asparagus',
     image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=800&q=80',
     time: '20 мин',
@@ -607,18 +607,18 @@ export const MOCK_RECIPES: Recipe[] = [
     category: 'Үндсэн хоол',
     rating: 5.0,
     tags: ['Сэлмон', 'Зөөлөн', 'Keto'],
-    ingredients: ['Сэлмон загас', 'Нимбэг', 'Сармис', 'Розмарин', 'Оливын тос', 'Ногоон мөөг'],
+    ingredients: ['Сэлмон загас', 'Нимбэг', 'Сармис', 'Розмарин', 'Оливын тос', 'Аспарагус'],
     ingredientsEn: ['Salmon Fillet', 'Lemon', 'Garlic', 'Rosemary', 'Olive Oil', 'Asparagus'],
     nutrition: { calories: 420, protein: 36, carbs: 6, fat: 28 },
     isPremium: true,
     steps: [
       {
-        title: 'Сэлмон гриллдэх',
+        title: 'Сэлмон шарах',
         titleEn: 'Sear & Roast Salmon',
-        description: 'Сэлмон загасаа нимбэгийн шүүс, сармис, розмаринаар амтлан 12 минут гриллдэнэ.',
+        description: 'Сэлмон загасаа нимбэгийн шүүс, сармис, розмаринаар амтлаад грилл дээр 12 минут шарна.',
         descriptionEn: 'Season salmon fillet with fresh lemon juice, minced garlic, and rosemary. Pan-sear then bake.',
         image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=800&q=80',
-        sisterTip: 'Аспарагус (ногоон мөөг/ногоо)-той хамт шарахад төгс зохицдог.',
+        sisterTip: 'Аспарагусыг хамт шарвал төгс зохицдог.',
         sisterTipEn: 'Roast asparagus alongside for the perfect side dish.'
       }
     ]
@@ -652,7 +652,7 @@ export const MOCK_RECIPES: Recipe[] = [
   },
   {
     id: 'low-carb-beef-stew',
-    title: 'Үхрийн Мах ба Нүүрс Ус Багатай Бүрэн Ногооны Гуляш',
+    title: 'Нүүрс Ус Багатай Үхрийн Мах, Ногооны Гуляш',
     titleEn: 'Low-Carb Beef Veggie Stew',
     image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',
     time: '35 мин',
@@ -669,7 +669,7 @@ export const MOCK_RECIPES: Recipe[] = [
       {
         title: 'Үхрийн мах ба ногоо жигнэх',
         titleEn: 'Slow Simmer Beef & Veggies',
-        description: 'Үхрийн махаа дөрвөлжин хэрчин сонгино, томатад жигнэж ногоонуудаа зөөлөртөл буцалгана.',
+        description: 'Үхрийн махаа дөрвөлжин хэрчиж, сонгино, томат пастатай хамт жигнээд ногоогоо зөөлрөх хүртэл буцалгана.',
         descriptionEn: 'Simmer tender beef cubes with cauliflower, carrots, and tomato broth.',
         image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',
         sisterTip: 'Төмсний оронд цэцэгт байцаа хэрэглэснээр нүүрс ус маш багатай болно.',
@@ -688,7 +688,7 @@ export const MOCK_RECIPES: Recipe[] = [
     category: 'Үндсэн хоол',
     rating: 4.9,
     tags: ['Пад Тай', 'Сам хорхой', 'Тайланд'],
-    ingredients: ['Гоймон', 'Сам хорхой', 'Өндөг', 'Самрын үйрмэг', 'Лимон'],
+    ingredients: ['Гоймон', 'Сам хорхой', 'Өндөг', 'Самрын үйрмэг', 'Нимбэг'],
     ingredientsEn: ['Rice Noodles', 'Shrimp', 'Eggs', 'Peanuts', 'Lime'],
     nutrition: { calories: 450, protein: 26, carbs: 58, fat: 14 },
     isPremium: true,
@@ -699,7 +699,7 @@ export const MOCK_RECIPES: Recipe[] = [
         description: 'Будааны гоймонгоо дэвтээж, сам хорхой ба өндөгтэй хамт вок тогоонд хуурна.',
         descriptionEn: 'Soak rice noodles, then stir-fry with shrimp, scrambled egg, tamarind sauce.',
         image: 'https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=800&q=80',
-        sisterTip: 'Лимоны шүүс ба газрын самар нэмж өгвөл Тайланд амт бэлэн болно.',
+        sisterTip: 'Нимбэгийн шүүс, газрын самар нэмж өгвөл Тайландын жинхэнэ амт орно.',
         sisterTipEn: 'Finish with fresh lime juice and crushed peanuts.'
       }
     ]
@@ -708,7 +708,7 @@ export const MOCK_RECIPES: Recipe[] = [
   // ================= 4. ШӨЛ БА БҮЛЭЭН ХООЛ =================
   {
     id: 'pumpkin-soup',
-    title: 'Ногоон Хулдангийн (Pumpkin) Зутан Шөл',
+    title: 'Шарсан Хулууны Зутан Шөл',
     titleEn: 'Creamy Roasted Pumpkin Soup',
     image: 'https://images.unsplash.com/photo-1476718406336-bb5a9690ee2a?auto=format&fit=crop&w=800&q=80',
     time: '30 мин',
@@ -716,19 +716,19 @@ export const MOCK_RECIPES: Recipe[] = [
     cuisine: 'European',
     category: 'Шөл ба Бүлээн хоол',
     rating: 4.8,
-    tags: ['Хулдаа', 'Шөл', 'Зутан'],
-    ingredients: ['Амтат хулдаа', 'Сүү', 'Сонгино', 'Сармис', 'Тос'],
+    tags: ['Хулуу', 'Шөл', 'Зутан'],
+    ingredients: ['Амтат хулуу', 'Сүү', 'Сонгино', 'Сармис', 'Тос'],
     ingredientsEn: ['Pumpkin', 'Cream/Milk', 'Onion', 'Garlic', 'Butter'],
     nutrition: { calories: 210, protein: 5, carbs: 32, fat: 8 },
     isPremium: false,
     steps: [
       {
-        title: 'Хулдаа шарж миксдэх',
+        title: 'Хулуу шарж нухах',
         titleEn: 'Roast & Blend',
-        description: 'Хулдаагаа шарах шүүгээнд шарж, сонгино сармистай хуурснаар блендерт миксдэн зутан шөл болгоно.',
+        description: 'Хулуугаа шарах шүүгээнд шараад сонгино, сармистай хуурна. Дараа нь блендерээр жигд нухаж зутан шөл болгоно.',
         descriptionEn: 'Roast pumpkin slices, saute onions and garlic, then blend into a silky creamy soup.',
         image: 'https://images.unsplash.com/photo-1476718406336-bb5a9690ee2a?auto=format&fit=crop&w=800&q=80',
-        sisterTip: 'Хулдааны үр эсвэл сухари дээр нь цацвал яг ресторанд идэж байгаа мэт болно.',
+        sisterTip: 'Хулууны үр эсвэл сухари дээр нь цацвал яг ресторанд идэж байгаа мэт болно.',
         sisterTipEn: 'Top with toasted pumpkin seeds and croutons.'
       }
     ]
@@ -744,7 +744,7 @@ export const MOCK_RECIPES: Recipe[] = [
     category: 'Шөл ба Бүлээн хоол',
     rating: 4.7,
     tags: ['Томат', 'Шөл', 'Итали'],
-    ingredients: ['Улаан лооль', 'Базилик', 'Сармис', 'Оливын тос', 'Бальзамик уксус'],
+    ingredients: ['Улаан лооль', 'Базилик', 'Сармис', 'Оливын тос', 'Бальзамик цуу'],
     ingredientsEn: ['Tomatoes', 'Fresh Basil', 'Garlic', 'Olive Oil', 'Balsamic Vinegar'],
     nutrition: { calories: 190, protein: 4, carbs: 24, fat: 9 },
     isPremium: false,
@@ -752,7 +752,7 @@ export const MOCK_RECIPES: Recipe[] = [
       {
         title: 'Томат буцалгах',
         titleEn: 'Simmer & Puree',
-        description: 'Шинэхэн улаан лоолийг сармис, базиликтэй 15 минут буцалгаж блендерээр зөөлөн зутан болгоно.',
+        description: 'Шинэхэн улаан лоолио сармис, базиликтай хамт 15 минут буцалгаад блендерээр зөөлөн зутан болгоно.',
         descriptionEn: 'Simmer ripe tomatoes with fresh basil and garlic, then puree until velvety smooth.',
         image: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=800&q=80',
         sisterTip: 'Халуун талх дүрж идвэл маш сайхан амттай!',
@@ -770,7 +770,7 @@ export const MOCK_RECIPES: Recipe[] = [
     cuisine: 'American',
     category: 'Шөл ба Бүлээн хоол',
     rating: 4.9,
-    tags: ['Брокколи', 'Бяслаг', 'Суп'],
+    tags: ['Брокколи', 'Бяслаг', 'Шөл'],
     ingredients: ['Брокколи', 'Чеддар бяслаг', 'Сүү', 'Сонгино', 'Гурил'],
     ingredientsEn: ['Broccoli', 'Cheddar Cheese', 'Milk', 'Onion', 'Flour'],
     nutrition: { calories: 260, protein: 14, carbs: 18, fat: 16 },
@@ -782,7 +782,7 @@ export const MOCK_RECIPES: Recipe[] = [
         description: 'Брокколигоо ногооны шөлөнд чанаад чеддар бяслаг ба сүү нэмэн өтгөрүүлж бэлтгэнэ.',
         descriptionEn: 'Simmer fresh broccoli in vegetable stock, melt cheddar cheese into a warm savory soup.',
         image: 'https://images.unsplash.com/photo-1603105037880-880cd4edfb0d?auto=format&fit=crop&w=800&q=80',
-        sisterTip: 'Брокколин хэсгүүдийг бүтнээр нь бага зэрэг үлдээвэл зажлахад гоё амттай.',
+        sisterTip: 'Брокколины хэсгээс жаахныг бүтнээр нь үлдээвэл зажлахад илүү амттай.',
         sisterTipEn: 'Leave a few small broccoli florets whole for texture.'
       }
     ]
@@ -827,7 +827,7 @@ export const MOCK_RECIPES: Recipe[] = [
     category: 'Эрүүл дессерт ба Ундаа',
     rating: 4.9,
     tags: ['Шоколад', 'Дессерт', 'Авокадо'],
-    ingredients: ['Авокадо', 'Какао нунтаг', 'Кленовын сироп / Зөгийн бал', 'Ваниль', 'Бөөрөлзгөнө'],
+    ingredients: ['Авокадо', 'Какао нунтаг', 'Агч модны сироп / Зөгийн бал', 'Ваниль', 'Бөөрөлзгөнө'],
     ingredientsEn: ['Avocado', 'Cocoa Powder', 'Maple Syrup/Honey', 'Vanilla', 'Raspberries'],
     nutrition: { calories: 230, protein: 4, carbs: 22, fat: 15 },
     isPremium: false,
@@ -835,17 +835,17 @@ export const MOCK_RECIPES: Recipe[] = [
       {
         title: 'Блендерт өтгөрүүлэх',
         titleEn: 'Blend Creamy Mousse',
-        description: 'Зөөлөрсөн авокадо, какао нунтаг ба сиропыг блендерт хилэн шиг торгомсог болтол блендердэнэ.',
+        description: 'Зөөлөрсөн авокадо, какао нунтаг, сиропыг блендерт хийж хилэн шиг торгомсог болтол нухна.',
         descriptionEn: 'Blend ripe avocado, dark cocoa powder, and natural sweetener until velvety smooth.',
         image: 'https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?auto=format&fit=crop&w=800&q=80',
-        sisterTip: 'Хөргөгчинд 30 минут хүйтэн байлгавал яг жинхэнэ мусс шиг өтгөрнө.',
+        sisterTip: 'Хөргөгчид 30 минут хүйтэн байлгавал яг жинхэнэ мусс шиг өтгөрнө.',
         sisterTipEn: 'Chill for 30 minutes before serving.'
       }
     ]
   },
   {
     id: 'matcha-oat-latte',
-    title: 'Матча (Matcha) Лате ба Овьёосны Сүү',
+    title: 'Матча (Matcha) Лате ба Овъёосны Сүү',
     titleEn: 'Iced Matcha Latte with Oat Milk',
     image: 'https://images.unsplash.com/photo-1536256263959-770b48d82b0a?auto=format&fit=crop&w=800&q=80',
     time: '5 мин',
@@ -853,8 +853,8 @@ export const MOCK_RECIPES: Recipe[] = [
     cuisine: 'Japanese Drink',
     category: 'Эрүүл дессерт ба Ундаа',
     rating: 4.9,
-    tags: ['Матча', 'Ундаа', 'Овьёос сүү'],
-    ingredients: ['Япон матча нунтаг', 'Халуун ус', 'Овьёосны сүү', 'Мөс', 'Стевиа / Зөгийн бал'],
+    tags: ['Матча', 'Ундаа', 'Овъёосны сүү'],
+    ingredients: ['Япон матча нунтаг', 'Халуун ус', 'Овъёосны сүү', 'Мөс', 'Стевиа / Зөгийн бал'],
     ingredientsEn: ['Japanese Matcha Powder', 'Hot Water', 'Oat Milk', 'Ice', 'Honey'],
     nutrition: { calories: 110, protein: 3, carbs: 14, fat: 4 },
     isPremium: false,
@@ -862,7 +862,7 @@ export const MOCK_RECIPES: Recipe[] = [
       {
         title: 'Матча хутгах ба сүү юүлэх',
         titleEn: 'Whisk Matcha & Pour Milk',
-        description: 'Матча нунтгаа халуун усанд хуулшаар хутган уусгаад, мөстэй овьёосны сүүн дээрээ асгана.',
+        description: 'Матча нунтгаа халуун усанд хөөстэй болтол хутгаж уусгаад, мөстэй овъёосны сүүн дээрээ асгана.',
         descriptionEn: 'Whisk matcha powder with hot water until foamy, pour over iced oat milk.',
         image: 'https://images.unsplash.com/photo-1536256263959-770b48d82b0a?auto=format&fit=crop&w=800&q=80',
         sisterTip: 'Матча нь кофеноос илүү зөөлөн, удаан хугацааны эрч хүч өгдөг шүү!',
@@ -872,7 +872,7 @@ export const MOCK_RECIPES: Recipe[] = [
   },
   {
     id: 'ginger-lemon-detox-tea',
-    title: 'Цагаан Гаа ба Лимонтой Детокс Цай',
+    title: 'Цагаан Гаа ба Нимбэгтэй Детокс Цай',
     titleEn: 'Warm Ginger Lemon Detox Tea',
     image: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=800&q=80',
     time: '5 мин',
@@ -881,18 +881,18 @@ export const MOCK_RECIPES: Recipe[] = [
     category: 'Эрүүл дессерт ба Ундаа',
     rating: 4.8,
     tags: ['Детокс', 'Цай', 'Цагаан гаа'],
-    ingredients: ['Шинэ цагаан гаа', 'Куркума нунтаг', 'Лимоны шүүс', 'Зөгийн бал', 'Халуун ус'],
+    ingredients: ['Шинэ цагаан гаа', 'Куркума нунтаг', 'Нимбэгийн шүүс', 'Зөгийн бал', 'Халуун ус'],
     ingredientsEn: ['Fresh Ginger', 'Turmeric Powder', 'Lemon Juice', 'Honey', 'Hot Water'],
     nutrition: { calories: 45, protein: 1, carbs: 10, fat: 0 },
     isPremium: false,
     steps: [
       {
-        title: 'Цай хандалах',
+        title: 'Цай хандлах',
         titleEn: 'Brew & Infuse',
-        description: 'Цагаан гаа ба куркумаг халуун усанд 5 минут хандалж, лимон ба зөгийн балаар амтална.',
+        description: 'Цагаан гаа ба куркумаг халуун усанд 5 минут хандлаж, нимбэг ба зөгийн балаар амтална.',
         descriptionEn: 'Steep freshly grated ginger and turmeric in hot water for 5 mins. Add lemon and honey.',
         image: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=800&q=80',
-        sisterTip: 'Өглөө өлөн дээрээ уувал дархлаа дэмжиж, хоол холиход тустай.',
+        sisterTip: 'Өглөө өлөн элгэн дээрээ уувал дархлааг дэмжиж, хоол боловсруулахад тустай.',
         sisterTipEn: 'Drink first thing in the morning to boost immunity.'
       }
     ]

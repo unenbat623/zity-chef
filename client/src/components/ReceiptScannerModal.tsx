@@ -43,7 +43,7 @@ export const ReceiptScannerModal: React.FC = () => {
     setTimeout(() => {
       setDetectedItems([
         {
-          name: 'Шинэ Сүү 1L',
+          name: 'Шинэ сүү',
           category: '🥛 Сүү, өндөг',
           quantity: 1,
           unit: 'л',
@@ -51,7 +51,7 @@ export const ReceiptScannerModal: React.FC = () => {
           pricePerUnit: 3900,
         },
         {
-          name: 'Үхрийн Гуяны Мах',
+          name: 'Үхрийн гуяны мах',
           category: '🥩 Мах',
           quantity: 800,
           unit: 'гр',
@@ -59,7 +59,7 @@ export const ReceiptScannerModal: React.FC = () => {
           pricePerUnit: 24000,
         },
         {
-          name: 'Шинэхэн Банан',
+          name: 'Шинэхэн банан',
           category: '🍎 Жимс',
           quantity: 6,
           unit: 'ш',

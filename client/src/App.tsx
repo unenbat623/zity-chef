@@ -144,7 +144,7 @@ const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <div className="w-12 h-12 rounded-2xl bg-mango text-white font-black flex items-center justify-center text-xl shadow-lg animate-pulse">
           Z
         </div>
-        <p className="text-xs font-semibold text-gray-400">Ачааллаж байна…</p>
+        <p className="text-xs font-semibold text-gray-400">Ачаалж байна…</p>
       </div>
     );
   }

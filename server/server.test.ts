@@ -8,7 +8,7 @@ describe('Backend Server Configuration Unit Tests', () => {
 
   it('should verify database fallback mocks', () => {
     const mockInventory = [
-      { id: '1', name: 'Үхрийн мал ма мах', category: 'Meat', quantity: 2, unit: 'кг' },
+      { id: '1', name: 'Үхрийн мах', category: 'Meat', quantity: 2, unit: 'кг' },
     ];
     expect(mockInventory.length).toBe(1);
     expect(mockInventory[0].category).toBe('Meat');
