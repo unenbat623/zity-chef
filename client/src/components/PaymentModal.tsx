@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useToast } from './Toast';
-import { MOCK_BANK_APPS } from '../constants';
+import { BANK_APPS } from '../constants';
 import { PaymentMethod } from '../types';
 import { createQpayInvoice, checkQpayPayment, type QpayInvoice } from '../services/qpayService';
 
@@ -274,7 +274,7 @@ export const PaymentModal: React.FC = () => {
                       {t('selectBank')}
                     </span>
                     <div className="grid grid-cols-3 gap-2">
-                      {MOCK_BANK_APPS.map((bank) => (
+                      {BANK_APPS.map((bank) => (
                         <button
                           key={bank.id}
                           onClick={() => setSelectedBank(bank.id)}

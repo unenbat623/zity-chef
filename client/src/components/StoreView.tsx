@@ -14,7 +14,6 @@ import {
   ChefHat,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { MOCK_INGREDIENTS } from '../constants';
 import { SmartImage } from './SmartImage';
 import { getIngredientImageUrl } from '../lib/imageService';
 import { useStoreProducts } from '../hooks/useStoreProducts';
@@ -43,10 +42,9 @@ export const StoreView: React.FC = () => {
     savedRecipeIds,
     t,
   } = useApp();
-  const { products, loading } = useStoreProducts();
+  const { products, loading, isError: catalogError } = useStoreProducts();
   const { recipes } = useRecipes();
-  // Real DB catalog when available; fall back to the bundled mock list.
-  const catalog: CatalogItem[] = products.length ? products : (MOCK_INGREDIENTS as CatalogItem[]);
+  const catalog: CatalogItem[] = products;
   const nameOf = (item: CatalogItem) => (lang === 'en' && item.nameEn ? item.nameEn : item.name);
 
   const [address, setAddress] = useState<string>('Сүхбаатар дүүрэг, 1-р хороо, Zity Tower 402');
@@ -265,13 +263,16 @@ export const StoreView: React.FC = () => {
                 ))}
               </div>
             ) : !loading && catalog.length === 0 ? (
-              /* Empty catalog state */
+              /* Empty or unreachable catalog. These used to be indistinguishable
+                 because a bundled list stood in for both. */
               <div className="pestle-card text-center py-16 px-6">
                 <Store size={48} className="mx-auto text-gray-300 mb-3" />
                 <h4 className="text-base font-bold text-pestle-text mb-1">
-                  {t('store_freshProducts')}
+                  {catalogError ? t('catalog_storeUnavailable') : t('store_freshProducts')}
                 </h4>
-                <p className="text-xs text-gray-400">{t('store_emptyCatalog')}</p>
+                <p className="text-xs text-gray-400">
+                  {catalogError ? t('catalog_unavailableBody') : t('store_emptyCatalog')}
+                </p>
               </div>
             ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-3.5">

@@ -20,7 +20,6 @@ import { WEEK_DAYS } from '../constants';
 import type { Recipe } from '../types';
 import { MacroProgressWidget } from './MacroProgressWidget';
 import { useRecipes } from '../hooks/useRecipes';
-import { MOCK_RECIPES } from '../data/recipes';
 
 // Meal time slots
 type MealType = 'breakfast' | 'lunch' | 'dinner';
@@ -37,26 +36,16 @@ interface DaySchedule {
 
 export const CalendarView: React.FC = () => {
   const { lang, inventory, cart, addToCart, setActiveCookingRecipe, setActiveTab, t } = useApp();
-  const { recipes } = useRecipes();
+  const { recipes, isLoading: recipesLoading, isError: recipesError, refetch: refetchRecipes } = useRecipes();
   const [selectedDayId, setSelectedDayId] = useState<string>(WEEK_DAYS[0].day);
   const [selectedMealType, setSelectedMealType] = useState<MealType>('lunch');
   const [isRegenerating, setIsRegenerating] = useState<boolean>(false);
   const [addedToast, setAddedToast] = useState<string | null>(null);
-  const [schedule, setSchedule] = useState<DaySchedule[]>(() => {
-    const pool = MOCK_RECIPES;
-    const b = pool.filter((r) => r.category === 'Өглөөний цай');
-    const l = pool.filter((r) => r.category === 'Үндсэн хоол' || r.category === 'Салат ба Хөнгөн зууш');
-    const d = pool.filter((r) => r.category === 'Шөл ба Бүлээн хоол' || r.category === 'Үндсэн хоол');
-    return WEEK_DAYS.map((w, idx) => ({
-      dayId: w.day, dayLabel: w.day, dateStr: w.date,
-      breakfast: b[idx % b.length] || pool[3] || pool[0],
-      lunch: l[idx % l.length] || pool[0],
-      dinner: d[(idx + 2) % d.length] || pool[1] || pool[0],
-      targetCalories: 2000 + (idx % 3) * 100,
-    }));
-  });
+  // Starts empty: the week used to be pre-built from a bundled recipe list, so
+  // the plan a user saw first was never their catalog's.
+  const [schedule, setSchedule] = useState<DaySchedule[]>([]);
 
-  // Re-hydrate schedule from real API recipes once they load
+  // Build the schedule from the catalog once it loads
   React.useEffect(() => {
     if (!recipes || recipes.length === 0) return;
     const b = recipes.filter((r) => r.category === 'Өглөөний цай');
@@ -150,7 +139,11 @@ export const CalendarView: React.FC = () => {
   const handleRegeneratePlan = () => {
     setIsRegenerating(true);
     setTimeout(() => {
-      const pool = recipes.length > 0 ? recipes : MOCK_RECIPES;
+      const pool = recipes;
+      if (pool.length === 0) {
+        setIsRegenerating(false);
+        return;
+      }
       setSchedule((prev) =>
         prev.map((s) => {
           const randB = pool[Math.floor(Math.random() * pool.length)];
@@ -172,9 +165,25 @@ export const CalendarView: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-4xl mx-auto pb-24">
-      {!activeRecipe && (
+      {/* Without a bundled catalog to fall back on, a failed load has to say so
+          rather than spin forever. */}
+      {!activeRecipe && (recipesLoading || (!recipesError && recipes.length > 0)) && (
         <div className="flex items-center justify-center h-48">
           <div className="w-8 h-8 rounded-xl bg-mango/80 text-white font-black flex items-center justify-center animate-pulse">Z</div>
+        </div>
+      )}
+      {!activeRecipe && !recipesLoading && (recipesError || recipes.length === 0) && (
+        <div className="pestle-card border border-pestle-border rounded-3xl py-12 px-6 text-center space-y-3">
+          <p className="text-sm font-black text-pestle-text">{t('catalog_unavailableTitle')}</p>
+          <p className="text-xs text-gray-400 font-medium max-w-sm mx-auto">
+            {t('catalog_unavailableBody')}
+          </p>
+          <button
+            onClick={() => refetchRecipes()}
+            className="text-xs font-bold px-4 py-2 rounded-xl shadow-md on-accent"
+          >
+            {t('fridge_retry')}
+          </button>
         </div>
       )}
       {activeRecipe && (<>
@@ -290,7 +299,15 @@ export const CalendarView: React.FC = () => {
       </div>
 
       {/* Interactive Macro Nutrient Progress Tracker */}
-      <MacroProgressWidget />
+      <MacroProgressWidget
+        planned={{
+          calories: dailyNutrition.totalCals,
+          protein: dailyNutrition.totalProtein,
+          carbs: dailyNutrition.totalCarbs,
+          fat: dailyNutrition.totalFat,
+        }}
+        targetCalories={activeDaySchedule.targetCalories}
+      />
 
       {/* ── MEAL TIME SLOTS (Өглөө, Өдөр, Орой) ──────────────────────────────── */}
       <div className="space-y-4">

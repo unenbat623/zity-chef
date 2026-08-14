@@ -21,15 +21,23 @@ database is the shared source of truth.
 ## 1. Supabase (auth + database + storage + realtime)
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. **SQL Editor → New query** → paste & run [`server/db/schema.sql`](server/db/schema.sql).
-   This creates every table, RLS policy, trigger, the `uploads` storage bucket
-   policies, and the realtime publication.
-   - Also create the bucket: **Storage → New bucket** → name `uploads`, **public**.
+2. Put `DIRECT_URL` (Project Settings → Database → Connection string) in `.env`
+   and run:
+   ```bash
+   npm run db:push
+   ```
+   [`supabase/migrations/`](supabase/migrations/) is the single source of truth:
+   every table, RLS policy, trigger, the `uploads` storage bucket, the realtime
+   publication, **and the recipe + store catalog itself**. Re-runnable — each
+   migration is idempotent.
 3. **Authentication → Providers**: enable **Anonymous**, **Email**, **Google**
    (add OAuth credentials). For phone OTP, configure an SMS provider under Phone.
-4. Optionally seed the store catalog: run [`supabase/seed.sql`](supabase/seed.sql).
-5. Copy from **Project Settings → API**: `URL`, `anon key`, `service_role key`,
+4. Copy from **Project Settings → API**: `URL`, `anon key`, `service_role key`,
    and **JWT secret** (Settings → API → JWT).
+
+> The app has no bundled catalog to fall back on. If step 2 is skipped, the
+> recipe and store tabs report that the catalog is unavailable rather than
+> quietly serving demo content.
 
 ## 2. Environment variables
 

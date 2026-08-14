@@ -8,11 +8,12 @@ import { Ingredient } from '../types';
 
 export const ReceiptScannerModal: React.FC = () => {
   const { showScanModal, setShowScanModal, addIngredient, t } = useApp();
-  const { toastSuccess } = useToast();
+  const { toastSuccess, toastError } = useToast();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [detectedItems, setDetectedItems] = useState<Partial<Ingredient>[]>([]);
   const [isDone, setIsDone] = useState<boolean>(false);
+  const [scanFailed, setScanFailed] = useState<boolean>(false);
 
   if (!showScanModal) return null;
 
@@ -24,59 +25,21 @@ export const ReceiptScannerModal: React.FC = () => {
     reader.onload = async () => {
       const base64 = (reader.result as string).split(',')[1];
       setSelectedImage(reader.result as string);
+      setScanFailed(false);
 
-      // Start OCR
+      // Start OCR. A failure used to come back as two invented ingredients,
+      // which the user then added to their fridge believing they were scanned.
       setIsAnalyzing(true);
-      const items = await parseReceiptImage(base64, file.type || 'image/jpeg');
-      setDetectedItems(items);
-      setIsAnalyzing(false);
+      try {
+        setDetectedItems(await parseReceiptImage(base64, file.type || 'image/jpeg'));
+      } catch {
+        setScanFailed(true);
+        toastError(t('scan_failedTitle'), t('scan_failedBody'));
+      } finally {
+        setIsAnalyzing(false);
+      }
     };
     reader.readAsDataURL(file);
-  };
-
-  const handleSimulatePresetSample = async () => {
-    // Demo sample receipt image
-    setSelectedImage(
-      'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80'
-    );
-    setIsAnalyzing(true);
-    setTimeout(() => {
-      setDetectedItems([
-        {
-          name: 'Шинэ сүү',
-          category: '🥛 Сүү, өндөг',
-          quantity: 1,
-          unit: 'л',
-          expiryDays: 4,
-          pricePerUnit: 3900,
-        },
-        {
-          name: 'Үхрийн гуяны мах',
-          category: '🥩 Мах',
-          quantity: 800,
-          unit: 'гр',
-          expiryDays: 3,
-          pricePerUnit: 24000,
-        },
-        {
-          name: 'Шинэхэн банан',
-          category: '🍎 Жимс',
-          quantity: 6,
-          unit: 'ш',
-          expiryDays: 5,
-          pricePerUnit: 8900,
-        },
-        {
-          name: 'Сонгино',
-          category: '🥦 Ногоо',
-          quantity: 500,
-          unit: 'гр',
-          expiryDays: 14,
-          pricePerUnit: 2200,
-        },
-      ]);
-      setIsAnalyzing(false);
-    }, 1500);
   };
 
   const handleAddAllDetected = () => {
@@ -165,14 +128,6 @@ export const ReceiptScannerModal: React.FC = () => {
                       className="hidden"
                     />
                   </label>
-
-                  <button
-                    onClick={handleSimulatePresetSample}
-                    className="w-full bg-pestle-bg border border-pestle-border py-3 rounded-xl text-xs font-bold text-mango-ink hover:bg-mango/10 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <Sparkles size={16} />
-                    <span>{t('scan_tryDemo')}</span>
-                  </button>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -186,6 +141,22 @@ export const ReceiptScannerModal: React.FC = () => {
                       </div>
                     )}
                   </div>
+
+                  {!isAnalyzing && scanFailed && (
+                    <div className="text-center space-y-2 py-2">
+                      <p className="text-xs font-bold text-pestle-text">{t('scan_failedTitle')}</p>
+                      <p className="text-[11px] text-gray-400">{t('scan_failedBody')}</p>
+                      <button
+                        onClick={() => {
+                          setSelectedImage(null);
+                          setScanFailed(false);
+                        }}
+                        className="text-xs font-bold px-4 py-2 rounded-xl shadow-md on-accent"
+                      >
+                        {t('fridge_retry')}
+                      </button>
+                    </div>
+                  )}
 
                   {/* Detected items list */}
                   {!isAnalyzing && detectedItems.length > 0 && (

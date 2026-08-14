@@ -73,7 +73,7 @@ function generationConfig(system: string) {
 
 let geminiClient: GoogleGenAI | null = null;
 function gemini() {
-  if (!geminiClient) geminiClient = new GoogleGenAI({ apiKey: GEMINI_KEY || 'demo-placeholder-key' });
+  if (!geminiClient) geminiClient = new GoogleGenAI({ apiKey: GEMINI_KEY });
   return geminiClient;
 }
 
@@ -373,15 +373,11 @@ router.post('/ocr', async (req, res) => {
     return res.json({ items: JSON.parse(cached), fromCache: true });
   }
 
-  const fallback = [
-    { name: 'Шинэ сүү', category: '🥛 Сүү, өндөг', quantity: 1, unit: 'л', expiryDays: 4, pricePerUnit: 3900 },
-    { name: 'Сонгино', category: '🥦 Ногоо', quantity: 3, unit: 'ш', expiryDays: 14, pricePerUnit: 1800 },
-  ];
-
-  // OCR needs a vision model — only Gemini is wired for it. Without a key, return
-  // the demo list so the scanner still works end-to-end.
+  // OCR needs a vision model — only Gemini is wired for it. This used to answer
+  // with two invented ingredients, which the fridge then stored as if they had
+  // been read off the receipt.
   if (PROVIDER !== 'gemini') {
-    return res.json({ items: fallback, fromCache: false, fallback: true });
+    return res.status(503).json({ error: 'OCR_UNAVAILABLE' });
   }
 
   try {
@@ -402,8 +398,8 @@ router.post('/ocr', async (req, res) => {
     await ocrResultCache.set(imageHash, JSON.stringify(items), 60 * 60 * 1000);
     return res.json({ items, fromCache: false });
   } catch (err) {
-    console.error('[ai] /ocr failed, returning demo items:', errorInfo(err).message);
-    return res.json({ items: fallback, fromCache: false, fallback: true });
+    console.error('[ai] /ocr failed:', errorInfo(err).message);
+    return res.status(503).json({ error: 'OCR_FAILED' });
   }
 });
 

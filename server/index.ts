@@ -11,14 +11,34 @@ const PORT = process.env.PORT || 3002;
 const IS_PROD = process.env.NODE_ENV === 'production';
 
 // ── Environment validation ───────────────────────────────────────────────────
-if (IS_PROD && !process.env.GEMINI_API_KEY) {
-  console.warn('⚠️ WARNING: GEMINI_API_KEY is not set in production environment variables.');
-}
-if (IS_PROD && !process.env.SUPABASE_URL) {
-  console.warn(
-    '⚠️ WARNING: SUPABASE_URL is not set — inventory/orders will use the in-memory ' +
-      'fallback store (data is lost on restart and NOT isolated across instances).'
-  );
+// Anything the app cannot honestly serve without is fatal in production. These
+// used to be warnings, so a deployment missing its database credentials booted
+// happily and served every visitor the in-memory fallback store: no accounts,
+// no catalog, data lost on restart, and nothing in the UI to say so.
+const REQUIRED_IN_PROD = [
+  ['SUPABASE_URL', 'database, auth and the recipe/store catalog'],
+  ['SUPABASE_ANON_KEY', 'public database reads'],
+  ['SUPABASE_SERVICE_ROLE_KEY', 'server-side token verification'],
+] as const;
+
+if (IS_PROD) {
+  const missing = REQUIRED_IN_PROD.filter(([key]) => !process.env[key]);
+  if (missing.length) {
+    console.error('❌ Refusing to start — required environment variables are missing:');
+    for (const [key, why] of missing) console.error(`   • ${key} — needed for ${why}`);
+    console.error('   See DEPLOYMENT.md §2 for where each value comes from.');
+    process.exit(1);
+  }
+
+  // Degraded but serviceable: the feature is off, the rest of the app works.
+  const OPTIONAL_IN_PROD = [
+    ['GEMINI_API_KEY', 'the AI chef and receipt scanning are disabled'],
+    ['ALLOWED_ORIGINS', 'CORS falls back to its development default'],
+    ['QPAY_INVOICE_CODE', 'payments run in simulated mode — no money is collected'],
+  ] as const;
+  for (const [key, effect] of OPTIONAL_IN_PROD) {
+    if (!process.env[key]) console.warn(`⚠️  ${key} is not set — ${effect}.`);
+  }
 }
 
 const app = createApp();

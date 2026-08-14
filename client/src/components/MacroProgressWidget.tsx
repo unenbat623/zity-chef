@@ -3,12 +3,41 @@ import { motion } from 'motion/react';
 import { Flame, Activity, Zap, PieChart } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
-export const MacroProgressWidget: React.FC = () => {
+export interface MacroTotals {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
+/**
+ * Macro split behind the gram targets: 25% of calories from protein, 45% from
+ * carbohydrate, 30% from fat (4/4/9 kcal per gram).
+ */
+function targetsFor(targetCalories: number): MacroTotals {
+  return {
+    calories: targetCalories,
+    protein: Math.round((targetCalories * 0.25) / 4),
+    carbs: Math.round((targetCalories * 0.45) / 4),
+    fat: Math.round((targetCalories * 0.3) / 9),
+  };
+}
+
+/**
+ * Progress of the day's planned meals against its calorie target.
+ *
+ * It used to render one hardcoded number for everybody — "1450 / 2200 kcal"
+ * regardless of the plan, the day, or the user — which read as tracked personal
+ * nutrition data and was not.
+ */
+export const MacroProgressWidget: React.FC<{
+  planned: MacroTotals;
+  targetCalories: number;
+}> = ({ planned, targetCalories }) => {
   const { t } = useApp();
 
-  // Mocked daily target vs actual progress for the active plan
-  const dailyTarget = { calories: 2200, protein: 90, carbs: 250, fat: 70 };
-  const currentProgress = { calories: 1450, protein: 68, carbs: 165, fat: 42 };
+  const dailyTarget = targetsFor(targetCalories);
+  const currentProgress = planned;
 
   const calPercent = Math.min(100, Math.round((currentProgress.calories / dailyTarget.calories) * 100));
   const proteinPercent = Math.min(100, Math.round((currentProgress.protein / dailyTarget.protein) * 100));
