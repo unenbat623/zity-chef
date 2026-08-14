@@ -19,10 +19,12 @@ import {
   Play,
   Bookmark,
   Calculator,
+  UserPlus,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { useRecipes } from '../hooks/useRecipes';
+import { useMySocialStats } from '../hooks/useUserProfile';
 import { uploadImage } from '../lib/storage';
 import { ensureContrast, readableTextOn } from '../lib/contrast';
 import { FoodCostCalculatorModal } from './FoodCostCalculatorModal';
@@ -264,7 +266,7 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
 // ── MAIN PROFILE VIEW ─────────────────────────────────────────────────────────
 export const ProfileView: React.FC = () => {
-  const { profile, setActiveTab, savedRecipeIds, toggleSaveRecipe, setActiveCookingRecipe, inventory, orders, t } = useApp();
+  const { profile, setActiveTab, savedRecipeIds, toggleSaveRecipe, setActiveCookingRecipe, t } = useApp();
   const { user: authUser, isAnonymous } = useAuth();
   const { recipes } = useRecipes();
   const [showEdit, setShowEdit] = useState(false);
@@ -275,10 +277,13 @@ export const ProfileView: React.FC = () => {
     : t('profile_guestAccount');
 
   const savedRecipesList = recipes.filter((r) => savedRecipeIds.includes(r.id));
+  // Posts and followers come from the community service; the local profile
+  // object only ever held zeroes for them.
+  const socialStats = useMySocialStats(profile.name || 'Zity Chef');
   const personalStats = [
-    { label: t('profile_statPosts'), value: 0, icon: Grid3x3 },
-    { label: t('dashboard_products'), value: inventory.length, icon: ChefHat },
-    { label: t('dashboard_orders'), value: orders.length, icon: Heart },
+    { label: t('profile_statPosts'), value: socialStats?.posts ?? 0, icon: Grid3x3 },
+    { label: t('userProfile_followers'), value: socialStats?.followers ?? 0, icon: Users },
+    { label: t('userProfile_following'), value: socialStats?.following ?? 0, icon: UserPlus },
     { label: t('profile_statRecipes'), value: savedRecipeIds.length, icon: BookOpen },
   ];
 
