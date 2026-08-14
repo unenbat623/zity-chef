@@ -11,12 +11,15 @@ export interface QpayInvoice {
 export async function createQpayInvoice(
   amount: number,
   description: string,
-  orderRef?: string
+  orderRef?: string,
+  /** 'pro' | 'family' when this invoice buys a subscription. The server records
+   *  the intent and upgrades the account itself once the payment clears. */
+  plan?: 'pro' | 'family'
 ): Promise<QpayInvoice | null> {
   try {
     const res = await authedFetch('/api/payments/qpay/create', {
       method: 'POST',
-      body: JSON.stringify({ amount, description, orderRef }),
+      body: JSON.stringify({ amount, description, orderRef, plan }),
     });
     if (!res.ok) return null;
     return (await res.json()) as QpayInvoice;

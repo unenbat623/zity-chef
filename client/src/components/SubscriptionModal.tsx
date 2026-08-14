@@ -16,6 +16,7 @@ import {
   Star,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useQueryClient } from '@tanstack/react-query';
 import type { SubscriptionTier } from '../types';
 
 // ── Plan definitions (single source of truth) ─────────────────────────────────
@@ -199,15 +200,25 @@ const PlanCard: React.FC<{
 // ── Main Modal ─────────────────────────────────────────────────────────────────
 export const SubscriptionModal: React.FC = () => {
   const { showSubModal, setShowSubModal, subscription, setSubscription, triggerPayment, formatPrice, t } = useApp();
+  const queryClient = useQueryClient();
   const PLAN_DEFS = getPlanDefs(t, formatPrice);
 
   if (!showSubModal) return null;
 
   const handleUpgrade = (plan: PlanDef) => {
-    if (plan.priceRaw === 0) return;
-    triggerPayment(plan.priceRaw, `Zity ${plan.name}`, () => {
-      setSubscription(plan.id);
-    });
+    if (plan.priceRaw === 0 || plan.id === 'free') return;
+    triggerPayment(
+      plan.priceRaw,
+      `Zity ${plan.name}`,
+      () => {
+        // Optimistic only. The server grants the tier when the payment clears,
+        // and the next /api/ai/quota poll replaces this with the real value.
+        setSubscription(plan.id);
+        queryClient.invalidateQueries({ queryKey: ['ai', 'quota'] });
+      },
+      'qpay',
+      plan.id as 'pro' | 'family'
+    );
     setShowSubModal(false);
   };
 

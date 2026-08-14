@@ -1,4 +1,6 @@
 import express from 'express';
+import { authenticateToken, AuthenticatedRequest, isGuestId } from '../middleware/auth.js';
+import { setSubscriptionTier, Tier } from '../lib/subscription.js';
 
 const router = express.Router();
 
@@ -38,6 +40,35 @@ interface SimInvoice {
 }
 const simInvoices = new Map<string, SimInvoice>();
 
+/**
+ * What each invoice is buying, and for whom. Without this the payment flow had
+ * no way to grant anything: the client simply called setSubscription() locally,
+ * so the tier lived in localStorage and anyone could award themselves Pro.
+ */
+interface PlanIntent {
+  userId: string;
+  tier: Tier;
+  months: number;
+}
+const invoiceIntents = new Map<string, PlanIntent>();
+
+function normalizePlan(value: unknown): Tier | null {
+  return value === 'pro' || value === 'family' ? value : null;
+}
+
+/** Grants the purchased tier once, when a payment is confirmed. */
+async function grantPurchasedTier(invoiceId: string): Promise<Tier | null> {
+  const intent = invoiceIntents.get(invoiceId);
+  if (!intent) return null;
+  const ok = await setSubscriptionTier(intent.userId, intent.tier, intent.months);
+  if (ok) {
+    invoiceIntents.delete(invoiceId);
+    console.log(`[payments] ${invoiceId}: granted ${intent.tier} to ${intent.userId}`);
+    return intent.tier;
+  }
+  return null;
+}
+
 // A tiny inline QR-ish placeholder image (data URI) for the simulated flow.
 const PLACEHOLDER_QR =
   'data:image/svg+xml;base64,' +
@@ -54,16 +85,30 @@ const PLACEHOLDER_QR =
   ).toString('base64');
 
 // ── POST /api/payments/qpay/create ────────────────────────────────────────────
-router.post('/qpay/create', async (req, res) => {
-  const { amount, description = 'Zity Chef захиалга', orderRef } = req.body;
+router.post('/qpay/create', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  const { amount, description = 'Zity Chef захиалга', orderRef, plan, months = 1 } = req.body;
   if (!amount || typeof amount !== 'number') {
     return res.status(400).json({ error: 'amount (number) is required' });
   }
+
+  // A subscription purchase must be tied to a real account, otherwise there is
+  // nobody to upgrade when the payment lands.
+  const tier = normalizePlan(plan);
+  const userId = req.user?.id;
+  if (tier && (!userId || isGuestId(userId))) {
+    return res.status(401).json({ error: 'SIGN_IN_REQUIRED' });
+  }
+  const rememberIntent = (invoiceId: string) => {
+    if (tier && userId) {
+      invoiceIntents.set(invoiceId, { userId, tier, months: Number(months) || 1 });
+    }
+  };
 
   // Simulated flow — no merchant credentials configured.
   if (!isQpayConfigured) {
     const invoiceId = `SIM-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     simInvoices.set(invoiceId, { amount, createdAt: Date.now(), paid: false });
+    rememberIntent(invoiceId);
     return res.json({
       simulated: true,
       invoiceId,
@@ -97,6 +142,7 @@ router.post('/qpay/create', async (req, res) => {
       console.error('[QPay create error]', data);
       return res.status(502).json({ error: 'QPay invoice creation failed', detail: data });
     }
+    rememberIntent(String(data.invoice_id));
     return res.json({
       simulated: false,
       invoiceId: data.invoice_id,
@@ -120,7 +166,8 @@ router.post('/qpay/check', async (req, res) => {
     const inv = simInvoices.get(invoiceId);
     if (!inv) return res.json({ paid: false, status: 'NOT_FOUND' });
     if (!inv.paid && Date.now() - inv.createdAt > 2500) inv.paid = true;
-    return res.json({ paid: inv.paid, status: inv.paid ? 'PAID' : 'PENDING', simulated: true });
+    const granted = inv.paid ? await grantPurchasedTier(invoiceId) : null;
+    return res.json({ paid: inv.paid, status: inv.paid ? 'PAID' : 'PENDING', simulated: true, tier: granted });
   }
 
   try {
@@ -140,7 +187,8 @@ router.post('/qpay/check', async (req, res) => {
       return res.status(502).json({ error: 'QPay check failed' });
     }
     const paid = Number(data.paid_amount) > 0 || (Array.isArray(data.rows) && data.rows.length > 0);
-    return res.json({ paid, status: paid ? 'PAID' : 'PENDING', paidAmount: data.paid_amount });
+    const granted = paid ? await grantPurchasedTier(String(invoiceId)) : null;
+    return res.json({ paid, status: paid ? 'PAID' : 'PENDING', paidAmount: data.paid_amount, tier: granted });
   } catch (err) {
     console.error('[QPay check exception]', err);
     return res.status(502).json({ error: 'QPay unavailable' });
@@ -154,9 +202,8 @@ router.all('/qpay/callback', async (req, res) => {
   const invoice = String(req.query.invoice || req.body?.invoice || req.body?.object_id || '');
   if (invoice && !processedCallbacks.has(invoice)) {
     processedCallbacks.add(invoice);
-    // Phase 2+: verify the payment via /payment/check, then mark the order paid
-    // in the DB here. Kept idempotent via processedCallbacks.
-    console.log(`[QPay callback] invoice ${invoice} marked processed`);
+    await grantPurchasedTier(invoice);
+    console.log(`[QPay callback] invoice ${invoice} processed`);
   }
   return res.json({ received: true });
 });

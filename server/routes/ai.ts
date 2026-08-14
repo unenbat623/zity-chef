@@ -2,6 +2,9 @@ import express from 'express';
 import crypto from 'crypto';
 import { GoogleGenAI } from '@google/genai';
 import { aiResponseCache, ocrResultCache } from '../cache.js';
+import { authenticateToken, AuthenticatedRequest } from '../middleware/auth.js';
+import { consumeAiQuota, peekAiQuota } from '../lib/subscription.js';
+import { getRecipeCatalog, renderCatalog } from '../lib/recipeCatalog.js';
 
 const router = express.Router();
 
@@ -40,9 +43,31 @@ const PROVIDER =
   process.env.AI_PROVIDER || (GEMINI_KEY ? 'gemini' : 'ollama');
 
 // Primary model first; the `-latest` alias is a safety net for the day the
-// preview id is retired or is temporarily out of capacity.
-const GEMINI_MODEL = 'gemini-3-flash-preview';
-const GEMINI_FALLBACK_MODELS = [GEMINI_MODEL, 'gemini-flash-latest'];
+// pinned id is retired or is temporarily out of capacity.
+//
+// Cost note: gemini-3-flash-preview is a reasoning model. Measured on this
+// app's own prompt it spent 1894 thinking tokens against a 249-token answer —
+// thinking is billed as output, so ~88% of every bill bought reasoning that a
+// cooking chat does not need. A Flash-Lite tier plus a low thinking level cuts
+// the per-request cost by roughly an order of magnitude at the same usefulness.
+const GEMINI_MODEL = process.env.AI_MODEL || 'gemini-3.1-flash-lite';
+const GEMINI_FALLBACK_MODELS = [GEMINI_MODEL, 'gemini-flash-lite-latest', 'gemini-flash-latest'];
+
+/** 'low' | 'medium' | 'high' — or 'off' to drop the thinking budget entirely. */
+const THINKING_LEVEL = process.env.AI_THINKING_LEVEL || 'low';
+/** Hard ceiling on the answer, so one odd prompt cannot run up a large bill. */
+const MAX_OUTPUT_TOKENS = Number(process.env.AI_MAX_OUTPUT_TOKENS || 700);
+
+function generationConfig(system: string) {
+  const config: Record<string, unknown> = {
+    systemInstruction: system,
+    maxOutputTokens: MAX_OUTPUT_TOKENS,
+  };
+  if (THINKING_LEVEL !== 'off') {
+    config.thinkingConfig = { thinkingLevel: THINKING_LEVEL };
+  }
+  return config;
+}
 
 let geminiClient: GoogleGenAI | null = null;
 function gemini() {
@@ -102,8 +127,16 @@ async function geminiChat(system: string, message: string): Promise<string> {
         const r = await gemini().models.generateContent({
           model,
           contents: message,
-          config: { systemInstruction: system },
+          config: generationConfig(system),
         });
+        const u = r.usageMetadata;
+        if (u) {
+          console.log(
+            `[ai] ${model} in=${u.promptTokenCount ?? 0} out=${u.candidatesTokenCount ?? 0} think=${
+              u.thoughtsTokenCount ?? 0
+            }`
+          );
+        }
         const text = (r.text || '').trim();
         if (text) return text;
         // Empty body (e.g. the model spent its budget on thinking, or the answer
@@ -171,6 +204,50 @@ function unavailableMessage(err: unknown, lang: string): string {
     : 'The AI assistant is temporarily unreachable. Please try again shortly. 🙏';
 }
 
+/**
+ * The assistant's brief. Two things it previously lacked: the expiry state of
+ * the fridge (the app's whole premise is cooking food before it spoils) and the
+ * list of recipe ids it is allowed to open, which it used to invent.
+ */
+function buildSystemPrompt(inventoryContext: string, catalog: string, lang: string): string {
+  const mn = lang === 'mn';
+  const fridge = inventoryContext.trim() || (mn ? '(хоосон)' : '(empty)');
+
+  const rules = mn
+    ? `ДҮРЭМ:
+1. Мэргэжлийн, найрсаг тогооч шиг, товч бөгөөд тодорхой хариул. 120 үгээс хэтрүүлэхгүй.
+2. Хамгийн түрүүнд удахгүй муудах орцыг ашиглахыг санал болго — энэ бол таны гол үүрэг.
+3. Хөргөгчид байхгүй орц хэрэгтэй бол түүнийг тодорхой хэлж, дэлгүүрээс авахыг сануул.
+4. Хоолыг бүтэн жороор хийхийг санал болгож байвал хариултын ТӨГСГӨЛД яг ийм тэмдэглэгээ бич:
+   [ACTION: OPEN_COOKING_MODE, RECIPE_ID: 'id']
+   RECIPE_ID нь заавал доорх жагсаалтын id байх ёстой. Жагсаалтад байхгүй бол тэмдэглэгээг бүү бич.
+5. Хэрэглэгч 3 сонголт хүсвэл 3 санал болго, эс бөгөөс 1-2 хангалттай.
+6. Орцын хэмжээг метр системээр (гр, мл, кг) бич.`
+    : `RULES:
+1. Answer as a warm, professional chef. Be concrete and stay under 120 words.
+2. Prioritise ingredients that are about to spoil — that is your main job.
+3. If a dish needs something the fridge lacks, say so and suggest buying it.
+4. When you recommend cooking a full recipe, end the reply with exactly:
+   [ACTION: OPEN_COOKING_MODE, RECIPE_ID: 'id']
+   RECIPE_ID must come from the list below. If nothing fits, omit the marker.
+5. Give three options only when asked; otherwise one or two is enough.
+6. Use metric units (g, ml, kg).`;
+
+  return [
+    mn
+      ? 'Та бол "Zity Chef" аппын ухаалаг тогооч туслах "Zity Тогооч".'
+      : 'You are "Zity Chef", the smart cooking assistant inside the Zity Chef app.',
+    '',
+    mn ? `ХЭРЭГЛЭГЧИЙН ХӨРГӨГЧ:\n${fridge}` : `THE USER'S FRIDGE:\n${fridge}`,
+    '',
+    catalog ? (mn ? `АППАД БАЙГАА ЖОРУУД (id | нэр | орц):\n${catalog}` : `RECIPES AVAILABLE IN THE APP (id | name | ingredients):\n${catalog}`) : '',
+    '',
+    rules,
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
 // ── In-flight request deduplication (per instance) ───────────────────────────
 const inflight = new Map<string, Promise<string>>();
 
@@ -178,6 +255,12 @@ function makeContextKey(message: string, inventoryContext: string, lang: string)
   const normalized = `${lang}|${inventoryContext.toLowerCase().trim()}|${message.toLowerCase().trim()}`;
   return crypto.createHash('sha256').update(normalized).digest('hex').slice(0, 16);
 }
+
+// ── GET /api/ai/quota (how many requests the caller has left today) ───────────
+router.get('/quota', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  const quota = await peekAiQuota(req);
+  res.json(quota);
+});
 
 // ── GET /api/ai/provider (which backend is active) ────────────────────────────
 // `?check=1` additionally makes one tiny live call, so a broken key / exhausted
@@ -202,7 +285,7 @@ router.get('/provider', async (req, res) => {
 });
 
 // ── AI Chat ───────────────────────────────────────────────────────────────────
-router.post('/chat', async (req, res) => {
+router.post('/chat', authenticateToken, async (req: AuthenticatedRequest, res) => {
   const { message, inventoryContext = '', lang = 'mn' } = req.body;
 
   if (!message || typeof message !== 'string') {
@@ -211,9 +294,24 @@ router.post('/chat', async (req, res) => {
 
   const cacheKey = makeContextKey(message, inventoryContext, lang);
 
+  // A cache hit costs nothing, so it must not spend the caller's allowance.
   const cached = await aiResponseCache.get(cacheKey);
   if (cached) {
     return res.json({ text: cached, fromCache: true });
+  }
+
+  // Every uncached answer is a real bill — claim it against the daily quota
+  // before calling the provider, not after.
+  const quota = await consumeAiQuota(req);
+  if (!quota.allowed) {
+    return res.status(429).json({
+      error: 'AI_QUOTA_EXCEEDED',
+      text:
+        lang === 'mn'
+          ? `Өнөөдрийн ${quota.limit} удаагийн AI хязгаар дууслаа. Маргааш дахин ашиглах эсвэл Pro багц идэвхжүүлээрэй. ✨`
+          : `You have used all ${quota.limit} AI requests for today. Try again tomorrow or upgrade to Pro. ✨`,
+      quota: { used: quota.used, limit: quota.limit, remaining: quota.remaining, tier: quota.tier },
+    });
   }
 
   if (inflight.has(cacheKey)) {
@@ -227,17 +325,8 @@ router.post('/chat', async (req, res) => {
     }
   }
 
-  const systemInstruction = `
-    Та бол "Zity Chef" аппын ухаалаг тогооч туслах "Zity Тогооч" юм.
-    Хэрэглэгчийн хөргөгчид байгаа материалууд: ${inventoryContext}
-    Хэрэглэгчийн хэл: ${lang === 'mn' ? 'Монгол' : 'English'}
-
-    ДҮРЭМ:
-    1. Хэрэглэгчтэй мэргэжлийн бөгөөд найрсаг тогооч шиг харилцана.
-    2. Хэрэглэгч хоол сонговол хариултын төгсгөлд [ACTION: OPEN_COOKING_MODE, RECIPE_ID: 'id'] бич.
-    3. Хоолны жорыг санал болгохдоо 3 хоол санал болго.
-    4. Хариултаа товч, ойлгомжтой байлга.
-  `;
+  const catalog = renderCatalog(await getRecipeCatalog());
+  const systemInstruction = buildSystemPrompt(inventoryContext, catalog, lang);
 
   const call = chatComplete(systemInstruction, message);
   inflight.set(cacheKey, call);

@@ -4,10 +4,12 @@ import { MessageCircle, X, ChevronRight, Sparkles, Send } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getSisterAdvice } from '../services/geminiService';
 import { useRecipes } from '../hooks/useRecipes';
+import { useAiQuota } from '../hooks/useAiQuota';
 
 export const FloatingAssistant: React.FC = () => {
   const { lang, inventory, setActiveCookingRecipe, setActiveTab, t } = useApp();
   const { recipes } = useRecipes();
+  const { quota, refresh: refreshQuota } = useAiQuota();
   const [showBubble, setShowBubble] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; text: string }[]>([
@@ -49,6 +51,7 @@ export const FloatingAssistant: React.FC = () => {
     }
 
     setIsLoading(false);
+    refreshQuota();
   };
 
   return (
@@ -108,7 +111,9 @@ export const FloatingAssistant: React.FC = () => {
                     {t('assistantName')} <Sparkles size={13} className="text-emerald-100" />
                   </p>
                   <p className="text-[9px] text-white/80 font-medium">
-                    Gemini 3 Flash • {t('online')}
+                    {quota.limit > 0
+                      ? t('ai_remainingToday', { n: quota.remaining, total: quota.limit })
+                      : t('online')}
                   </p>
                 </div>
               </div>

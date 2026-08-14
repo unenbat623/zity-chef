@@ -47,7 +47,12 @@ export const PaymentModal: React.FC = () => {
     if (!paymentModalState || method !== 'qpay') return;
     let active = true;
     setInvoice(null);
-    createQpayInvoice(paymentModalState.amount, paymentModalState.title).then((inv) => {
+    createQpayInvoice(
+      paymentModalState.amount,
+      paymentModalState.title,
+      undefined,
+      paymentModalState.plan
+    ).then((inv) => {
       if (active) setInvoice(inv);
     });
     return () => {

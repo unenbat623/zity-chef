@@ -5,6 +5,7 @@ import { formatCurrency } from '../lib/currency';
 import { ensureContrast, readableTextOn } from '../lib/contrast';
 import { useInventory } from '../hooks/useInventory';
 import { useOrders } from '../hooks/useOrders';
+import { useAiQuota } from '../hooks/useAiQuota';
 import { useAuth } from './AuthContext';
 
 interface PendingPayment {
@@ -12,6 +13,8 @@ interface PendingPayment {
   title: string;
   onSuccess?: (paymentMethod: 'qpay' | 'socialpay' | 'card') => void;
   preferredMethod?: 'qpay' | 'socialpay' | 'card';
+  /** Set when the invoice buys a subscription, so the server can grant it. */
+  plan?: 'pro' | 'family';
 }
 
 interface AppContextType {
@@ -63,7 +66,8 @@ interface AppContextType {
     amount: number,
     title: string,
     onSuccess?: (paymentMethod: 'qpay' | 'socialpay' | 'card') => void,
-    preferredMethod?: 'qpay' | 'socialpay' | 'card'
+    preferredMethod?: 'qpay' | 'socialpay' | 'card',
+    plan?: 'pro' | 'family'
   ) => void;
   closePaymentModal: () => void;
 
@@ -173,6 +177,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     isError: ordersError,
     createOrder: createOrderMutation,
   } = useOrders();
+
+  // The tier of record lives in Postgres. localStorage is only a first paint
+  // hint — trusting it would let anyone hand themselves Pro from DevTools.
+  const { quota: aiQuota } = useAiQuota();
 
   const [subscription, setSubscriptionState] = useState<SubscriptionTier>(() => {
     return (localStorage.getItem('zity_subscription') as SubscriptionTier) || 'free';
@@ -323,6 +331,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setHydratedAccount(accountId);
   }, [accountId, accountStorage, authUser, isAnonymous]);
 
+  // Server tier wins as soon as it arrives — the local value is a hint only.
+  useEffect(() => {
+    if (aiQuota.limit > 0 && aiQuota.tier !== subscription) {
+      setSubscriptionState(aiQuota.tier);
+    }
+  }, [aiQuota.tier, aiQuota.limit, subscription]);
+
   const formatPrice = useCallback((amountInMNT: number) => {
     return formatCurrency(amountInMNT, currency);
   }, [currency]);
@@ -463,9 +478,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       amount: number,
       title: string,
       onSuccess?: (paymentMethod: 'qpay' | 'socialpay' | 'card') => void,
-      preferredMethod: 'qpay' | 'socialpay' | 'card' = 'card'
+      preferredMethod: 'qpay' | 'socialpay' | 'card' = 'card',
+      plan?: 'pro' | 'family'
     ) => {
-      setPaymentModalState({ amount, title, onSuccess, preferredMethod });
+      setPaymentModalState({ amount, title, onSuccess, preferredMethod, plan });
     },
     []
   );

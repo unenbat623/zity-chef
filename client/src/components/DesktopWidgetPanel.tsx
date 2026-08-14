@@ -13,6 +13,7 @@ import {
 import { useApp } from '../context/AppContext';
 import { getSisterAdvice, getServerHealth } from '../services/geminiService';
 import { useRecipes } from '../hooks/useRecipes';
+import { useAiQuota } from '../hooks/useAiQuota';
 
 const CALORIE_GOAL = 2000;
 const GLASS_ML = 250;
@@ -60,6 +61,7 @@ export const DesktopWidgetPanel: React.FC = () => {
     t,
   } = useApp();
   const { recipes } = useRecipes();
+  const { quota, refresh: refreshQuota } = useAiQuota();
   const [healthData, setHealthData] = useState<any>(null);
   const [inputVal, setInputVal] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
@@ -120,6 +122,7 @@ export const DesktopWidgetPanel: React.FC = () => {
       setChatLog((prev) => [...prev, { role: 'assistant', text: reply }]);
     }
     setLoading(false);
+    refreshQuota();
   };
 
   const handleMicClick = () => {
@@ -141,7 +144,11 @@ export const DesktopWidgetPanel: React.FC = () => {
             </div>
             <div>
               <h3 className="font-extrabold text-xs text-pestle-text">{t('assistantName')}</h3>
-              <p className="text-[10px] text-mint-ink font-bold">Gemini 3 Flash • {t('online')}</p>
+              <p className="text-[10px] text-mint-ink font-bold">
+                {quota.limit > 0
+                  ? t('ai_remainingToday', { n: quota.remaining, total: quota.limit })
+                  : t('online')}
+              </p>
             </div>
           </div>
           <span className="text-[9px] bg-mint/15 text-mint-ink font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">

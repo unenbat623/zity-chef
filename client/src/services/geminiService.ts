@@ -47,8 +47,16 @@ export async function getSisterAdvice(
   inventory: Ingredient[],
   lang: Language = 'mn'
 ): Promise<string> {
+  // Expiry is the whole point of the assistant ("what should I cook before it
+  // goes off?"), so it has to reach the model — names and quantities alone left
+  // it guessing which items were urgent.
   const inventoryContext = inventory
-    .map((i) => `${i.name}: ${formatQuantity(i.quantity, i.unit)}`)
+    .map((i) => {
+      const qty = formatQuantity(i.quantity, i.unit);
+      if (i.expiryDays <= 0) return `${i.name}: ${qty} (хугацаа дууссан)`;
+      if (i.expiryDays <= 3) return `${i.name}: ${qty} (${i.expiryDays} хоногт муудна ⚠️)`;
+      return `${i.name}: ${qty} (${i.expiryDays} хоног)`;
+    })
     .join(', ');
 
   const requestKey = `${lang}|${message.slice(0, 50)}|${inventoryContext.slice(0, 100)}`;
