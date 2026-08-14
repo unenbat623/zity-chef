@@ -17,6 +17,7 @@ import {
 import { SmartImage } from './SmartImage';
 import { useApp } from '../context/AppContext';
 import { useCommunity } from '../hooks/useCommunity';
+import { useToast } from './Toast';
 import { useDirectMessages } from '../hooks/useDirectMessages';
 import { uploadDataUrl } from '../lib/storage';
 import { useRecipes } from '../hooks/useRecipes';
@@ -927,6 +928,7 @@ const PostCard: React.FC<{
 // ── MAIN COMMUNITY VIEW ────────────────────────────────────────────────────────
 export const CommunityView: React.FC = () => {
   const { profile, t } = useApp();
+  const { toastWarning } = useToast();
   const { feedPosts, feedLoading, persistLike, persistComment, persistPost, serverStoryGroups, persistStory } =
     useCommunity();
 
@@ -992,6 +994,13 @@ export const CommunityView: React.FC = () => {
       typeof post.image === 'string' && post.image.startsWith('http') ? post.image : null;
     if (typeof post.image === 'string' && post.image.startsWith('data:')) {
       imageUrl = await uploadDataUrl(post.image, 'community');
+      // A failed upload used to be swallowed here: the post saved without its
+      // photo and the preview only vanished on the next refetch.
+      if (!imageUrl) {
+        setPosts((prev) => prev.filter((p) => p.id !== post.id));
+        toastWarning(t('community_uploadFailedTitle'), t('community_uploadFailedBody'));
+        return;
+      }
     }
     persistPost({
       caption: post.caption || '',
@@ -1006,6 +1015,10 @@ export const CommunityView: React.FC = () => {
       newStory.img && newStory.img.startsWith('http') ? newStory.img : null;
     if (newStory.img && newStory.img.startsWith('data:')) {
       imageUrl = await uploadDataUrl(newStory.img, 'stories');
+      if (!imageUrl) {
+        toastWarning(t('community_uploadFailedTitle'), t('community_uploadFailedBody'));
+        return;
+      }
     }
     persistStory({
       imageUrl,
