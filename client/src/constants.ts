@@ -1,5 +1,5 @@
 import React from 'react';
-import { Ingredient, Recipe, Category, BankApp } from './types';
+import { Category, BankApp } from './types';
 import {
   KhanBankLogo,
   GolomtBankLogo,
@@ -17,7 +17,7 @@ export const CATEGORIES: Category[] = [
   '🍎 Жимс',
 ];
 
-export const MOCK_BANK_APPS: BankApp[] = [
+export const BANK_APPS: BankApp[] = [
   {
     id: 'khanbank',
     name: 'Хаан Банк',
@@ -67,98 +67,6 @@ export const MOCK_BANK_APPS: BankApp[] = [
     deepLink: 'tdb://qpay',
   },
 ];
-
-export const MOCK_INGREDIENTS: Ingredient[] = [
-  {
-    id: '1',
-    name: 'Лууван',
-    nameEn: 'Carrot',
-    emoji: '🥕',
-    category: '🥦 Ногоо',
-    quantity: 500,
-    unit: 'гр',
-    expiryDays: 2,
-    pricePerUnit: 2500,
-  },
-  {
-    id: '2',
-    name: 'Үхрийн мах',
-    nameEn: 'Beef Ribeye',
-    emoji: '🥩',
-    category: '🥩 Мах',
-    quantity: 500,
-    unit: 'гр',
-    expiryDays: 3,
-    pricePerUnit: 22000,
-  },
-  {
-    id: '3',
-    name: 'Сүү',
-    nameEn: 'Fresh Milk',
-    emoji: '🥛',
-    category: '🥛 Сүү, өндөг',
-    quantity: 1,
-    unit: 'л',
-    expiryDays: 1,
-    pricePerUnit: 3800,
-  },
-  {
-    id: '4',
-    name: 'Сонгино',
-    nameEn: 'Onion',
-    emoji: '🧅',
-    category: '🥦 Ногоо',
-    quantity: 3,
-    unit: 'ш',
-    expiryDays: 14,
-    pricePerUnit: 1800,
-  },
-  {
-    id: '5',
-    name: 'Өндөг',
-    nameEn: 'Eggs (10 pack)',
-    emoji: '🥚',
-    category: '🥛 Сүү, өндөг',
-    quantity: 10,
-    unit: 'ш',
-    expiryDays: 10,
-    pricePerUnit: 6500,
-  },
-  {
-    id: '6',
-    name: 'Алим',
-    nameEn: 'Fuji Apple',
-    emoji: '🍎',
-    category: '🍎 Жимс',
-    quantity: 6,
-    unit: 'ш',
-    expiryDays: 8,
-    pricePerUnit: 8900,
-  },
-  {
-    id: '7',
-    name: 'Гурил',
-    nameEn: 'Wheat Flour',
-    emoji: '🌾',
-    category: '🧂 Амтлагч',
-    quantity: 1000,
-    unit: 'гр',
-    expiryDays: 60,
-    pricePerUnit: 3200,
-  },
-  {
-    id: '8',
-    name: 'Бяслаг',
-    nameEn: 'Mozzarella Cheese',
-    emoji: '🧀',
-    category: '🥛 Сүү, өндөг',
-    quantity: 300,
-    unit: 'гр',
-    expiryDays: 5,
-    pricePerUnit: 12500,
-  },
-];
-
 
 export const WEEK_DAYS = [
   { day: 'Дав', dayEn: 'Mon', date: '04.02' },

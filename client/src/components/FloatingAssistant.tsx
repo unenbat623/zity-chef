@@ -40,12 +40,17 @@ export const FloatingAssistant: React.FC = () => {
       const cleanResponse = response.replace(/\[ACTION: .*?\]/, '').trim();
       setMessages((prev) => [...prev, { role: 'assistant', text: cleanResponse }]);
 
-      const targetRecipe = recipes.find((r) => r.id === recipeId) || recipes[0];
-      setTimeout(() => {
-        setActiveCookingRecipe(targetRecipe);
-        setActiveTab('cooking');
-        setIsOpen(false);
-      }, 1500);
+      // Only follow the action when the id really exists. It used to fall back
+      // to recipes[0], which opened a dish the assistant never mentioned — and
+      // with an unreachable catalog there is no recipes[0] to open at all.
+      const targetRecipe = recipes.find((r) => r.id === recipeId);
+      if (targetRecipe) {
+        setTimeout(() => {
+          setActiveCookingRecipe(targetRecipe);
+          setActiveTab('cooking');
+          setIsOpen(false);
+        }, 1500);
+      }
     } else {
       setMessages((prev) => [...prev, { role: 'assistant', text: response }]);
     }

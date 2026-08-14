@@ -146,25 +146,12 @@ export function useDirectMessages(recipient: ChatRecipient) {
   const deliver = useCallback(
     async (tempId: string, text: string) => {
       if (!supabase || !convRef.current) {
-        // Demo fallback: local echo + canned reply.
+        // Local development without Supabase: the message stays on this device.
+        // It used to be answered by a canned reply attributed to the recipient,
+        // so the thread showed words the other person never wrote.
         setMessages((prev) =>
           prev.map((m) => (m.id === tempId ? { ...m, status: 'sent' as const } : m))
         );
-        setTimeout(() => {
-          const now = new Date().toISOString();
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: `r-${now}-${tempSeq++}`,
-              sender: recipientName,
-              mine: false,
-              text: 'Үнэхээр гоё! Жороо явуулаарай 👨‍🍳',
-              time: hhmm(now),
-              createdAt: now,
-              status: 'sent',
-            },
-          ]);
-        }, 900);
         return;
       }
 
@@ -201,7 +188,7 @@ export function useDirectMessages(recipient: ChatRecipient) {
         );
       });
     },
-    [recipientName]
+    []
   );
 
   const send = useCallback(

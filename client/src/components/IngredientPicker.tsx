@@ -13,11 +13,35 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { CATEGORIES, MOCK_INGREDIENTS } from '../constants';
+import { CATEGORIES } from '../constants';
+import { useStoreProducts, type StoreProduct } from '../hooks/useStoreProducts';
 import { Category, Ingredient } from '../types';
 import { formatQuantity } from '../lib/utils';
 import { SmartImage } from './SmartImage';
 import { getIngredientImageUrl } from '../lib/imageService';
+
+/**
+ * A store product as a fridge ingredient. The store carries categories the
+ * fridge doesn't model (bakery, for one), so anything unrecognised lands in the
+ * pantry bucket rather than disappearing from every category filter.
+ */
+function toIngredient(product: StoreProduct): Ingredient {
+  const category = CATEGORIES.includes(product.category as Category)
+    ? (product.category as Category)
+    : '🧂 Амтлагч';
+  return {
+    id: product.id,
+    name: product.name,
+    nameEn: product.nameEn ?? undefined,
+    emoji: product.emoji,
+    category,
+    quantity: 1,
+    unit: product.unit === 'л' ? 'л' : product.unit === 'ш' ? 'ш' : 'гр',
+    expiryDays: product.expiryDays,
+    pricePerUnit: product.pricePerUnit,
+    imageUrl: product.imageUrl ?? undefined,
+  };
+}
 
 export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const { addIngredient, setShowScanModal, unitSystem, t } = useApp();
@@ -36,7 +60,16 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const filteredItems = MOCK_INGREDIENTS.filter((item) => {
+  // The pick list is the store catalog, not a bundled copy of eight items that
+  // could never match what the shop actually sells.
+  const { products, loading: catalogLoading, isError: catalogError } = useStoreProducts();
+
+  const catalogItems: Ingredient[] = React.useMemo(
+    () => products.map(toIngredient),
+    [products]
+  );
+
+  const filteredItems = catalogItems.filter((item) => {
     const matchesCat = selectedCategory === 'all' || item.category === selectedCategory;
     const matchesSearch =
       item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -177,6 +210,26 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                   </button>
                 ))}
               </div>
+
+              {catalogLoading && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="pestle-card overflow-hidden animate-pulse">
+                      <div className="h-24 w-full bg-pestle-bg" />
+                      <div className="p-2.5 space-y-2">
+                        <div className="h-3 w-2/3 bg-pestle-bg rounded" />
+                        <div className="h-2 w-1/2 bg-pestle-bg rounded" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {!catalogLoading && filteredItems.length === 0 && (
+                <p className="text-xs font-semibold text-gray-400 text-center py-8">
+                  {catalogError ? t('catalog_storeUnavailable') : t('fridge_noItems')}
+                </p>
+              )}
 
               {/* Ingredients Grid with High Quality Photos */}
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">

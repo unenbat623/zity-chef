@@ -1,26 +1,25 @@
 import { useQuery } from '@tanstack/react-query';
 import { authedFetch } from '../lib/apiClient';
-import { MOCK_RECIPES } from '../data/recipes';
 import type { Recipe } from '../types';
 
 /**
- * Fetches recipes from the backend API.
- * Falls back to MOCK_RECIPES if the server returns an error or is unreachable —
- * this ensures the app always has content to display even in offline/demo mode.
+ * The recipe catalog, served from the database.
+ *
+ * A bundled copy used to stand in whenever the request failed or came back
+ * empty, so a broken catalog looked like a working app with different content
+ * — and the 25 bundled recipes silently replaced whatever the database held.
+ * Callers now get an explicit empty list plus `isError`, and render a state
+ * that says so.
  */
 async function fetchRecipes(): Promise<Recipe[]> {
-  try {
-    const res = await authedFetch('/api/recipes');
-    if (!res.ok) return MOCK_RECIPES;
-    const data = await res.json();
-    const recipes = data.recipes;
-    // If Supabase has no rows yet, fall back to the bundled mock data
-    if (!Array.isArray(recipes) || recipes.length === 0) return MOCK_RECIPES;
-    return recipes as Recipe[];
-  } catch {
-    return MOCK_RECIPES;
-  }
+  const res = await authedFetch('/api/recipes');
+  if (!res.ok) throw new Error(`Failed to load recipes (${res.status})`);
+  const data = await res.json();
+  return Array.isArray(data.recipes) ? (data.recipes as Recipe[]) : [];
 }
+
+// Frozen so an empty result keeps a stable identity across renders.
+const NO_RECIPES: Recipe[] = [];
 
 export function useRecipes() {
   const query = useQuery<Recipe[]>({
@@ -32,7 +31,7 @@ export function useRecipes() {
   });
 
   return {
-    recipes: query.data ?? MOCK_RECIPES,
+    recipes: query.data ?? NO_RECIPES,
     isLoading: query.isLoading,
     isError: query.isError,
     refetch: query.refetch,

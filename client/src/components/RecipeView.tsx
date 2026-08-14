@@ -19,7 +19,6 @@ import {
 import { useApp } from '../context/AppContext';
 import { useRecipes } from '../hooks/useRecipes';
 import { useStoreProducts } from '../hooks/useStoreProducts';
-import { MOCK_INGREDIENTS } from '../constants';
 import {
   CatalogProduct,
   buildIngredientCartItem,
@@ -46,9 +45,7 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
     useApp();
   const { products } = useStoreProducts();
   // Same catalog the store tab sells from — recipe orders resolve to real products.
-  const storeCatalog: CatalogProduct[] = products.length
-    ? products
-    : (MOCK_INGREDIENTS as CatalogProduct[]);
+  const storeCatalog: CatalogProduct[] = products;
 
   const isSaved = savedRecipeIds.includes(recipe.id);
   const [missingAdded, setMissingAdded] = useState(false);
@@ -439,7 +436,11 @@ export const RecipeView: React.FC = () => {
         matchRatio,
       };
     });
-  }, [inventory, lang]);
+    // `recipes` was missing from the deps: with a bundled catalog always
+    // present on first render the memo happened to be right anyway, but a
+    // catalog that arrives from the network left this frozen at the empty
+    // first-render value — 25 recipes loaded and none of them listed.
+  }, [recipes, inventory, lang]);
 
   // Autocomplete Suggestions popup list
   const searchSuggestions = useMemo(() => {

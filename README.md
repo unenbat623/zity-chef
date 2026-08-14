@@ -148,23 +148,25 @@ Auth is real (Supabase Auth) and each user's fridge/orders are isolated by
 **Row Level Security**. To enable it:
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. **SQL Editor → New Query** → paste & run [`server/db/schema.sql`](server/db/schema.sql)
-   (creates tables, RLS policies, and the profile-on-signup trigger).
+2. Set `DIRECT_URL` in `.env` and run `npm run db:push` — this applies
+   [`supabase/migrations/`](supabase/migrations/): tables, RLS policies, the
+   profile-on-signup trigger, the `uploads` storage bucket, and the recipe and
+   store catalog.
 3. **Authentication → Providers**: enable **Anonymous sign-ins** (every device
    gets its own isolated data instantly), **Email**, and **Google** (optional).
    For phone OTP, configure an SMS provider (e.g. Twilio) under Phone.
-4. **Storage → New bucket**: create a public bucket named `uploads` (used for
-   avatars/photos). Optional — without it, images fall back to inline base64.
-5. Copy the keys from **Project Settings → API** into `.env` (see above).
-6. Restart `npm run dev`.
+4. Copy the keys from **Project Settings → API** into `.env` (see above).
+5. Restart `npm run dev`.
 
 **Optional — shared cache/rate-limit at scale:** create an
 [Upstash Redis](https://upstash.com) database and set `UPSTASH_REDIS_REST_URL` +
 `UPSTASH_REDIS_REST_TOKEN`. Without them the server uses an in-memory cache
 (fine for a single instance).
 
-> Without Supabase configured the app still runs in **demo mode**: no accounts,
-> data is kept in the server's in-memory store (per session, lost on restart).
+> Without Supabase configured the app runs in a **local development mode**: no
+> accounts, data kept in the server's in-memory store (per session, lost on
+> restart) and no recipe or store catalog — those are served from the database
+> only. `NODE_ENV=production` refuses to start without Supabase credentials.
 
 ---
 
@@ -177,10 +179,13 @@ To launch the Express backend BFF server:
 npm run server
 ```
 
-The database schema is located in `server/db/schema.sql` and includes tables for:
-- `users`: User profiles and authentication metadata.
-- `inventory`: Ingredient names, quantities, units, categories, and expiration dates.
-- `orders`: Grocery store transactions and cart items.
+The schema lives in `supabase/migrations/` (applied with `npm run db:push`) and
+includes, among others:
+- `profiles`: user profiles and authentication metadata.
+- `inventory_items`: ingredient names, quantities, units, categories, expiry.
+- `orders`: grocery store transactions and cart items.
+- `recipes` / `store_products`: the catalog the app serves.
+- `community_posts`, `stories`, `direct_messages`, `user_follows`: the social side.
 
 ---
 

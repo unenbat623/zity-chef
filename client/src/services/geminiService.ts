@@ -96,40 +96,23 @@ export async function getSisterAdvice(
 }
 
 // ── Receipt OCR via server proxy ─────────────────────────────────────────────
+/**
+ * Reads a receipt photo. Throws when the scan fails — it used to answer with
+ * two invented ingredients, so a failed scan looked like a successful one and
+ * the user's fridge silently filled with groceries they never bought.
+ */
 export async function parseReceiptImage(
   base64Image: string,
   mimeType = 'image/jpeg'
 ): Promise<Partial<Ingredient>[]> {
-  try {
-    const res = await fetchWithRetry('/api/ai/ocr', {
-      method: 'POST',
-      body: JSON.stringify({ base64Image, mimeType }),
-    });
+  const res = await fetchWithRetry('/api/ai/ocr', {
+    method: 'POST',
+    body: JSON.stringify({ base64Image, mimeType }),
+  });
 
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    return data.items || [];
-  } catch {
-    // Demo fallback for offline / server down
-    return [
-      {
-        name: 'Шинэ сүү',
-        category: '🥛 Сүү, өндөг',
-        quantity: 1,
-        unit: 'л',
-        expiryDays: 4,
-        pricePerUnit: 3900,
-      },
-      {
-        name: 'Үхрийн гуяны мах',
-        category: '🥩 Мах',
-        quantity: 800,
-        unit: 'гр',
-        expiryDays: 3,
-        pricePerUnit: 24000,
-      },
-    ];
-  }
+  if (!res.ok) throw new Error(`OCR failed (HTTP ${res.status})`);
+  const data = await res.json();
+  return data.items || [];
 }
 
 // ── Health check ─────────────────────────────────────────────────────────────

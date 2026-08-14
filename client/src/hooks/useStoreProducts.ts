@@ -10,6 +10,8 @@ export interface StoreProduct {
   unit: string;
   pricePerUnit: number;
   imageUrl: string | null;
+  /** Shelf life in days, used when the product is added to the fridge. */
+  expiryDays: number;
 }
 
 const NO_PRODUCTS: StoreProduct[] = [];
@@ -28,5 +30,10 @@ export function useStoreProducts() {
     refetchInterval: 20_000,
     refetchOnWindowFocus: true,
   });
-  return { products: query.data ?? NO_PRODUCTS, loading: query.isLoading };
+  return {
+    products: query.data ?? NO_PRODUCTS,
+    loading: query.isLoading,
+    isError: query.isError,
+    refetch: query.refetch,
+  };
 }
