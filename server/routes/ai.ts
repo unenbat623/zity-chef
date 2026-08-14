@@ -8,7 +8,32 @@ const router = express.Router();
 // ── Provider config ───────────────────────────────────────────────────────────
 // AI_PROVIDER: 'gemini' | 'ollama' | 'auto' (default). `auto` prefers Gemini when
 // a key is set, otherwise falls back to a local (free) Ollama server.
-const GEMINI_KEY = process.env.GEMINI_API_KEY || '';
+// Tolerate the usual copy-paste damage: surrounding quotes and stray whitespace.
+const GEMINI_KEY = (process.env.GEMINI_API_KEY || '').trim().replace(/^["']|["']$/g, '');
+
+/**
+ * The SDK sends the key in the `x-goog-api-key` header, and HTTP headers are
+ * ByteStrings — a single non-Latin-1 character makes every request throw before
+ * it leaves the process. That looks exactly like an outage in the chat UI, so
+ * detect it up front and report it as the configuration error it is. A Cyrillic
+ * "Т"/"А"/"С" pasted with a Mongolian keyboard layout is the usual culprit.
+ */
+function describeKeyProblem(key: string): string | null {
+  if (!key) return 'GEMINI_API_KEY is empty';
+  const bad = [...key].findIndex((ch) => ch.charCodeAt(0) > 255);
+  if (bad !== -1) {
+    const ch = key[bad];
+    return `GEMINI_API_KEY contains a non-Latin character ${JSON.stringify(ch)} (U+${ch
+      .charCodeAt(0)
+      .toString(16)
+      .toUpperCase()
+      .padStart(4, '0')}) at position ${bad} — it cannot be sent as an HTTP header. Re-paste the key with a Latin keyboard layout.`;
+  }
+  return null;
+}
+
+const GEMINI_KEY_PROBLEM = describeKeyProblem(GEMINI_KEY);
+
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3.2:1b';
 const PROVIDER =
@@ -103,6 +128,17 @@ async function geminiChat(system: string, message: string): Promise<string> {
 async function chatComplete(system: string, message: string): Promise<string> {
   if (PROVIDER !== 'gemini') return ollamaChat(system, message);
 
+  // A malformed key can never succeed, so skip the doomed call and its retries
+  // and surface the real reason instead of a generic "temporarily unreachable".
+  if (GEMINI_KEY_PROBLEM) {
+    console.error('[ai] Misconfigured Gemini key:', GEMINI_KEY_PROBLEM);
+    try {
+      return await ollamaChat(system, message);
+    } catch {
+      throw new Error(`AI_MISCONFIGURED: ${GEMINI_KEY_PROBLEM}`);
+    }
+  }
+
   try {
     return await geminiChat(system, message);
   } catch (err) {
@@ -120,11 +156,16 @@ async function chatComplete(system: string, message: string): Promise<string> {
 function unavailableMessage(err: unknown, lang: string): string {
   const { status, message } = errorInfo(err);
   const quota = status === 429 || /RESOURCE_EXHAUSTED|quota/i.test(message);
+  // "Try again shortly" is a lie when the key itself is wrong — say so instead.
+  const misconfigured = /AI_MISCONFIGURED|ByteString/i.test(message);
+
   if (lang === 'mn') {
+    if (misconfigured) return 'AI тохиргоо буруу байна. Админ GEMINI_API_KEY-г шалгах шаардлагатай. ⚙️';
     return quota
       ? 'AI-н хүсэлтийн хязгаар түр дүүрлээ. 1 минутын дараа дахин оролдоно уу. 🙏'
       : 'AI туслах түр холбогдохгүй байна. Хэсэг хүлээгээд дахин оролдоно уу. 🙏';
   }
+  if (misconfigured) return 'The AI is misconfigured — an admin needs to check GEMINI_API_KEY. ⚙️';
   return quota
     ? 'The AI request limit is temporarily full. Please try again in a minute. 🙏'
     : 'The AI assistant is temporarily unreachable. Please try again shortly. 🙏';
@@ -146,6 +187,7 @@ router.get('/provider', async (req, res) => {
     provider: PROVIDER,
     model: PROVIDER === 'gemini' ? GEMINI_MODEL : OLLAMA_MODEL,
     keyConfigured: PROVIDER !== 'gemini' || Boolean(GEMINI_KEY),
+    keyProblem: PROVIDER === 'gemini' ? GEMINI_KEY_PROBLEM ?? undefined : undefined,
   };
 
   if (req.query.check !== '1') return res.json(info);
