@@ -606,10 +606,11 @@ const DirectChatDrawer: React.FC<{
             onClick={openProfile}
             className="flex items-center gap-2.5 flex-1 min-w-0 text-left rounded-2xl p-1 -m-1 hover:bg-pestle-card transition-colors"
           >
-            <img
+            <SmartImage
               src={recipient.avatar}
               alt=""
-              className="w-10 h-10 rounded-full border border-pestle-border object-cover shrink-0"
+              emoji="👨‍🍳"
+              className="w-10 h-10 rounded-full border border-pestle-border shrink-0"
             />
             <div className="min-w-0">
               <h3 className="font-extrabold text-sm text-pestle-text truncate">{recipient.name}</h3>
@@ -670,10 +671,11 @@ const DirectChatDrawer: React.FC<{
 
           {ready && messages.length === 0 && (
             <div className="h-full flex flex-col items-center justify-center text-center gap-3 px-4">
-              <img
+              <SmartImage
                 src={recipient.avatar}
                 alt=""
-                className="w-20 h-20 rounded-full border-2 border-pestle-border object-cover"
+                emoji="👨‍🍳"
+                className="w-20 h-20 rounded-full border-2 border-pestle-border"
               />
               <div className="space-y-1">
                 <h4 className="text-sm font-black text-pestle-text">
@@ -726,10 +728,11 @@ const DirectChatDrawer: React.FC<{
                   <div className={`flex items-end gap-2 ${m.mine ? 'justify-end' : 'justify-start'}`}>
                     {!m.mine &&
                       (endsRun ? (
-                        <img
+                        <SmartImage
                           src={recipient.avatar}
                           alt=""
-                          className="w-6 h-6 rounded-full object-cover shrink-0 mb-4"
+                          emoji="👨‍🍳"
+                          className="w-6 h-6 rounded-full shrink-0 mb-4"
                         />
                       ) : (
                         <div className="w-6 shrink-0" />
@@ -1050,10 +1053,11 @@ const PostCard: React.FC<{
             aria-label={post.user.name}
             className="p-[2px] rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-fuchsia-600 shrink-0"
           >
-            <img
+            <SmartImage
               src={post.user.avatar}
-              className="w-9 h-9 rounded-full border-2 border-pestle-card object-cover"
               alt=""
+              emoji="👨‍🍳"
+              className="w-9 h-9 rounded-full border-2 border-pestle-card"
             />
           </button>
           <div className="flex-1 min-w-0">

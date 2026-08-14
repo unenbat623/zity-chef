@@ -100,13 +100,3 @@ export function useUserProfile(target: ProfileTarget | null, onFollowError?: () 
     followPending: followMutation.isPending,
   };
 }
-
-/** The signed-in user's own social counters, for the profile screen. */
-export function useMySocialStats(name: string) {
-  const query = useQuery({
-    queryKey: ['community', 'user', 'me'],
-    queryFn: () => fetchProfile({ id: 'me', name }),
-    staleTime: 15_000,
-  });
-  return query.data?.stats ?? null;
-}

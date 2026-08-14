@@ -1,24 +1,30 @@
 import React, { useEffect } from 'react';
 import { motion } from 'motion/react';
-import { X, UserPlus, UserCheck, MessageSquare, Grid3x3, Heart, Loader2 } from 'lucide-react';
+import {
+  X,
+  UserPlus,
+  UserCheck,
+  MessageSquare,
+  Grid3x3,
+  Users,
+  Heart,
+  Loader2,
+} from 'lucide-react';
+import { StatRow, PostsGrid } from './ProfileParts';
 import { SmartImage } from './SmartImage';
 import { useToast } from './Toast';
 import { useApp } from '../context/AppContext';
 import { useUserProfile } from '../hooks/useUserProfile';
 import type { CommunityUser } from '../types';
 
-// ── One stat cell in the header row ───────────────────────────────────────────
-const Stat: React.FC<{ value: number; label: string }> = ({ value, label }) => (
-  <div className="flex-1 text-center">
-    <p className="text-base font-black text-pestle-text tabular-nums">{value}</p>
-    <p className="text-[10px] font-bold text-gray-400 mt-0.5">{label}</p>
-  </div>
-);
-
 /**
  * A chef's public profile: their posts, follower counts, and the follow /
  * message actions. Opened by tapping any avatar or name in the community feed,
  * the story player or the chat header.
+ *
+ * Deliberately laid out like the signed-in user's own Profile tab — same cover,
+ * same avatar shape, same stat card, same post grid — so the two read as one
+ * screen with different actions.
  */
 export const UserProfileSheet: React.FC<{
   target: CommunityUser;
@@ -46,6 +52,13 @@ export const UserProfileSheet: React.FC<{
   const isFollowing = Boolean(profile?.isFollowing);
   const canFollow = Boolean(profile) && !profile!.isMe;
 
+  const statItems = [
+    { label: t('userProfile_posts'), value: stats?.posts ?? 0, icon: Grid3x3 },
+    { label: t('userProfile_followers'), value: stats?.followers ?? 0, icon: Users },
+    { label: t('userProfile_following'), value: stats?.following ?? 0, icon: UserPlus },
+    { label: t('userProfile_likes'), value: stats?.likes ?? 0, icon: Heart },
+  ];
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -63,15 +76,19 @@ export const UserProfileSheet: React.FC<{
         exit={{ opacity: 0, y: 40, scale: 0.97 }}
         transition={{ type: 'spring', damping: 26, stiffness: 240 }}
         onClick={(e) => e.stopPropagation()}
-        className="w-full sm:max-w-md bg-pestle-card border border-pestle-border rounded-t-[32px] sm:rounded-[32px] overflow-hidden shadow-2xl max-h-[90vh] flex flex-col"
+        className="w-full sm:max-w-md bg-pestle-card border border-pestle-border rounded-t-[32px] sm:rounded-[32px] overflow-hidden shadow-2xl max-h-[92vh] flex flex-col"
       >
         {/* Cover — the app accent is user-configurable, so this stays a single
             brand colour rather than a gradient that can clash with it. */}
-        <div className="relative h-24 bg-mango shrink-0">
+        <div className="relative h-28 bg-mango shrink-0">
           <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute -top-8 -right-6 w-32 h-32 bg-white/20 rounded-full blur-2xl" />
-            <div className="absolute -bottom-10 -left-8 w-32 h-32 bg-black/15 rounded-full blur-2xl" />
+            <div className="absolute -top-10 -right-8 w-40 h-40 bg-white/20 rounded-full blur-2xl" />
+            <div className="absolute -bottom-14 -left-8 w-36 h-36 bg-black/15 rounded-full blur-2xl" />
           </div>
+
+          {/* Grab handle — this is a bottom sheet on phones. */}
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full bg-white/40 sm:hidden" />
+
           <button
             onClick={onClose}
             aria-label={t('chat_close')}
@@ -79,53 +96,45 @@ export const UserProfileSheet: React.FC<{
           >
             <X size={16} />
           </button>
+
           {/* The avatar lives in the cover, not in the scrolling body: pulled up
               with a negative margin it was clipped by the body's overflow. */}
-          <img
-            src={avatar}
-            alt={name}
-            className="absolute -bottom-10 left-5 w-20 h-20 rounded-3xl border-4 border-pestle-card object-cover shadow-xl bg-pestle-bg"
-          />
+          <div className="absolute -bottom-11 left-5">
+            {/* SmartImage, not a bare <img>: these avatars are remote (dicebear
+                / Google) and a failed or rate-limited load left a blank hole
+                where the face should be. */}
+            <SmartImage
+              src={avatar}
+              alt=""
+              emoji="👨‍🍳"
+              className="w-[88px] h-[88px] rounded-3xl border-4 border-pestle-card shadow-xl bg-pestle-bg"
+            />
+            {isFollowing && (
+              <span className="absolute -bottom-1 -right-1 w-7 h-7 rounded-2xl bg-mango text-white border-2 border-pestle-card shadow-md flex items-center justify-center">
+                <UserCheck size={13} />
+              </span>
+            )}
+          </div>
         </div>
 
-        <div className="px-5 pb-5 pt-12 flex-1 overflow-y-auto">
-          <div>
-            <h3 className="text-base font-black text-pestle-text truncate">{name}</h3>
-            <span className="text-[10px] font-bold text-mango-ink bg-mango/12 px-2 py-0.5 rounded-full inline-block mt-1">
-              👨‍🍳 {t('userProfile_chefBadge')}
-            </span>
-          </div>
+        <div className="px-5 pb-6 pt-14 flex-1 overflow-y-auto">
+          <h3 className="text-lg font-black text-pestle-text truncate tracking-tight">{name}</h3>
+          <span className="text-[10px] font-bold text-mango-ink bg-mango/12 px-2 py-0.5 rounded-full inline-block mt-1.5">
+            👨‍🍳 {t('userProfile_chefBadge')}
+          </span>
 
-          {/* Stats */}
-          <div className="flex items-stretch gap-1 mt-4 bg-pestle-bg border border-pestle-border rounded-2xl py-3">
-            {stats || unavailable ? (
-              <>
-                <Stat value={stats?.posts ?? 0} label={t('userProfile_posts')} />
-                <div className="w-px bg-pestle-border" />
-                <Stat value={stats?.followers ?? 0} label={t('userProfile_followers')} />
-                <div className="w-px bg-pestle-border" />
-                <Stat value={stats?.following ?? 0} label={t('userProfile_following')} />
-                <div className="w-px bg-pestle-border" />
-                <Stat value={stats?.likes ?? 0} label={t('userProfile_likes')} />
-              </>
-            ) : (
-              [0, 1, 2, 3].map((i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1.5 animate-pulse">
-                  <div className="h-4 w-8 bg-pestle-border/60 rounded" />
-                  <div className="h-2 w-10 bg-pestle-border/40 rounded" />
-                </div>
-              ))
-            )}
+          <div className="mt-4">
+            <StatRow items={statItems} loading={loading} />
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2.5 mt-4">
+          <div className="flex gap-2.5 mt-3">
             {canFollow && (
               <button
                 onClick={toggleFollow}
                 disabled={followPending}
                 aria-pressed={isFollowing}
-                className={`flex-1 py-3 rounded-2xl text-xs font-black flex items-center justify-center gap-1.5 transition-all disabled:opacity-60 ${
+                className={`flex-1 py-3 rounded-2xl text-xs font-black flex items-center justify-center gap-1.5 transition-all disabled:opacity-60 active:scale-[0.98] ${
                   isFollowing
                     ? 'bg-pestle-bg border border-pestle-border text-pestle-text hover:border-mango'
                     : 'btn-primary shadow-lg shadow-mango/20'
@@ -149,7 +158,7 @@ export const UserProfileSheet: React.FC<{
             ) : (
               <button
                 onClick={() => onMessage({ ...target, name, avatar })}
-                className="flex-1 py-3 rounded-2xl text-xs font-black flex items-center justify-center gap-1.5 bg-pestle-bg border border-pestle-border text-pestle-text hover:border-mango transition-colors"
+                className="flex-1 py-3 rounded-2xl text-xs font-black flex items-center justify-center gap-1.5 bg-pestle-bg border border-pestle-border text-pestle-text hover:border-mango transition-colors active:scale-[0.98]"
               >
                 <MessageSquare size={14} className="text-mango-ink" />
                 {t('userProfile_message')}
@@ -158,18 +167,12 @@ export const UserProfileSheet: React.FC<{
           </div>
 
           {/* Posts */}
-          <div className="mt-5">
+          <div className="mt-6">
             <h4 className="text-[11px] font-black text-gray-400 flex items-center gap-1.5 mb-2.5">
               <Grid3x3 size={13} /> {t('userProfile_postsSection')}
             </h4>
 
-            {loading && (
-              <div className="grid grid-cols-3 gap-1.5">
-                {[0, 1, 2].map((i) => (
-                  <div key={i} className="aspect-square rounded-xl bg-pestle-bg animate-pulse" />
-                ))}
-              </div>
-            )}
+            {loading && <PostsGrid posts={[]} loading />}
 
             {(error || unavailable) && (
               <p className="text-xs font-semibold text-gray-400 text-center py-6">
@@ -178,39 +181,15 @@ export const UserProfileSheet: React.FC<{
             )}
 
             {profile && profile.posts.length === 0 && (
-              <p className="text-xs font-semibold text-gray-400 text-center py-6">
-                {t('userProfile_noPosts')}
-              </p>
-            )}
-
-            {profile && profile.posts.length > 0 && (
-              <div className="grid grid-cols-3 gap-1.5">
-                {profile.posts.map((post) => (
-                  <div
-                    key={post.id}
-                    className="aspect-square rounded-xl overflow-hidden bg-pestle-bg border border-pestle-border relative group"
-                  >
-                    {post.image ? (
-                      <SmartImage
-                        src={post.image}
-                        alt={post.caption}
-                        emoji="🍽️"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <p className="p-2 text-[9px] font-semibold text-pestle-text line-clamp-4 leading-snug">
-                        {post.caption}
-                      </p>
-                    )}
-                    {post.likes > 0 && (
-                      <span className="absolute bottom-1 right-1 text-[9px] font-black text-white bg-black/55 rounded-full px-1.5 py-0.5 flex items-center gap-0.5">
-                        <Heart size={8} className="fill-white" /> {post.likes}
-                      </span>
-                    )}
-                  </div>
-                ))}
+              <div className="text-center py-8 space-y-2">
+                <div className="w-12 h-12 rounded-2xl bg-pestle-bg border border-pestle-border flex items-center justify-center mx-auto text-gray-400">
+                  <Grid3x3 size={20} />
+                </div>
+                <p className="text-xs font-semibold text-gray-400">{t('userProfile_noPosts')}</p>
               </div>
             )}
+
+            {profile && profile.posts.length > 0 && <PostsGrid posts={profile.posts} />}
           </div>
         </div>
       </motion.div>
