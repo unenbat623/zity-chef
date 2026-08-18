@@ -39,6 +39,10 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
     <link rel="manifest" href="/manifest.json" />
 
+    <!-- Sets the colour scheme before the first paint (no flash of light theme).
+         External, not inline, so the CSP can forbid inline scripts. -->
+    <script src="/theme-init.js"></script>
+
     <!-- ── Preconnect Fonts ───────────────────────────────────── -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -47,15 +51,5 @@
   <body class="bg-pestle-bg antialiased text-pestle-text selection:bg-mango selection:text-white">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script>
-      // Register service worker — works on both localhost (dev) and HTTPS (prod)
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then((reg) => console.log('[SW] Registered, scope:', reg.scope))
-            .catch((err) => console.warn('[SW] Registration failed:', err));
-        });
-      }
-    </script>
   </body>
 </html>

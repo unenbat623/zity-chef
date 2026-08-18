@@ -36,7 +36,7 @@ export const HeaderNav: React.FC = () => {
             <h1 className="font-extrabold text-sm sm:text-lg leading-tight tracking-tight flex items-center gap-1 text-pestle-text truncate">
               <span className="truncate">Zity Chef</span>
               {subscription === 'pro' && (
-                <span className="text-[8px] sm:text-[10px] bg-gradient-to-r from-amber-400 to-orange-500 text-white font-black px-1.5 py-0.2 rounded-full uppercase tracking-wider flex items-center gap-0.5 shadow-xs shrink-0">
+                <span className="text-[8px] sm:text-[10px] bg-gradient-to-r from-amber-600 to-orange-600 text-white font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-0.5 shadow-xs shrink-0">
                   <Sparkles size={8} /> PRO
                 </span>
               )}
@@ -59,6 +59,7 @@ export const HeaderNav: React.FC = () => {
             onClick={() => setShowAuthModal(true)}
             className="flex items-center gap-1.5 bg-pestle-card border border-pestle-border p-1 sm:px-3 sm:py-1.5 rounded-xl text-xs font-bold text-pestle-text hover:border-mango transition-all active:scale-95 shadow-xs cursor-pointer"
             title={t('header_profileTitle')}
+            aria-label={t('header_profileTitle')}
           >
             <div
               className={`w-6 h-6 rounded-lg overflow-hidden flex items-center justify-center bg-gradient-to-br ${profile.coverGradient} shrink-0`}
@@ -82,8 +83,9 @@ export const HeaderNav: React.FC = () => {
           <select
             value={lang}
             onChange={(e) => setLang(e.target.value as any)}
-            className="h-8 max-w-[70px] sm:max-w-none bg-pestle-card border border-pestle-border hover:border-mango/60 rounded-xl px-1.5 text-[11px] font-black text-pestle-text shadow-xs cursor-pointer focus:outline-none"
+            className="h-8 shrink-0 max-w-[70px] sm:max-w-none bg-pestle-card border border-pestle-border hover:border-mango/60 rounded-xl px-1.5 text-[11px] font-black text-pestle-text shadow-xs cursor-pointer focus:outline-none"
             title={t('header_switchLang')}
+            aria-label={t('header_switchLang')}
           >
             <option value="mn">🇲🇳 MN</option>
             <option value="en">🇬🇧 EN</option>
@@ -99,6 +101,7 @@ export const HeaderNav: React.FC = () => {
                 : 'bg-amber-500/10 border-amber-500/30 hover:border-mango'
             }`}
             title={t('header_toggleTheme')}
+            aria-label={t('header_toggleTheme')}
           >
             <AnimatePresence mode="wait" initial={false}>
               {isDark ? (

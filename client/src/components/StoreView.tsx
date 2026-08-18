@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useId, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import {
   Store,
@@ -26,6 +26,24 @@ import {
 
 type CatalogItem = CatalogProduct;
 
+// Orders were all rendered as "paid • delivering" regardless of their real
+// status, so a cancelled or completed order looked like one still on its way.
+const ORDER_STATUS_KEYS: Record<string, string> = {
+  pending: 'store_statusPending',
+  paid: 'store_statusPaid',
+  delivering: 'store_statusDelivering',
+  completed: 'store_statusCompleted',
+  cancelled: 'store_statusCancelled',
+};
+
+const ORDER_STATUS_STYLES: Record<string, string> = {
+  pending: 'bg-amber-500/15 text-amber-700 dark:text-amber-400',
+  paid: 'bg-mint/15 text-mint-ink',
+  delivering: 'bg-blue-500/15 text-blue-700 dark:text-blue-400',
+  completed: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
+  cancelled: 'bg-red-500/10 text-red-500',
+};
+
 export const StoreView: React.FC = () => {
   const {
     cart,
@@ -40,6 +58,7 @@ export const StoreView: React.FC = () => {
     setActiveTab,
     lang,
     savedRecipeIds,
+    formatPrice,
     t,
   } = useApp();
   const { products, loading, isError: catalogError } = useStoreProducts();
@@ -47,9 +66,17 @@ export const StoreView: React.FC = () => {
   const catalog: CatalogItem[] = products;
   const nameOf = (item: CatalogItem) => (lang === 'en' && item.nameEn ? item.nameEn : item.name);
 
+  const addressId = useId();
   const [address, setAddress] = useState<string>('Сүхбаатар дүүрэг, 1-р хороо, Zity Tower 402');
   const [activeSubTab, setActiveSubTab] = useState<'catalog' | 'cart' | 'orders'>('catalog');
   const [addedBundleIds, setAddedBundleIds] = useState<string[]>([]);
+
+  // "Added" is a property of the current cart, not a permanent flag. Checkout
+  // empties the cart but this view stays mounted, so a bought bundle used to
+  // stay disabled forever and could never be ordered again.
+  useEffect(() => {
+    if (cart.length === 0 && addedBundleIds.length > 0) setAddedBundleIds([]);
+  }, [cart.length, addedBundleIds.length]);
 
   // Recipes mapped onto the store catalog: buyable ingredient bundles.
   // Saved recipes come first, then the ones the store covers best.
@@ -79,10 +106,13 @@ export const StoreView: React.FC = () => {
     );
   };
 
+  const addressValid = address.trim().length >= 8;
+
   const handleCheckout = () => {
-    if (cart.length === 0) return;
-    triggerPayment(totalCartAmount, t('store_checkoutTitle'), (paymentMethod) => {
-      createOrder(address, paymentMethod);
+    // An empty or throwaway address used to sail straight through to payment.
+    if (cart.length === 0 || !addressValid) return;
+    triggerPayment(totalCartAmount, t('store_checkoutTitle'), (paymentMethod, invoiceId) => {
+      createOrder(address, paymentMethod, invoiceId);
       setActiveSubTab('orders');
     }, 'qpay');
   };
@@ -114,7 +144,7 @@ export const StoreView: React.FC = () => {
             </span>
             <button
               onClick={() => setActiveTab('dashboard')}
-              className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white px-3 py-1.5 text-[11px] font-black text-emerald-700 hover:bg-emerald-50"
+              className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white px-3.5 py-2.5 text-[11px] font-black text-emerald-700 hover:bg-emerald-50"
             >
               <LayoutDashboard size={14} />
               {t('store_openDashboard')}
@@ -132,7 +162,8 @@ export const StoreView: React.FC = () => {
             <button
               key={id}
               onClick={() => setActiveSubTab(id as 'catalog' | 'cart' | 'orders')}
-              className={`px-3 py-2 rounded-lg transition-all text-center ${
+              aria-pressed={activeSubTab === id}
+              className={`px-2 sm:px-3 py-2 rounded-lg transition-all text-center truncate ${
                 activeSubTab === id
                   ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm'
                   : 'text-gray-400 hover:text-pestle-text'
@@ -146,19 +177,18 @@ export const StoreView: React.FC = () => {
       {activeSubTab === 'catalog' && (
         <div className="space-y-6">
           {/* Nearest Supermarket Banner */}
-          <div className="pestle-card p-4 flex items-center justify-between bg-emerald-500/8 border-emerald-500/20 rounded-3xl">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-emerald-600 text-white rounded-xl flex items-center justify-center shadow-md">
-                <Store size={20} />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-pestle-text">Zity Supermarket #04</h4>
-                <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold">
-                  {t('store_nearestInfo')}
-                </p>
-              </div>
+          {/* Informational only — it used to show a chevron affordance with no
+              onClick behind it, so tapping the card did nothing. */}
+          <div className="pestle-card p-4 flex items-center gap-3 bg-emerald-500/8 border-emerald-500/20 rounded-3xl">
+            <div className="w-10 h-10 shrink-0 bg-emerald-600 text-white rounded-xl flex items-center justify-center shadow-md">
+              <Store size={20} />
             </div>
-            <ChevronRight size={18} className="text-emerald-700 dark:text-emerald-400" />
+            <div className="min-w-0">
+              <h4 className="text-xs font-bold text-pestle-text truncate">Zity Supermarket #04</h4>
+              <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold line-clamp-2">
+                {t('store_nearestInfo')}
+              </p>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -184,13 +214,17 @@ export const StoreView: React.FC = () => {
                 </h3>
                 <button
                   onClick={() => setActiveTab('recipe')}
-                  className="text-[11px] font-black text-mango-ink hover:text-amber-600 bg-mango/10 hover:bg-mango/20 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1 shrink-0"
+                  className="text-[11px] font-black text-mango-ink hover:text-amber-600 bg-mango/10 hover:bg-mango/20 px-3.5 py-2.5 rounded-full transition-colors flex items-center gap-1 shrink-0"
                 >
                   {t('store_openRecipes')} <ChevronRight size={13} />
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Two columns only from lg up. At 768px the sidebar (224px) plus a
+                  2-column split left each card ~228px — image + button ate all
+                  of it and the middle column collapsed to ~40px, rendering the
+                  text one character per line. */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 {recipeBundles.map((bundle) => {
                   const isAdded = addedBundleIds.includes(bundle.recipe.id);
                   const title =
@@ -210,14 +244,14 @@ export const StoreView: React.FC = () => {
                       />
                       <div className="flex-1 min-w-0 space-y-1">
                         <h4 className="text-xs font-black text-pestle-text truncate">{title}</h4>
-                        <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full inline-block">
+                        <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full inline-block whitespace-nowrap max-w-full truncate">
                           {t('store_bundleAvailable', {
                             matched: bundle.matched.length,
                             total: bundle.totalIngredients,
                           })}
                         </span>
-                        <span className="text-xs font-black text-mango-ink block">
-                          ≈ ₮{bundle.totalPrice.toLocaleString()}
+                        <span className="text-xs font-black text-mango-ink block whitespace-nowrap truncate">
+                          ≈ {formatPrice(bundle.totalPrice)}
                         </span>
                       </div>
                       <button
@@ -306,7 +340,7 @@ export const StoreView: React.FC = () => {
                       <div>
                         <span className="text-[9px] text-gray-400 font-bold block">{t('store_unitPrice')}</span>
                         <span className="text-xs font-black text-mango-ink">
-                          ₮{(item.pricePerUnit || 3000).toLocaleString()}
+                          {formatPrice(item.pricePerUnit || 3000)}
                         </span>
                       </div>
 
@@ -346,24 +380,25 @@ export const StoreView: React.FC = () => {
               {/* Cart List */}
               <div className="space-y-3">
                 {cart.map((item) => (
-                  <div key={item.id} className="pestle-card p-4 flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{item.emoji}</span>
-                      <div>
-                        <h4 className="text-xs font-bold text-pestle-text">{item.name}</h4>
-                        <span className="text-[10px] text-gray-400">
-                          {item.quantity} {item.unit} x ₮{item.pricePerUnit.toLocaleString()}
+                  <div key={item.id} className="pestle-card p-3.5 sm:p-4 flex justify-between items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="text-2xl shrink-0">{item.emoji}</span>
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-bold text-pestle-text truncate">{item.name}</h4>
+                        <span className="text-[10px] text-gray-400 block truncate">
+                          {item.quantity} {item.unit} × {formatPrice(item.pricePerUnit)}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs font-black text-mango-ink">
-                        ₮{item.totalPrice.toLocaleString()}
+                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                      <span className="text-xs font-black text-mango-ink tabular-nums">
+                        {formatPrice(item.totalPrice)}
                       </span>
                       <button
                         onClick={() => removeFromCart(item.id)}
-                        className="text-gray-400 hover:text-red-500 p-1"
+                        aria-label={`${t('store_subtabCart')}: ${item.name}`}
+                        className="text-gray-400 hover:text-red-500 p-1.5 -m-0.5 rounded-lg"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -374,17 +409,22 @@ export const StoreView: React.FC = () => {
 
               {/* Delivery Address Input */}
               <div className="space-y-2">
-                <label className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
+                <label htmlFor={addressId} className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
                   <MapPin size={14} className="text-mango-ink" />
                   <span>{t('deliveryAddress')}</span>
                 </label>
                 <input
+                  id={addressId}
                   type="text"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   placeholder={t('enterAddress')}
+                  aria-invalid={!addressValid}
                   className="w-full bg-pestle-card border border-pestle-border rounded-xl px-4 py-3 text-xs font-medium text-pestle-text focus:outline-none focus:border-mango"
                 />
+                {!addressValid && (
+                  <p className="text-[10px] font-semibold text-red-500">{t('store_addressRequired')}</p>
+                )}
               </div>
 
               {/* Order Summary & QPay Checkout */}
@@ -392,17 +432,18 @@ export const StoreView: React.FC = () => {
                 <div className="flex justify-between items-center text-sm font-bold border-b border-pestle-border/60 pb-3">
                   <span className="text-pestle-text">{t('total')}</span>
                   <span className="text-xl font-black text-mango-ink">
-                    ₮{totalCartAmount.toLocaleString()}
+                    {formatPrice(totalCartAmount)}
                   </span>
                 </div>
 
                 <button
                   onClick={handleCheckout}
-                  className="w-full btn-primary py-4 font-bold flex items-center justify-center gap-2 shadow-xl shadow-mango/25"
+                  disabled={!addressValid}
+                  className="w-full btn-primary py-4 font-bold flex items-center justify-center gap-2 shadow-xl shadow-mango/25 disabled:opacity-50"
                 >
                   <ShieldCheck size={20} />
                   <span>
-                    {t('checkout')} (₮{totalCartAmount.toLocaleString()})
+                    {t('checkout')} ({formatPrice(totalCartAmount)})
                   </span>
                 </button>
               </div>
@@ -432,24 +473,28 @@ export const StoreView: React.FC = () => {
           ) : (
             orders.map((order) => (
               <div key={order.id} className="pestle-card p-4 space-y-3">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <span className="text-xs font-bold text-pestle-text">{order.id}</span>
-                    <span className="text-[10px] text-gray-400 block">{order.createdAt}</span>
+                <div className="flex justify-between items-start gap-2">
+                  <div className="min-w-0">
+                    <span className="text-xs font-bold text-pestle-text block truncate">{order.id}</span>
+                    <span className="text-[10px] text-gray-400 block truncate">{order.createdAt}</span>
                   </div>
-                  <span className="text-[10px] font-bold bg-mint/15 text-mint-ink px-2.5 py-1 rounded-full flex items-center gap-1">
-                    <CheckCircle size={10} /> {t('store_paidDelivering')}
+                  <span
+                    className={`text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shrink-0 whitespace-nowrap ${
+                      ORDER_STATUS_STYLES[order.status] ?? ORDER_STATUS_STYLES.paid
+                    }`}
+                  >
+                    <CheckCircle size={10} className="shrink-0" /> {t(ORDER_STATUS_KEYS[order.status] ?? 'store_statusPaid')}
                   </span>
                 </div>
 
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-gray-500 line-clamp-2">
                   {order.items.map((i) => i.name).join(', ')}
                 </div>
 
-                <div className="flex justify-between items-center pt-2 border-t border-pestle-border/60 text-xs">
-                  <span className="text-gray-400 font-medium">{order.address}</span>
-                  <span className="font-black text-mango-ink">
-                    ₮{order.totalAmount.toLocaleString()}
+                <div className="flex justify-between items-start gap-3 pt-2 border-t border-pestle-border/60 text-xs">
+                  <span className="text-gray-400 font-medium min-w-0 line-clamp-2">{order.address}</span>
+                  <span className="font-black text-mango-ink shrink-0 tabular-nums">
+                    {formatPrice(order.totalAmount)}
                   </span>
                 </div>
               </div>

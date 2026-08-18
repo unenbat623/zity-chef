@@ -1,7 +1,8 @@
 import { supabase } from './supabase';
 
-// Public Storage bucket for user-uploaded images (avatars, community photos).
-// Create it in Supabase → Storage → New bucket named "uploads" (public).
+// Public Storage bucket for user-uploaded images (avatars, ingredient photos,
+// community posts). Created by migration 20260814140000_uploads_bucket.sql —
+// no manual dashboard step is needed.
 const BUCKET = 'uploads';
 
 /**

@@ -68,26 +68,26 @@ export const FridgeView: React.FC = () => {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           onClick={() => setFilterExpiringOnly(!filterExpiringOnly)}
-          className={`p-4 rounded-2xl border cursor-pointer flex items-center justify-between transition-all ${
+          className={`p-3.5 sm:p-4 rounded-2xl border cursor-pointer flex items-center justify-between gap-3 transition-all ${
             filterExpiringOnly
               ? 'bg-red-500 text-white border-red-600 shadow-md'
               : 'bg-red-500/10 border-red-500/20 text-red-500 hover:bg-red-500/15'
           }`}
         >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-red-500/20 text-red-500 rounded-xl flex items-center justify-center">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 shrink-0 bg-red-500/20 text-red-500 rounded-xl flex items-center justify-center">
               <AlertTriangle size={20} />
             </div>
-            <div>
+            <div className="min-w-0">
               <h4 className="text-xs font-bold">
                 {t('expiringAlert')} ({expiringCount})
               </h4>
-              <p className="text-[10px] opacity-80">
+              <p className="text-[10px] opacity-80 line-clamp-2">
                 {filterExpiringOnly ? t('fridge_clearFilter') : t('fridge_expiringSubtitle')}
               </p>
             </div>
           </div>
-          <span className="text-xs font-extrabold underline">
+          <span className="text-xs font-extrabold underline shrink-0">
             {filterExpiringOnly ? t('fridge_view') : t('fridge_filter')}
           </span>
         </motion.div>
@@ -110,7 +110,7 @@ export const FridgeView: React.FC = () => {
         <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 sm:-mx-6 px-4 sm:px-6 no-scrollbar">
           <button
             onClick={() => setSelectedCat('all')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+            className={`px-3 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
               selectedCat === 'all'
                 ? 'bg-mango text-white'
                 : 'bg-pestle-card border border-pestle-border text-gray-400 hover:text-pestle-text'
@@ -122,7 +122,7 @@ export const FridgeView: React.FC = () => {
             <button
               key={cat}
               onClick={() => setSelectedCat(cat)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+              className={`px-3 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
                 selectedCat === cat
                   ? 'bg-mango text-white'
                   : 'bg-pestle-card border border-pestle-border text-gray-400 hover:text-pestle-text'
@@ -151,7 +151,7 @@ export const FridgeView: React.FC = () => {
 
       {/* Loading skeleton */}
       {inventoryLoading && !inventoryError && inventory.length === 0 && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="pestle-card p-3.5 animate-pulse opacity-70">
               <div className="w-full h-24 rounded-xl bg-pestle-bg mb-3" />
@@ -191,8 +191,13 @@ export const FridgeView: React.FC = () => {
                   <div className="absolute inset-0 bg-red-500/10 rounded-xl border border-red-400/40" />
                 )}
 
-                {/* Edit Icon Overlay on Hover */}
-                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
+                {/* Edit affordance. Hover-only meant a touch user had no hint
+                    the card was editable at all, so phones get a permanent
+                    corner badge and pointers keep the full-cover overlay. */}
+                <span className="md:hidden absolute top-1.5 right-1.5 w-7 h-7 rounded-lg bg-black/45 backdrop-blur-sm text-white flex items-center justify-center">
+                  <Edit size={13} />
+                </span>
+                <div className="hidden md:flex absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity items-center justify-center text-white text-xs font-bold gap-1">
                   <Edit size={14} /> {t('fridge_edit')}
                 </div>
               </div>

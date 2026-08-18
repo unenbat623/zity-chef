@@ -54,3 +54,28 @@ export async function getAccessToken(): Promise<string | null> {
   const { data } = await supabase.auth.getSession();
   return data.session?.access_token ?? null;
 }
+
+// A single refresh at a time: when several API calls hit a 401 together (tab
+// woke from sleep, token expired), they all await the same attempt instead of
+// racing Supabase with parallel refreshes.
+let refreshInFlight: Promise<boolean> | null = null;
+
+/**
+ * Force-refreshes the session after the server rejected our token (401).
+ * Returns true when a usable session exists afterwards. On failure Supabase
+ * emits SIGNED_OUT, which AuthContext handles by re-establishing an anonymous
+ * session.
+ */
+export async function refreshAccessToken(): Promise<boolean> {
+  if (!supabase) return false;
+  if (!refreshInFlight) {
+    refreshInFlight = supabase.auth
+      .refreshSession()
+      .then(({ data, error }) => !error && Boolean(data.session))
+      .catch(() => false)
+      .finally(() => {
+        refreshInFlight = null;
+      });
+  }
+  return refreshInFlight;
+}

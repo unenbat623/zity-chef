@@ -7,11 +7,30 @@ import { HeaderNav } from './components/HeaderNav';
 import { BottomNav } from './components/BottomNav';
 import { SidebarNav } from './components/SidebarNav';
 import { FridgeView } from './components/FridgeView';
-import { PaymentModal } from './components/PaymentModal';
-import { SubscriptionModal } from './components/SubscriptionModal';
-import { ReceiptScannerModal } from './components/ReceiptScannerModal';
-import { CookieBanner } from './components/CookieBanner';
 import { useRealtimeSync } from './hooks/useRealtimeSync';
+
+// ── Global overlays ───────────────────────────────────────────────────────────
+// Mounted on every screen but shown rarely, so they load on demand rather than
+// riding along in the entry chunk. Each already renders null while closed, so
+// there is nothing to show behind a Suspense fallback.
+const PaymentModal = lazy(() =>
+  import('./components/PaymentModal').then((m) => ({ default: m.PaymentModal }))
+);
+const SubscriptionModal = lazy(() =>
+  import('./components/SubscriptionModal').then((m) => ({ default: m.SubscriptionModal }))
+);
+const ReceiptScannerModal = lazy(() =>
+  import('./components/ReceiptScannerModal').then((m) => ({ default: m.ReceiptScannerModal }))
+);
+const PasswordRecoveryModal = lazy(() =>
+  import('./components/PasswordRecoveryModal').then((m) => ({ default: m.PasswordRecoveryModal }))
+);
+const OfflineBanner = lazy(() =>
+  import('./components/OfflineBanner').then((m) => ({ default: m.OfflineBanner }))
+);
+const CookieBanner = lazy(() =>
+  import('./components/CookieBanner').then((m) => ({ default: m.CookieBanner }))
+);
 
 // ── Route-level code splitting ────────────────────────────────────────────────
 // FridgeView (the default tab) stays eager for an instant first paint; the rest
@@ -69,7 +88,11 @@ const AppContent: React.FC = () => {
   const is404 = !validTabs.includes(activeTab);
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-pestle-bg text-pestle-text flex flex-row transition-colors duration-500">
+    // `100dvh`, not `h-screen`: on mobile Safari/Chrome `100vh` is the height
+    // with the URL bar collapsed, so the bottom nav sat below the fold until you
+    // scrolled. `w-full` rather than `w-screen` — `100vw` ignores the desktop
+    // scrollbar and produced a horizontal scroll on every page.
+    <div className="h-[100dvh] w-full overflow-hidden bg-pestle-bg text-pestle-text flex flex-row transition-colors duration-500">
       {/* Desktop Left Sidebar — hidden on mobile, shown md+ */}
       <SidebarNav />
 
@@ -78,8 +101,11 @@ const AppContent: React.FC = () => {
         {/* Sticky Header */}
         <HeaderNav />
 
-        {/* Main scrollable content area */}
+        {/* Main scrollable content area. The inner wrapper caps line length on
+            wide monitors — without it the views stretched edge to edge and a
+            four-column grid spread across ~2000px of empty space. */}
         <main className="flex-1 overflow-y-auto pb-24 md:pb-6">
+          <div className="w-full max-w-5xl mx-auto">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={activeTab}
@@ -102,6 +128,7 @@ const AppContent: React.FC = () => {
               </Suspense>
             </motion.div>
           </AnimatePresence>
+          </div>
         </main>
 
         {/* Below xl there is no room for the side panel, so the assistant lives
@@ -122,10 +149,14 @@ const AppContent: React.FC = () => {
       </Suspense>
 
       {/* Global modals */}
-      <PaymentModal />
-      <SubscriptionModal />
-      <ReceiptScannerModal />
-      <CookieBanner />
+      <Suspense fallback={null}>
+        <PaymentModal />
+        <SubscriptionModal />
+        <ReceiptScannerModal />
+        <PasswordRecoveryModal />
+        <OfflineBanner />
+        <CookieBanner />
+      </Suspense>
     </div>
   );
 };
@@ -140,7 +171,7 @@ const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="h-screen w-screen flex flex-col items-center justify-center bg-pestle-bg text-pestle-text gap-3">
+      <div className="h-[100dvh] w-full flex flex-col items-center justify-center bg-pestle-bg text-pestle-text gap-3">
         <div className="w-12 h-12 rounded-2xl bg-mango text-white font-black flex items-center justify-center text-xl shadow-lg animate-pulse">
           Z
         </div>

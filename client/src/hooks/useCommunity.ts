@@ -1,6 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { authedFetch } from '../lib/apiClient';
 
+/**
+ * Turns HTTP errors into rejected mutations. Without this every mutationFn
+ * resolved on a 500 — onSuccess fired, the optimistic UI stuck around, and the
+ * change silently vanished on the next poll.
+ */
+async function okOrThrow(res: Response): Promise<Response> {
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.error || `Request failed (${res.status})`);
+  }
+  return res;
+}
+
 export interface FeedComment {
   user: string;
   text: string;
@@ -62,7 +75,10 @@ export function useCommunity() {
       sticker?: string | null;
       authorName: string;
       authorAvatar?: string;
-    }) => authedFetch('/api/community/stories', { method: 'POST', body: JSON.stringify(payload) }),
+    }) =>
+      authedFetch('/api/community/stories', { method: 'POST', body: JSON.stringify(payload) }).then(
+        okOrThrow
+      ),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['community', 'stories'] }),
   });
 
@@ -71,8 +87,9 @@ export function useCommunity() {
       authedFetch(`/api/community/posts/${postId}/like`, {
         method: 'POST',
         body: JSON.stringify({ liked }),
-      }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['community', 'feed'] }),
+      }).then(okOrThrow),
+    // A failed like must not look applied — refetch snaps the UI back.
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['community', 'feed'] }),
   });
 
   const commentMutation = useMutation({
@@ -80,8 +97,8 @@ export function useCommunity() {
       authedFetch(`/api/community/posts/${postId}/comments`, {
         method: 'POST',
         body: JSON.stringify({ text, authorName }),
-      }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['community', 'feed'] }),
+      }).then(okOrThrow),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['community', 'feed'] }),
   });
 
   const createPostMutation = useMutation({
@@ -94,8 +111,8 @@ export function useCommunity() {
       authedFetch('/api/community/posts', {
         method: 'POST',
         body: JSON.stringify(payload),
-      }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['community', 'feed'] }),
+      }).then(okOrThrow),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['community', 'feed'] }),
   });
 
   return {

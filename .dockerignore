@@ -1,0 +1,16 @@
+# Secrets must never enter the build context — COPY . . would bake them into
+# a builder layer otherwise.
+.env
+.env.*
+!.env.example
+
+node_modules
+dist
+.git
+.github
+.vscode
+.claude
+.DS_Store
+*.log
+loadtest
+supabase/.temp

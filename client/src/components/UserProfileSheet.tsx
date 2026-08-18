@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { motion } from 'motion/react';
 import {
   X,
@@ -15,6 +15,8 @@ import { SmartImage } from './SmartImage';
 import { useToast } from './Toast';
 import { useApp } from '../context/AppContext';
 import { useUserProfile } from '../hooks/useUserProfile';
+import { useEscapeClose } from '../hooks/useEscapeClose';
+import { useScrollLock } from '../hooks/useScrollLock';
 import type { CommunityUser } from '../types';
 
 /**
@@ -38,13 +40,8 @@ export const UserProfileSheet: React.FC<{
     () => toastWarning(t('userProfile_followFailedTitle'), t('userProfile_followFailedBody'))
   );
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  useEscapeClose(onClose);
+  useScrollLock(true);
 
   const name = profile?.user.name || target.name;
   const avatar = profile?.user.avatar || target.avatar;
@@ -76,7 +73,7 @@ export const UserProfileSheet: React.FC<{
         exit={{ opacity: 0, y: 40, scale: 0.97 }}
         transition={{ type: 'spring', damping: 26, stiffness: 240 }}
         onClick={(e) => e.stopPropagation()}
-        className="w-full sm:max-w-md bg-pestle-card border border-pestle-border rounded-t-[32px] sm:rounded-[32px] overflow-hidden shadow-2xl max-h-[92vh] flex flex-col"
+        className="w-full sm:max-w-md bg-pestle-card border border-pestle-border rounded-t-[32px] sm:rounded-[32px] overflow-hidden shadow-2xl max-h-[92dvh] flex flex-col"
       >
         {/* Cover — the app accent is user-configurable, so this stays a single
             brand colour rather than a gradient that can clash with it. */}
@@ -117,7 +114,7 @@ export const UserProfileSheet: React.FC<{
           </div>
         </div>
 
-        <div className="px-5 pb-6 pt-14 flex-1 overflow-y-auto">
+        <div className="px-5 pb-sheet-safe sm:pb-6 pt-14 flex-1 min-h-0 overflow-y-auto overscroll-contain">
           <h3 className="text-lg font-black text-pestle-text truncate tracking-tight">{name}</h3>
           <span className="text-[10px] font-bold text-mango-ink bg-mango/12 px-2 py-0.5 rounded-full inline-block mt-1.5">
             👨‍🍳 {t('userProfile_chefBadge')}

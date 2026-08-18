@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useQueryClient } from '@tanstack/react-query';
+import { useEscapeClose } from '../hooks/useEscapeClose';
+import { useScrollLock } from '../hooks/useScrollLock';
 import type { SubscriptionTier } from '../types';
 
 // ── Plan definitions (single source of truth) ─────────────────────────────────
@@ -119,7 +121,7 @@ const PlanCard: React.FC<{
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`relative p-5 rounded-2xl border transition-all duration-200 ${plan.bgClass} ${
+      className={`relative p-4 sm:p-5 rounded-2xl border transition-all duration-200 ${plan.bgClass} ${
         isCurrent
           ? plan.id === 'pro'
             ? 'border-mango ring-2 ring-mango/20'
@@ -131,31 +133,31 @@ const PlanCard: React.FC<{
     >
       {/* Most Popular Badge */}
       {plan.badge && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-mango to-amber-500 text-white text-[10px] font-extrabold px-4 py-1 rounded-full shadow-md whitespace-nowrap uppercase tracking-wide">
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-mango to-amber-600 text-white text-[10px] font-extrabold px-4 py-1 rounded-full shadow-md whitespace-nowrap uppercase tracking-wide">
           ⭐ {plan.badge}
         </div>
       )}
 
       {/* Plan Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${
+      <div className="flex items-start justify-between gap-3 mb-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center shadow-sm ${
             plan.id === 'pro'
-              ? 'bg-amber-500 text-white'
+              ? 'bg-amber-600 text-white'
               : plan.id === 'family'
               ? 'bg-teal-600 text-white'
               : 'bg-pestle-card border border-pestle-border'
           }`}>
             {plan.icon}
           </div>
-          <div>
-            <h3 className="font-black text-sm text-pestle-text">{plan.name}</h3>
+          <div className="min-w-0">
+            <h3 className="font-black text-sm text-pestle-text truncate">{plan.name}</h3>
             <p className="text-[10px] text-gray-400 font-medium">{plan.tagline}</p>
           </div>
         </div>
 
-        <div className="text-right">
-          <p className={`text-lg font-black ${plan.color}`}>{plan.price}</p>
+        <div className="text-right shrink-0">
+          <p className={`text-base sm:text-lg font-black tabular-nums ${plan.color}`}>{plan.price}</p>
           <p className="text-[10px] text-gray-400 font-bold">{plan.period}</p>
         </div>
       </div>
@@ -163,9 +165,9 @@ const PlanCard: React.FC<{
       {/* Features List */}
       <ul className="space-y-2 mb-4">
         {plan.features.map((f, i) => (
-          <li key={i} className="flex items-center gap-2.5 text-xs font-medium text-pestle-text">
-            <span className="shrink-0">{f.icon}</span>
-            <span>{f.text}</span>
+          <li key={i} className="flex items-start gap-2.5 text-xs font-medium text-pestle-text">
+            <span className="shrink-0 mt-0.5">{f.icon}</span>
+            <span className="min-w-0">{f.text}</span>
           </li>
         ))}
       </ul>
@@ -185,11 +187,12 @@ const PlanCard: React.FC<{
         isActive && (
           <button
             onClick={onSelect}
-            className={`w-full py-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all active:scale-95 ${plan.ctaClass}`}
+            className={`w-full py-3 px-3 rounded-xl text-xs font-extrabold flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 leading-tight text-center transition-all active:scale-95 ${plan.ctaClass}`}
           >
-            {plan.id === 'pro' && <Sparkles size={15} />}
-            {plan.id === 'family' && <Users size={15} />}
-            {plan.ctaLabel} — {plan.price}
+            {plan.id === 'pro' && <Sparkles size={15} className="shrink-0" />}
+            {plan.id === 'family' && <Users size={15} className="shrink-0" />}
+            <span>{plan.ctaLabel}</span>
+            <span className="tabular-nums">— {plan.price}</span>
           </button>
         )
       )}
@@ -202,6 +205,9 @@ export const SubscriptionModal: React.FC = () => {
   const { showSubModal, setShowSubModal, subscription, setSubscription, triggerPayment, formatPrice, t } = useApp();
   const queryClient = useQueryClient();
   const PLAN_DEFS = getPlanDefs(t, formatPrice);
+
+  useEscapeClose(() => setShowSubModal(false), showSubModal);
+  useScrollLock(showSubModal);
 
   if (!showSubModal) return null;
 
@@ -237,14 +243,17 @@ export const SubscriptionModal: React.FC = () => {
           exit={{ y: '100%', opacity: 0 }}
           transition={{ type: 'spring', damping: 26, stiffness: 240 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-pestle-card border border-pestle-border/80 w-full max-w-lg rounded-t-[32px] sm:rounded-[32px] shadow-2xl overflow-hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('sub_membershipPlans')}
+          className="bg-pestle-card border border-pestle-border/80 w-full max-w-lg rounded-t-[32px] sm:rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[92dvh]"
         >
           {/* Pull Handle (mobile) */}
-          <div className="w-10 h-1 bg-gray-300 dark:bg-slate-600 rounded-full mx-auto mt-3 sm:hidden" />
+          <div className="w-10 h-1 bg-gray-300 dark:bg-slate-600 rounded-full mx-auto mt-3 sm:hidden shrink-0" />
 
           {/* Header */}
-          <div className="px-6 pt-5 pb-4 flex items-start justify-between">
-            <div className="space-y-1">
+          <div className="px-5 sm:px-6 pt-5 pb-4 flex items-start justify-between gap-3 shrink-0">
+            <div className="space-y-1 min-w-0">
               <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-widest text-mango-ink bg-mango/15 px-3 py-1 rounded-full">
                 <Sparkles size={11} /> Zity Premium
               </span>
@@ -256,14 +265,14 @@ export const SubscriptionModal: React.FC = () => {
             <button
               onClick={() => setShowSubModal(false)}
               aria-label={t('close')}
-              className="w-9 h-9 border border-pestle-border rounded-2xl flex items-center justify-center text-gray-400 hover:text-pestle-text hover:border-pestle-text transition-colors mt-1"
+              className="w-9 h-9 shrink-0 border border-pestle-border rounded-2xl flex items-center justify-center text-gray-400 hover:text-pestle-text hover:border-pestle-text transition-colors mt-1"
             >
               <X size={17} />
             </button>
           </div>
 
           {/* Plan Cards */}
-          <div className="px-6 pb-6 space-y-4 overflow-y-auto max-h-[70vh]">
+          <div className="px-5 sm:px-6 pb-sheet-safe sm:pb-6 space-y-4 flex-1 min-h-0 overflow-y-auto overscroll-contain">
             {PLAN_DEFS.map((plan) => (
               <PlanCard
                 key={plan.id}

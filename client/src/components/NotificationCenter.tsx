@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useEscapeClose } from '../hooks/useEscapeClose';
 import { motion, AnimatePresence } from 'motion/react';
 import { Bell, AlertTriangle, Utensils, Sparkles, Check, Trash2, ShieldCheck, X } from 'lucide-react';
 import { useApp } from '../context/AppContext';
@@ -17,10 +18,20 @@ export interface NotificationItem {
 
 interface NotificationReadState {
   readIds: string[];
-  cleared: boolean;
+  /** What the fridge looked like when the user last cleared the list. */
+  clearedSignature: string | null;
+  clearedAt: number | null;
 }
 
-const DEFAULT_READ_STATE: NotificationReadState = { readIds: ['notif-3'], cleared: false };
+const DEFAULT_READ_STATE: NotificationReadState = {
+  readIds: ['notif-3'],
+  clearedSignature: null,
+  clearedAt: null,
+};
+
+/** A cleared list comes back after this long even if nothing changed, so an
+ *  expiry warning is never silenced permanently. */
+const CLEAR_TTL_MS = 24 * 60 * 60 * 1000;
 
 /** Read/dismissed state lives in localStorage so a refresh does not resurrect
  *  notifications the user already went through. Scoped per account. */
@@ -28,10 +39,13 @@ function readNotificationState(accountId: string): NotificationReadState {
   try {
     const raw = localStorage.getItem(`zity_notif_state:${accountId}`);
     if (!raw) return DEFAULT_READ_STATE;
-    const parsed = JSON.parse(raw) as Partial<NotificationReadState>;
+    const parsed = JSON.parse(raw) as Partial<NotificationReadState> & { cleared?: boolean };
     return {
       readIds: Array.isArray(parsed.readIds) ? parsed.readIds : DEFAULT_READ_STATE.readIds,
-      cleared: Boolean(parsed.cleared),
+      // Migrates the old permanent `cleared: true` flag onto the timed one.
+      clearedSignature: typeof parsed.clearedSignature === 'string' ? parsed.clearedSignature : null,
+      clearedAt:
+        typeof parsed.clearedAt === 'number' ? parsed.clearedAt : parsed.cleared ? Date.now() : null,
     };
   } catch {
     return DEFAULT_READ_STATE;
@@ -55,22 +69,40 @@ export const NotificationCenter: React.FC = () => {
   }, [inventory]);
 
   const [readIds, setReadIds] = useState<string[]>(() => readNotificationState(accountId).readIds);
-  const [cleared, setCleared] = useState<boolean>(() => readNotificationState(accountId).cleared);
+  const [clearedSignature, setClearedSignature] = useState<string | null>(
+    () => readNotificationState(accountId).clearedSignature
+  );
+  const [clearedAt, setClearedAt] = useState<number | null>(
+    () => readNotificationState(accountId).clearedAt
+  );
 
   // Re-read when the account changes (sign in / sign out swaps the identity).
   useEffect(() => {
     const next = readNotificationState(accountId);
     setReadIds(next.readIds);
-    setCleared(next.cleared);
+    setClearedSignature(next.clearedSignature);
+    setClearedAt(next.clearedAt);
   }, [accountId]);
 
   useEffect(() => {
-    localStorage.setItem(`zity_notif_state:${accountId}`, JSON.stringify({ readIds, cleared }));
-  }, [accountId, readIds, cleared]);
+    localStorage.setItem(
+      `zity_notif_state:${accountId}`,
+      JSON.stringify({ readIds, clearedSignature, clearedAt })
+    );
+  }, [accountId, readIds, clearedSignature, clearedAt]);
 
   const expiringNames = expiringItems.length > 0
     ? expiringItems.map((i) => i.name).slice(0, 3).join(', ')
     : t('notif_expiringFallback');
+
+  // Clearing hides what is on screen *now*. It used to set a permanent flag, so
+  // one tap meant the user never saw another expiry warning — the list comes
+  // back when the fridge changes, or after a day.
+  const cleared = useMemo(() => {
+    if (clearedAt === null) return false;
+    if (Date.now() - clearedAt > CLEAR_TTL_MS) return false;
+    return clearedSignature === expiringNames;
+  }, [clearedAt, clearedSignature, expiringNames]);
 
   const notifications = useMemo<NotificationItem[]>(() => {
     if (cleared) return [];
@@ -126,7 +158,8 @@ export const NotificationCenter: React.FC = () => {
   };
 
   const clearAll = () => {
-    setCleared(true);
+    setClearedSignature(expiringNames);
+    setClearedAt(Date.now());
   };
 
   const handleNotificationClick = (notif: NotificationItem) => {
@@ -138,6 +171,8 @@ export const NotificationCenter: React.FC = () => {
     setIsOpen(false);
   };
 
+  useEscapeClose(() => setIsOpen(false), isOpen);
+
   return (
     <div className="relative">
       {/* Bell Trigger Button */}
@@ -145,6 +180,8 @@ export const NotificationCenter: React.FC = () => {
         onClick={() => setIsOpen(!isOpen)}
         className="relative w-8 h-8 sm:w-9 sm:h-9 bg-pestle-card border border-pestle-border hover:border-mango/60 rounded-xl flex items-center justify-center text-pestle-text shadow-xs transition-all active:scale-95 cursor-pointer"
         title={t('notif_centerTitle')}
+        aria-label={t('notif_centerTitle')}
+        aria-expanded={isOpen}
       >
         <Bell size={16} className={unreadCount > 0 ? 'text-mango-ink animate-bounce' : 'text-gray-400'} />
         {unreadCount > 0 && (
@@ -167,10 +204,12 @@ export const NotificationCenter: React.FC = () => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed left-3 right-3 top-[calc(4.5rem+env(safe-area-inset-top,0px))] max-h-[calc(100vh-6rem)] bg-pestle-card/95 backdrop-blur-xl border border-pestle-border rounded-3xl shadow-2xl z-[170] overflow-hidden flex flex-col sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-96 sm:max-h-[80vh]"
+              role="dialog"
+              aria-label={t('notif_centerTitle')}
+              className="fixed left-3 right-3 top-[calc(4.5rem+env(safe-area-inset-top,0px))] max-h-[calc(100dvh-7rem)] bg-pestle-card/95 backdrop-blur-xl border border-pestle-border rounded-3xl shadow-2xl z-[170] overflow-hidden flex flex-col sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-96 sm:max-h-[80dvh]"
             >
               {/* Header */}
-              <div className="p-4 border-b border-pestle-border/60 flex items-center justify-between gap-3 bg-pestle-bg/50">
+              <div className="p-4 border-b border-pestle-border/60 flex items-center justify-between gap-3 bg-pestle-bg/50 shrink-0">
                 <div className="flex items-center gap-2 min-w-0">
                   <Bell size={16} className="text-mango-ink" />
                   <h3 className="font-black text-xs text-pestle-text uppercase tracking-wider truncate">
@@ -188,7 +227,8 @@ export const NotificationCenter: React.FC = () => {
                   )}
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="w-6 h-6 rounded-lg text-gray-400 hover:text-pestle-text flex items-center justify-center"
+                    aria-label={t('close')}
+                    className="w-8 h-8 rounded-lg text-gray-400 hover:text-pestle-text flex items-center justify-center"
                   >
                     <X size={14} />
                   </button>
@@ -196,7 +236,7 @@ export const NotificationCenter: React.FC = () => {
               </div>
 
               {/* Push Permission Switcher Banner */}
-              <div className="p-3 bg-mango/10 border-b border-mango/20 flex items-center justify-between gap-3">
+              <div className="p-3 bg-mango/10 border-b border-mango/20 flex items-center justify-between gap-3 shrink-0">
                 <div className="flex items-center gap-2 min-w-0">
                   <ShieldCheck size={16} className="text-mango-ink" />
                   <div className="min-w-0">
@@ -216,8 +256,10 @@ export const NotificationCenter: React.FC = () => {
                 </button>
               </div>
 
-              {/* Notification List */}
-              <div className="max-h-80 overflow-y-auto divide-y divide-pestle-border/40 p-1">
+              {/* Notification List — takes the space the panel actually has
+                  rather than a fixed 320px, which left a gap under the list on
+                  a tall phone and clipped it on a short one. */}
+              <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain divide-y divide-pestle-border/40 p-1">
                 {notifications.length === 0 ? (
                   <div className="py-8 text-center text-xs text-gray-400 font-medium">
                     {t('notif_empty')}
@@ -254,7 +296,7 @@ export const NotificationCenter: React.FC = () => {
 
               {/* Footer */}
               {notifications.length > 0 && (
-                <div className="p-2 border-t border-pestle-border/60 bg-pestle-bg/50 flex justify-center">
+                <div className="p-2 pb-safe sm:pb-2 border-t border-pestle-border/60 bg-pestle-bg/50 flex justify-center shrink-0">
                   <button
                     onClick={clearAll}
                     className="text-[10px] font-bold text-gray-400 hover:text-red-500 flex items-center gap-1 py-1 px-3 rounded-lg transition-colors"

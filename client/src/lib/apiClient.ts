@@ -1,4 +1,4 @@
-import { getAccessToken } from './supabase';
+import { getAccessToken, refreshAccessToken } from './supabase';
 
 function getDefaultApiBase(): string {
   if (typeof window === 'undefined') return 'http://localhost:3002';
@@ -48,19 +48,33 @@ export function getGuestId(): string {
  * Falls back to an unauthenticated request in demo mode (no token available).
  */
 export async function authedFetch(path: string, init: RequestInit = {}): Promise<Response> {
-  const token = await getAccessToken();
-  const headers = new Headers(init.headers);
-  if (token) headers.set('Authorization', `Bearer ${token}`);
+  const doFetch = async (): Promise<Response> => {
+    const token = await getAccessToken();
+    const headers = new Headers(init.headers);
+    if (token) headers.set('Authorization', `Bearer ${token}`);
 
-  // Sent unconditionally. The server only reads it when it falls back to a
-  // guest identity, which also happens when a Bearer token IS present but fails
-  // verification — sending it only in the token-less branch would drop those
-  // users into one shared bucket where they could read each other's data.
-  const guestId = getGuestId();
-  if (guestId) headers.set('X-Guest-Id', guestId);
-  if (init.body && !headers.has('Content-Type')) {
-    headers.set('Content-Type', 'application/json');
+    // Sent unconditionally. The server only reads it when it falls back to a
+    // guest identity, which also happens when Supabase is unreachable during
+    // token verification — sending it only in the token-less branch would drop
+    // those users into one shared bucket where they could read each other's data.
+    const guestId = getGuestId();
+    if (guestId) headers.set('X-Guest-Id', guestId);
+    if (init.body && !headers.has('Content-Type')) {
+      headers.set('Content-Type', 'application/json');
+    }
+    const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
+    return fetch(url, { ...init, headers });
+  };
+
+  let res = await doFetch();
+
+  // The server answers 401 when our token failed verification (usually
+  // expiry). Refresh the session once and retry — without this, an expired
+  // token surfaced as an empty fridge with no way back short of a reload.
+  if (res.status === 401) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) res = await doFetch();
   }
-  const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
-  return fetch(url, { ...init, headers });
+
+  return res;
 }

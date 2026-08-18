@@ -18,10 +18,28 @@ export const FloatingAssistant: React.FC = () => {
   const [inputValue, setInputValue] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  // The greeting bubble pops in briefly, then leaves on its own. It used to
+  // stay forever until manually dismissed — parked right over the checkout
+  // button and other bottom CTAs.
   useEffect(() => {
-    const timer = setTimeout(() => setShowBubble(true), 1500);
-    return () => clearTimeout(timer);
+    const show = setTimeout(() => setShowBubble(true), 1500);
+    const hide = setTimeout(() => setShowBubble(false), 9500);
+    return () => {
+      clearTimeout(show);
+      clearTimeout(hide);
+    };
   }, []);
+
+  // The greeting was seeded once at mount, so it stayed in the old language
+  // after a switch. Re-translate it while it is still the only message —
+  // never rewrite an actual conversation.
+  useEffect(() => {
+    setMessages((prev) =>
+      prev.length === 1 && prev[0].role === 'assistant'
+        ? [{ role: 'assistant', text: t('aiInitialGreeting') }]
+        : prev
+    );
+  }, [lang, t]);
 
   const handleSend = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -74,7 +92,7 @@ export const FloatingAssistant: React.FC = () => {
               <button
                 onClick={() => setShowBubble(false)}
                 aria-label={t('close')}
-                className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-pestle-card border border-pestle-border text-gray-400 hover:text-pestle-text flex items-center justify-center transition-colors shadow-sm"
+                className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-pestle-card border border-pestle-border text-gray-400 hover:text-pestle-text flex items-center justify-center transition-colors shadow-sm"
               >
                 <X size={12} />
               </button>
@@ -88,6 +106,8 @@ export const FloatingAssistant: React.FC = () => {
 
         <motion.button
           onClick={() => setIsOpen(!isOpen)}
+          aria-label={t('assistantName')}
+          aria-expanded={isOpen}
           animate={{ scale: [1, 1.04, 1] }}
           transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
           className="w-12 h-12 sm:w-14 sm:h-14 bg-mango rounded-full shadow-xl flex items-center justify-center text-white active:scale-90 transition-transform pointer-events-auto border-2 border-white dark:border-slate-900 cursor-pointer"
@@ -125,9 +145,10 @@ export const FloatingAssistant: React.FC = () => {
 
               <button
                 onClick={() => setIsOpen(false)}
-                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+                aria-label={t('close')}
+                className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
               >
-                <X size={15} />
+                <X size={16} />
               </button>
             </div>
 

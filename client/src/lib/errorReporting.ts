@@ -1,25 +1,33 @@
 /**
- * Central error reporting hook. Today it logs to the console; it is the single
- * place to forward errors to Sentry / an error tracker.
+ * Central error reporting hook: logs to the console and, when VITE_SENTRY_DSN
+ * is set, forwards to Sentry. Keeping it behind this single module means no
+ * call site has to know which tracker is in use.
  *
- * To enable Sentry later:
- *   1. npm i @sentry/react
- *   2. set VITE_SENTRY_DSN
- *   3. in initErrorReporting(): dynamically import @sentry/react and Sentry.init,
- *      then call Sentry.captureException(error) inside reportError().
- * Keeping it behind this single module means no call sites change.
+ * Source maps: `build.sourcemap` is on in vite.config.ts, but Sentry can only
+ * un-minify a stack trace if the maps are uploaded to it at deploy time
+ * (`sentry-cli sourcemaps upload ./dist`) — see DEPLOYMENT.md.
  */
 
 const DSN = import.meta.env.VITE_SENTRY_DSN || '';
+const RELEASE = import.meta.env.VITE_SENTRY_RELEASE || undefined;
 
 // Loaded lazily only when a DSN is configured, so the Sentry SDK stays out of
 // the bundle for deployments that don't use it.
 let sentry: typeof import('@sentry/browser') | null = null;
 
+// Errors thrown before the async import resolves used to be dropped entirely —
+// hydration is exactly when they happen. They queue here and flush on init.
+const pending: { error: unknown; context?: Record<string, unknown> }[] = [];
+const MAX_PENDING = 20;
+
 export function reportError(error: unknown, context?: Record<string, unknown>): void {
   // eslint-disable-next-line no-console
   console.error('[Zity Chef] reportError:', error, context ?? '');
-  if (sentry) sentry.captureException(error, { extra: context });
+  if (sentry) {
+    sentry.captureException(error, { extra: context });
+  } else if (DSN && pending.length < MAX_PENDING) {
+    pending.push({ error, context });
+  }
 }
 
 /**
@@ -41,7 +49,25 @@ export function initErrorReporting(): void {
     import('@sentry/browser')
       .then((mod) => {
         sentry = mod;
-        mod.init({ dsn: DSN, tracesSampleRate: 0.1, environment: import.meta.env.MODE });
+        mod.init({
+          dsn: DSN,
+          release: RELEASE,
+          environment: import.meta.env.MODE,
+          // No tracing integration is registered, so a sample rate here would
+          // do nothing; errors are what this deployment collects.
+          beforeSend(event) {
+            // Never ship access tokens to a third party: Supabase puts them in
+            // the URL fragment on OAuth and password-recovery returns.
+            if (event.request?.url) {
+              event.request.url = event.request.url.replace(/#.*$/, '');
+            }
+            return event;
+          },
+        });
+        // Flush anything captured while the SDK was still loading.
+        for (const item of pending.splice(0)) {
+          mod.captureException(item.error, { extra: item.context });
+        }
       })
       .catch(() => {
         /* Sentry is optional — ignore load failures */

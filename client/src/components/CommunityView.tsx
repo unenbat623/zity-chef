@@ -31,6 +31,8 @@ import { useToast } from './Toast';
 import { useDirectMessages } from '../hooks/useDirectMessages';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { uploadDataUrl } from '../lib/storage';
+import { useEscapeClose } from '../hooks/useEscapeClose';
+import { useScrollLock } from '../hooks/useScrollLock';
 import { useRecipes } from '../hooks/useRecipes';
 import type { CommunityUser } from '../types';
 
@@ -78,6 +80,8 @@ const StoryViewerModal: React.FC<{
   const [isPaused, setIsPaused] = useState(false);
   const [floatingHeart, setFloatingHeart] = useState<boolean>(false);
   const [replyText, setReplyText] = useState('');
+
+  useEscapeClose(onClose);
 
   const stories = storyGroup.stories;
   const currentStory = stories[slideIndex] || stories[0];
@@ -162,7 +166,7 @@ const StoryViewerModal: React.FC<{
       className="fixed inset-0 bg-black z-[350] flex items-center justify-center select-none"
     >
       <div
-        className="w-full max-w-sm sm:max-w-md h-full sm:h-[92vh] sm:rounded-3xl overflow-hidden relative flex flex-col justify-between shadow-2xl bg-slate-950"
+        className="w-full max-w-sm sm:max-w-md h-[100dvh] sm:h-[92dvh] sm:rounded-3xl overflow-hidden relative flex flex-col justify-between shadow-2xl bg-slate-950"
         onMouseDown={() => setIsPaused(true)}
         onMouseUp={() => setIsPaused(false)}
         onTouchStart={() => setIsPaused(true)}
@@ -204,7 +208,7 @@ const StoryViewerModal: React.FC<{
         </AnimatePresence>
 
         {/* TOP CONTROLS: IG Progress Segment Bars */}
-        <div className="relative z-20 p-3 sm:p-4 space-y-3">
+        <div className="relative z-20 p-3 sm:p-4 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] sm:pt-4 space-y-3">
           <div className="flex gap-1.5 w-full">
             {stories.map((s, i) => {
               let widthVal = 0;
@@ -231,19 +235,19 @@ const StoryViewerModal: React.FC<{
                 onOpenProfile(storyUser);
                 onClose();
               }}
-              className="flex items-center gap-2.5 text-left"
+              className="flex items-center gap-2.5 text-left min-w-0"
             >
-              <div className="p-0.5 rounded-full bg-gradient-to-tr from-amber-400 via-rose-500 to-fuchsia-600">
+              <div className="p-0.5 shrink-0 rounded-full bg-gradient-to-tr from-amber-400 via-rose-500 to-fuchsia-600">
                 <img
                   src={storyGroup.userAvatar}
                   alt={storyGroup.userName}
                   className="w-8 h-8 rounded-full border border-black object-cover"
                 />
               </div>
-              <div>
-                <h4 className="text-white text-xs font-black drop-shadow-md flex items-center gap-1.5">
-                  <span>{storyGroup.userName}</span>
-                  <span className="text-[10px] text-white/70 font-normal">
+              <div className="min-w-0">
+                <h4 className="text-white text-xs font-black drop-shadow-md flex items-center gap-1.5 min-w-0">
+                  <span className="truncate">{storyGroup.userName}</span>
+                  <span className="text-[10px] text-white/70 font-normal shrink-0">
                     {currentStory.createdAt}
                   </span>
                 </h4>
@@ -257,7 +261,8 @@ const StoryViewerModal: React.FC<{
 
             <button
               onClick={onClose}
-              className="w-8 h-8 bg-black/40 hover:bg-black/70 backdrop-blur-md text-white rounded-full flex items-center justify-center transition-colors"
+              aria-label={t('chat_close')}
+              className="w-8 h-8 shrink-0 bg-black/40 hover:bg-black/70 backdrop-blur-md text-white rounded-full flex items-center justify-center transition-colors"
             >
               <X size={18} />
             </button>
@@ -271,7 +276,7 @@ const StoryViewerModal: React.FC<{
         </div>
 
         {/* BOTTOM CAPTION & REACTION BAR */}
-        <div className="relative z-20 p-4 space-y-3">
+        <div className="relative z-20 p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:pb-4 space-y-3">
           {currentStory.img && currentStory.caption && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -337,6 +342,8 @@ const CreateStoryModal: React.FC<{
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEscapeClose(onClose);
+
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -363,28 +370,35 @@ const CreateStoryModal: React.FC<{
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/80 backdrop-blur-md z-[350] flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('community_createStoryTitle')}
+      className="fixed inset-0 bg-black/80 backdrop-blur-md z-[350] flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
     >
       <motion.div
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.9, y: 20 }}
-        className="w-full max-w-md bg-pestle-card border border-pestle-border rounded-[32px] p-5 space-y-4 shadow-2xl overflow-hidden my-auto"
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md bg-pestle-card border border-pestle-border rounded-t-[32px] sm:rounded-[32px] p-4 sm:p-5 pb-sheet-safe sm:pb-5 space-y-4 shadow-2xl my-auto max-h-[94dvh] overflow-y-auto overscroll-contain"
       >
-        <div className="flex justify-between items-center">
-          <h3 className="text-sm font-black text-pestle-text flex items-center gap-2">
-            <Camera size={18} className="text-mango-ink" /> {t('community_createStoryTitle')}
+        <div className="flex justify-between items-center gap-3">
+          <h3 className="text-sm font-black text-pestle-text flex items-center gap-2 min-w-0">
+            <Camera size={18} className="text-mango-ink shrink-0" />
+            <span className="truncate">{t('community_createStoryTitle')}</span>
           </h3>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full border border-pestle-border flex items-center justify-center text-gray-400 hover:text-pestle-text"
+            aria-label={t('community_cancel')}
+            className="w-8 h-8 shrink-0 rounded-full border border-pestle-border flex items-center justify-center text-gray-400 hover:text-pestle-text"
           >
             <X size={16} />
           </button>
         </div>
 
         {/* PREVIEW CONTAINER (Strict 9:16 ratio vertical phone style on desktop) */}
-        <div className="w-56 h-[340px] mx-auto rounded-2xl overflow-hidden relative border border-pestle-border flex flex-col justify-between p-3.5 shadow-md">
+        <div className="w-48 sm:w-56 aspect-[9/16] max-h-[45dvh] mx-auto rounded-2xl overflow-hidden relative border border-pestle-border flex flex-col justify-between p-3.5 shadow-md">
           {imageBase64 ? (
             <img src={imageBase64} alt="" className="w-full h-full object-cover absolute inset-0" />
           ) : (
@@ -431,18 +445,18 @@ const CreateStoryModal: React.FC<{
             className="hidden"
             onChange={handleFile}
           />
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="flex-1 bg-pestle-bg border border-pestle-border py-2 px-3 rounded-xl text-xs font-bold text-pestle-text hover:border-mango flex items-center justify-center gap-2"
+              className="flex-1 min-w-[9rem] bg-pestle-bg border border-pestle-border py-2 px-3 rounded-xl text-xs font-bold text-pestle-text hover:border-mango flex items-center justify-center gap-2"
             >
-              <Camera size={15} className="text-mango-ink" />
-              <span>{t('community_addPhoto')}</span>
+              <Camera size={15} className="text-mango-ink shrink-0" />
+              <span className="truncate">{t('community_addPhoto')}</span>
             </button>
 
             {/* Gradient Swatches if no image */}
             {!imageBase64 && (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 shrink-0">
                 {GRADIENT_PRESETS.map((g) => (
                   <button
                     key={g}
@@ -533,19 +547,12 @@ const DirectChatDrawer: React.FC<{
   const isFollowing = Boolean(profile?.isFollowing);
 
   // Close on Escape, and keep the page behind the drawer from scrolling.
+  // (The body never scrolls in this app — useScrollLock freezes <main>.)
+  useEscapeClose(onClose);
+  useScrollLock(true);
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
     inputRef.current?.focus();
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [onClose]);
+  }, []);
 
   // Follow new messages, but never yank the view away from someone who has
   // scrolled up to read the history.
@@ -859,6 +866,8 @@ const CreatePostModal: React.FC<{
   const [tab, setTab] = useState<'photo' | 'recipe'>('photo');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEscapeClose(onClose);
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -889,20 +898,26 @@ const CreatePostModal: React.FC<{
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/75 backdrop-blur-md z-[350] flex items-center justify-center p-4"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('community_createPostTitle')}
+      className="fixed inset-0 bg-black/75 backdrop-blur-md z-[350] flex items-end sm:items-center justify-center p-0 sm:p-4"
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-        className="bg-pestle-card border border-pestle-border w-full max-w-lg rounded-[32px] p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+        className="bg-pestle-card border border-pestle-border w-full max-w-lg rounded-t-[32px] sm:rounded-[32px] p-4 sm:p-5 pb-sheet-safe sm:pb-5 space-y-4 shadow-2xl max-h-[92dvh] overflow-y-auto overscroll-contain"
       >
-        <div className="flex justify-between items-center">
-          <h2 className="text-base font-black text-pestle-text">{t('community_createPostTitle')}</h2>
+        <div className="flex justify-between items-center gap-3">
+          <h2 className="text-base font-black text-pestle-text min-w-0 truncate">{t('community_createPostTitle')}</h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full border border-pestle-border flex items-center justify-center text-gray-400 hover:text-pestle-text"
+            aria-label={t('community_cancel')}
+            className="w-8 h-8 shrink-0 rounded-full border border-pestle-border flex items-center justify-center text-gray-400 hover:text-pestle-text"
           >
             <X size={16} />
           </button>
@@ -1018,6 +1033,7 @@ const PostCard: React.FC<{
   isOwnPost?: boolean;
 }> = ({ post, onLike, onSave, onComment, onChat, onOpenProfile, onOpenStory, isOwnPost }) => {
   const { t } = useApp();
+  const { toastSuccess, toastWarning } = useToast();
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [showHeartOverlay, setShowHeartOverlay] = useState(false);
@@ -1063,7 +1079,7 @@ const PostCard: React.FC<{
           <div className="flex-1 min-w-0">
             <button
               onClick={onOpenProfile}
-              className="text-xs font-black text-pestle-text truncate hover:underline block max-w-full text-left"
+              className="text-xs font-black text-pestle-text truncate hover:underline block max-w-full text-left py-2 -my-2"
             >
               {post.user.name}
             </button>
@@ -1075,7 +1091,7 @@ const PostCard: React.FC<{
             yourself. Your own post links to your profile instead. */}
         <button
           onClick={isOwnPost ? onOpenProfile : onChat}
-          className="px-3 py-1.5 rounded-xl bg-pestle-bg border border-pestle-border text-[11px] font-bold text-pestle-text hover:border-mango flex items-center gap-1.5 shadow-2xs"
+          className="px-3 py-2.5 rounded-xl bg-pestle-bg border border-pestle-border text-[11px] font-bold text-pestle-text hover:border-mango flex items-center gap-1.5 shadow-2xs"
         >
           {isOwnPost ? (
             <>
@@ -1129,12 +1145,17 @@ const PostCard: React.FC<{
       )}
 
       {/* Post Actions Bar */}
-      <div className="px-4 pt-3 pb-2 flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      {/* The action row's buttons were 20px tall — a real miss on a phone.
+          py-2.5 gives each a ~40px hit area; the negative margin keeps the row
+          looking as tight as before. */}
+      <div className="px-4 pt-1 pb-0.5 flex items-center justify-between">
+        <div className="flex items-center gap-2">
           <motion.button
             whileTap={{ scale: 1.3 }}
             onClick={onLike}
-            className={`flex items-center gap-1.5 text-xs font-bold transition-all ${
+            aria-label={t('community_likeAria')}
+            aria-pressed={Boolean(post.liked)}
+            className={`flex items-center gap-1.5 px-2 py-2.5 -ml-2 text-xs font-bold transition-all ${
               post.liked ? 'text-red-500' : 'text-pestle-text hover:text-red-500'
             }`}
           >
@@ -1144,24 +1165,38 @@ const PostCard: React.FC<{
 
           <button
             onClick={() => setShowComments(!showComments)}
-            className="flex items-center gap-1.5 text-xs font-bold text-pestle-text hover:text-mango-ink transition-colors"
+            aria-label={t('community_commentsAria')}
+            aria-expanded={showComments}
+            className="flex items-center gap-1.5 px-2 py-2.5 text-xs font-bold text-pestle-text hover:text-mango-ink transition-colors"
           >
             <MessageCircle size={20} />
             <span className="text-xs font-extrabold">{post.comments.length}</span>
           </button>
 
           <button
-            onClick={() => {
-              const url = window.location.href;
-              const shareData = { title: 'Zity Chef', text: t('community_shareText'), url };
-              if (navigator.share) {
-                navigator.share(shareData).catch(() => {});
-              } else {
-                navigator.clipboard?.writeText(url).catch(() => {});
+            onClick={async () => {
+              // Deep-links to the community tab rather than whatever URL the
+              // user happens to be on.
+              const url = new URL(window.location.href);
+              url.searchParams.set('tab', 'community');
+              url.hash = '';
+              const link = url.toString();
+              const shareData = { title: 'Zity Chef', text: t('community_shareText'), url: link };
+              try {
+                if (navigator.share) {
+                  await navigator.share(shareData);
+                  return;
+                }
+                await navigator.clipboard.writeText(link);
+                toastSuccess(t('community_linkCopiedTitle'), t('community_linkCopiedBody'));
+              } catch (err) {
+                // A user-cancelled share is not a failure worth reporting.
+                if ((err as Error)?.name === 'AbortError') return;
+                toastWarning(t('community_shareFailedTitle'), t('community_shareFailedBody'));
               }
             }}
             aria-label={t('community_shareAria')}
-            className="text-pestle-text hover:text-mango-ink transition-colors"
+            className="w-11 h-11 flex items-center justify-center text-pestle-text hover:text-mango-ink transition-colors"
           >
             <Share2 size={19} />
           </button>
@@ -1169,7 +1204,9 @@ const PostCard: React.FC<{
 
         <button
           onClick={onSave}
-          className={`transition-colors ${post.saved ? 'text-mango-ink' : 'text-pestle-text hover:text-mango-ink'}`}
+          aria-label={post.saved ? t('recipe_removeBookmark') : t('recipe_saveBookmark')}
+          aria-pressed={Boolean(post.saved)}
+          className={`w-11 h-11 -mr-2 flex items-center justify-center transition-colors ${post.saved ? 'text-mango-ink' : 'text-pestle-text hover:text-mango-ink'}`}
         >
           <Bookmark size={20} fill={post.saved ? 'currentColor' : 'none'} />
         </button>
@@ -1225,7 +1262,7 @@ const PostCard: React.FC<{
 
 // ── MAIN COMMUNITY VIEW ────────────────────────────────────────────────────────
 export const CommunityView: React.FC = () => {
-  const { profile, t } = useApp();
+  const { profile, accountId, t } = useApp();
   const { user: authUser } = useAuth();
   const { toastWarning } = useToast();
   const { feedPosts, feedLoading, persistLike, persistComment, persistPost, serverStoryGroups, persistStory } =
@@ -1262,9 +1299,31 @@ export const CommunityView: React.FC = () => {
     [stories]
   );
 
+  // Bookmarks are the viewer's own, not part of the shared feed, so they live
+  // in per-account localStorage — the same place saved recipes do. Without
+  // this the flag was local component state and the 10s refetch erased it.
+  const savedKey = `zity_saved_posts:${accountId}`;
+  const [savedPostIds, setSavedPostIds] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem(`zity_saved_posts:${accountId}`);
+      return raw ? (JSON.parse(raw) as string[]) : [];
+    } catch {
+      return [];
+    }
+  });
+
   useEffect(() => {
-    setPosts(feedPosts);
-  }, [feedPosts]);
+    try {
+      const raw = localStorage.getItem(savedKey);
+      setSavedPostIds(raw ? (JSON.parse(raw) as string[]) : []);
+    } catch {
+      setSavedPostIds([]);
+    }
+  }, [savedKey]);
+
+  useEffect(() => {
+    setPosts(feedPosts.map((p) => ({ ...p, saved: savedPostIds.includes(p.id) })));
+  }, [feedPosts, savedPostIds]);
 
   useEffect(() => {
     const ownFromServer = serverStoryGroups.find((g: UserStoryGroup) => g.isOwn);
@@ -1289,16 +1348,27 @@ export const CommunityView: React.FC = () => {
   };
 
   const handleSave = (postId: string) => {
-    setPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, saved: !p.saved } : p)));
+    setSavedPostIds((prev) => {
+      const next = prev.includes(postId) ? prev.filter((id) => id !== postId) : [...prev, postId];
+      try {
+        localStorage.setItem(savedKey, JSON.stringify(next));
+      } catch {
+        /* private mode — the toggle still applies for this session */
+      }
+      return next;
+    });
   };
 
   const handleComment = (postId: string, text: string) => {
+    // The optimistic author must match what gets persisted, or the comment
+    // changes name the moment the feed refetches.
+    const authorName = profile.name || t('auth_defaultUserName');
     setPosts((prev) =>
       prev.map((p) =>
-        p.id === postId ? { ...p, comments: [...p.comments, { user: 'Би', text }] } : p
+        p.id === postId ? { ...p, comments: [...p.comments, { user: authorName, text }] } : p
       )
     );
-    persistComment(postId, text, profile.name || 'Би');
+    persistComment(postId, text, authorName);
   };
 
   const handleNewPost = async (post: any) => {
@@ -1368,12 +1438,14 @@ export const CommunityView: React.FC = () => {
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-4xl mx-auto">
       {/* HEADER BAR */}
-      <header className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-black text-pestle-text tracking-tight">
+      {/* The title and the two actions shared one row, so on a 320px phone the
+          heading was truncated to "Хамтын о…". They stack until there is room. */}
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-xl sm:text-3xl font-black text-pestle-text tracking-tight">
             {t('community_title')}
           </h2>
-          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5">
+          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5 line-clamp-2">
             {t('community_subtitle')}
           </p>
         </div>
@@ -1381,6 +1453,7 @@ export const CommunityView: React.FC = () => {
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => setShowCreateStory(true)}
+            aria-label={t('community_addStory')}
             className="bg-pestle-card border border-pestle-border py-2.5 px-3.5 rounded-2xl text-xs font-bold text-pestle-text hover:border-mango flex items-center gap-1.5 shadow-xs transition-all shrink-0 whitespace-nowrap"
           >
             <Camera size={16} className="text-mango-ink shrink-0" />
@@ -1389,7 +1462,7 @@ export const CommunityView: React.FC = () => {
 
           <button
             onClick={() => setShowCreatePost(true)}
-            className="btn-primary py-2.5 px-4 rounded-2xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-mango/20 shrink-0 whitespace-nowrap"
+            className="btn-primary py-2.5 px-4 rounded-2xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-mango/20 shrink-0 whitespace-nowrap flex-1 sm:flex-none justify-center"
           >
             <Plus size={16} className="shrink-0" />
             <span>{t('community_publish')}</span>
@@ -1437,7 +1510,7 @@ export const CommunityView: React.FC = () => {
               </div>
 
               <span className="text-[10px] font-bold text-pestle-text text-center w-16 truncate">
-                {group.isOwn ? t('community_yourStory') : group.userName.split('-')[0]}
+                {group.isOwn ? t('community_yourStory') : group.userName}
               </span>
             </button>
           ))}

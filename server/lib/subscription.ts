@@ -124,6 +124,18 @@ async function consumeGlobalBudget(accessToken?: string): Promise<boolean> {
 // authoritative across serverless instances, but better than no ceiling at all.
 const memoryUsage = new Map<string, { day: string; count: number }>();
 
+/**
+ * Quota key for the in-memory fallback. Guests are keyed by IP, not by their
+ * X-Guest-Id: that header is client-generated, so a caller could rotate it and
+ * reset their allowance at will — enough to drain the app-wide daily AI budget
+ * from a single machine. Signed-in users keep their uid (their quota is
+ * normally enforced in Postgres anyway).
+ */
+function quotaKeyFor(req: AuthenticatedRequest, userId: string): string {
+  if (!isGuestId(userId)) return userId;
+  return `ip:${req.ip || req.socket?.remoteAddress || 'unknown'}`;
+}
+
 function consumeInMemory(key: string, limit: number): { used: number; allowed: boolean } {
   const day = new Date().toISOString().slice(0, 10);
   const entry = memoryUsage.get(key);
@@ -165,7 +177,7 @@ export async function consumeAiQuota(req: AuthenticatedRequest): Promise<QuotaRe
     }
   }
 
-  const local = consumeInMemory(userId, limit);
+  const local = consumeInMemory(quotaKeyFor(req, userId), limit);
   return {
     allowed: local.allowed,
     used: local.used,
@@ -191,8 +203,10 @@ export async function peekAiQuota(req: AuthenticatedRequest): Promise<QuotaResul
       /* fall through to the in-memory view */
     }
   } else {
+    // Same key consumeAiQuota writes under, or the counter the UI shows would
+    // never match the one actually being enforced.
     const day = new Date().toISOString().slice(0, 10);
-    const entry = memoryUsage.get(userId);
+    const entry = memoryUsage.get(quotaKeyFor(req, userId));
     used = entry && entry.day === day ? entry.count : 0;
   }
 

@@ -44,16 +44,45 @@ interface FeedPost {
   comments: Comment[];
 }
 
-// ── In-memory demo feed (shared, used only when Supabase is unconfigured) ──────
-const memoryPosts: FeedPost[] = [];
-/** Demo-mode social graph: "<followerId>->:<followingId>". */
+// ── In-memory demo feed (used only when Supabase is unconfigured) ─────────────
+// Scoped per identity, exactly like the in-memory inventory and orders stores.
+// A single shared array meant two logged-out visitors on the same server saw —
+// and could comment on — each other's posts.
+const memoryPostsByUser = new Map<string, FeedPost[]>();
+const memoryStoriesByUser = new Map<string, MemStory[]>();
+
+/** Per-visitor caps: the demo feed is unauthenticated, so it must stay bounded. */
+const MEMORY_POST_LIMIT = 50;
+const MEMORY_STORY_LIMIT = 20;
+/** Total distinct demo identities kept in memory; the oldest is evicted first. */
+const MEMORY_USER_LIMIT = 500;
+const MAX_CAPTION_LENGTH = 2_000;
+const MAX_COMMENT_LENGTH = 1_000;
+const MAX_IMAGE_URL_LENGTH = 2_048;
+
+/** Returns this caller's demo store, evicting the least-recently-created one
+ *  when too many identities have accumulated. */
+function storeFor<T>(map: Map<string, T[]>, userId: string): T[] {
+  let list = map.get(userId);
+  if (!list) {
+    if (map.size >= MEMORY_USER_LIMIT) {
+      const oldest = map.keys().next().value;
+      if (oldest !== undefined) map.delete(oldest);
+    }
+    list = [];
+    map.set(userId, list);
+  }
+  return list;
+}
+
+/** Demo-mode social graph: "<followerId>-><followingId>". */
 const memoryFollows = new Set<string>();
 const followKey = (follower: string, following: string) => `${follower}->${following}`;
 
 // ── GET /api/community/posts ──────────────────────────────────────────────────
 router.get('/posts', async (req: AuthenticatedRequest, res) => {
   if (!usesDb(req)) {
-    return res.json({ posts: memoryPosts, source: 'memory' });
+    return res.json({ posts: storeFor(memoryPostsByUser, req.user!.id), source: 'memory' });
   }
 
   const db = getSupabaseForUser(req.accessToken!);
@@ -102,8 +131,23 @@ router.get('/posts', async (req: AuthenticatedRequest, res) => {
 
 // ── POST /api/community/posts ─────────────────────────────────────────────────
 router.post('/posts', async (req: AuthenticatedRequest, res) => {
-  const { caption = '', imageUrl = null, authorName = 'Zity Chef', authorAvatar = '' } = req.body;
+  const {
+    caption: rawCaption = '',
+    imageUrl: rawImageUrl = null,
+    authorName = 'Zity Chef',
+    authorAvatar = '',
+  } = req.body;
   const uid = req.user!.id;
+
+  // The JSON body limit is 10MB; a caption is not.
+  if (typeof rawCaption !== 'string' || rawCaption.length > MAX_CAPTION_LENGTH) {
+    return res.status(400).json({ error: 'CAPTION_TOO_LONG' });
+  }
+  if (rawImageUrl !== null && (typeof rawImageUrl !== 'string' || rawImageUrl.length > MAX_IMAGE_URL_LENGTH)) {
+    return res.status(400).json({ error: 'IMAGE_URL_INVALID' });
+  }
+  const caption = rawCaption;
+  const imageUrl = rawImageUrl;
 
   if (!usesDb(req)) {
     const post: FeedPost = {
@@ -118,7 +162,9 @@ router.post('/posts', async (req: AuthenticatedRequest, res) => {
       time: 'Дөнгөж сая',
       comments: [],
     };
-    memoryPosts.unshift(post);
+    const mine = storeFor(memoryPostsByUser, uid);
+    mine.unshift(post);
+    if (mine.length > MEMORY_POST_LIMIT) mine.length = MEMORY_POST_LIMIT;
     return res.status(201).json({ post, source: 'memory' });
   }
 
@@ -161,7 +207,7 @@ router.post('/posts/:id/like', async (req: AuthenticatedRequest, res) => {
   const uid = req.user!.id;
 
   if (!usesDb(req)) {
-    const post = memoryPosts.find((p) => p.id === id);
+    const post = storeFor(memoryPostsByUser, uid).find((p) => p.id === id);
     if (post) {
       post.liked = liked;
       post.likes = Math.max(0, post.likes + (liked ? 1 : -1));
@@ -187,9 +233,12 @@ router.post('/posts/:id/comments', async (req: AuthenticatedRequest, res) => {
   if (!text || typeof text !== 'string') {
     return res.status(400).json({ error: 'text is required' });
   }
+  if (text.length > MAX_COMMENT_LENGTH) {
+    return res.status(400).json({ error: 'COMMENT_TOO_LONG' });
+  }
 
   if (!usesDb(req)) {
-    const post = memoryPosts.find((p) => p.id === id);
+    const post = storeFor(memoryPostsByUser, uid).find((p) => p.id === id);
     if (post) post.comments.push({ user: authorName, text });
     return res.status(201).json({ comment: { user: authorName, text }, source: 'memory' });
   }
@@ -216,8 +265,6 @@ interface MemStory {
   sticker: string | null;
   createdAt: number;
 }
-const memoryStories: MemStory[] = [];
-
 function groupStories(
   rows: { user_id: string; author_name: string; author_avatar: string | null; id: string; image_url: string | null; caption: string | null; sticker: string | null; created_at: string }[],
   meId: string
@@ -250,7 +297,7 @@ router.get('/stories', async (req: AuthenticatedRequest, res) => {
   const meId = req.user!.id;
 
   if (!usesDb(req)) {
-    const rows = memoryStories.map((s) => ({
+    const rows = storeFor(memoryStoriesByUser, meId).map((s) => ({
       user_id: s.userId,
       author_name: s.authorName,
       author_avatar: s.authorAvatar,
@@ -292,7 +339,9 @@ router.post('/stories', async (req: AuthenticatedRequest, res) => {
       sticker,
       createdAt: Date.now(),
     };
-    memoryStories.unshift(story);
+    const myStories = storeFor(memoryStoriesByUser, uid);
+    myStories.unshift(story);
+    if (myStories.length > MEMORY_STORY_LIMIT) myStories.length = MEMORY_STORY_LIMIT;
     return res.status(201).json({ ok: true, source: 'memory' });
   }
 
@@ -337,7 +386,7 @@ router.get('/users/:id', async (req: AuthenticatedRequest, res) => {
   const fallbackAvatar = typeof req.query.avatar === 'string' ? req.query.avatar : '';
 
   if (!usesDb(req)) {
-    const posts = memoryPosts.filter((p) => p.user.id === targetId);
+    const posts = memoryPostsByUser.get(targetId) ?? [];
     const keys = [...memoryFollows];
     return res.json({
       user: {

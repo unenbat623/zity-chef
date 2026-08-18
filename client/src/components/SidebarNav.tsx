@@ -50,11 +50,13 @@ export const SidebarNav: React.FC = () => {
           <div>
             <div className="flex items-center gap-1.5">
               <h1 className="font-black text-base text-pestle-text tracking-tight">Zity Chef</h1>
-              <span
-                className="text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider on-accent"
-              >
-                PRO
-              </span>
+              {/* Gated on the real tier, like HeaderNav. This badge used to be
+                  hardcoded, so every free user was told they had Pro. */}
+              {subscription !== 'free' && (
+                <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider on-accent">
+                  {subscription === 'family' ? 'FAMILY' : 'PRO'}
+                </span>
+              )}
             </div>
             <p className="text-[10px] text-gray-400 font-semibold">{t('brand_sidebarSubtitle')}</p>
           </div>

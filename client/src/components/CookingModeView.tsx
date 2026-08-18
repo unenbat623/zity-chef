@@ -23,7 +23,9 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useToast } from './Toast';
+import { SmartImage } from './SmartImage';
 import { Recipe, RecipeStep } from '../types';
+import { formatDifficulty } from '../lib/format';
 
 export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe }) => {
   const { lang, setActiveTab, t } = useApp();
@@ -68,12 +70,15 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
       setIsTimerRunning(false);
       // Toast the user that the timer is done
       toastSuccess(t('cooking_timerDoneTitle'), t('cooking_timerDoneDesc'));
-      // Play alert tone if browser supports
+      // Play alert tone if browser supports. The context is closed once the
+      // tone finishes — browsers cap how many can be open at a time, and this
+      // leaked one per completed timer.
       try {
         const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
         const osc = ctx.createOscillator();
         osc.connect(ctx.destination);
         osc.frequency.value = 587.33; // D5 note
+        osc.onended = () => void ctx.close().catch(() => {});
         osc.start();
         osc.stop(ctx.currentTime + 0.4);
       } catch (e) {
@@ -82,6 +87,14 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
     }
     return () => clearInterval(interval);
   }, [isTimerRunning, timerSeconds]);
+
+  // Narration and the microphone must not outlive the screen: leaving cooking
+  // mode used to keep the voice reading steps aloud in the background.
+  useEffect(() => {
+    return () => {
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    };
+  }, []);
 
   if (!recipe) {
     return (
@@ -190,7 +203,6 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
         const lastResult = event.results[event.results.length - 1];
         if (lastResult && lastResult.isFinal) {
           const transcript = lastResult[0].transcript.toLowerCase().trim();
-          console.log('[Voice Command Heard]:', transcript);
           setLastVoiceCommand(transcript);
 
           if (transcript.includes('дараах') || transcript.includes('дараагийнх') || transcript.includes('next')) {
@@ -207,8 +219,19 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
         }
       };
 
-      recognition.onerror = () => {
-        // Restart on error if still enabled
+      // A denied mic permission (or any hard error) used to leave the button
+      // stuck in its red "listening" state with no explanation.
+      recognition.onerror = (event: any) => {
+        if (event?.error === 'no-speech' || event?.error === 'aborted') return;
+        recognition.onend = null;
+        setIsListeningVoiceCommands(false);
+        setLastVoiceCommand(null);
+        toastWarning(
+          t('cooking_handsFreeErrorTitle'),
+          event?.error === 'not-allowed' || event?.error === 'service-not-allowed'
+            ? t('cooking_handsFreeDeniedDesc')
+            : t('cooking_handsFreeErrorDesc')
+        );
       };
 
       recognition.onend = () => {
@@ -257,22 +280,22 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
             <span>{t('cooking_backToRecipes')}</span>
           </button>
 
-          <div>
-            <div className="flex items-center gap-2">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <span className="text-[10px] font-extrabold text-mango-ink uppercase tracking-widest bg-mango/10 px-2.5 py-0.5 rounded-full">
-                {recipe.cuisine || 'International'}
+                {recipe.cuisine || t('recipe_categoryFallback')}
               </span>
               <span className="text-[10px] font-bold text-gray-400">
-                • {recipe.difficulty} • {t('cooking_stepsCount', { n: steps.length })}
+                • {formatDifficulty(recipe.difficulty, t)} • {t('cooking_stepsCount', { n: steps.length })}
               </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black text-pestle-text mt-1">
+            <h2 className="text-lg sm:text-2xl font-black text-pestle-text mt-1 leading-tight">
               {lang === 'mn' ? recipe.title : recipe.titleEn || recipe.title}
             </h2>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+        <div className="flex flex-wrap items-center gap-2 shrink-0 self-end sm:self-auto">
           {/* Hands-Free Voice Control Button */}
           <button
             onClick={toggleHandsFree}
@@ -314,18 +337,18 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-rose-500/15 via-red-500/10 to-amber-500/15 border border-rose-500/30 p-3 rounded-2xl flex items-center justify-between shadow-xs"
+          className="bg-gradient-to-r from-rose-500/15 via-red-500/10 to-amber-500/15 border border-rose-500/30 p-3 rounded-2xl flex flex-wrap items-center justify-between gap-2 shadow-xs"
         >
-          <div className="flex items-center gap-2 text-xs font-black text-rose-500">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
+          <div className="flex flex-wrap items-center gap-2 text-xs font-black text-rose-500 min-w-0">
+            <span className="w-2.5 h-2.5 shrink-0 rounded-full bg-rose-500 animate-ping" />
             <span>{t('cooking_handsFreeActive')}</span>
             {lastVoiceCommand && (
-              <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">
+              <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium min-w-0 truncate">
                 • {t('cooking_lastHeard')}: "{lastVoiceCommand}"
               </span>
             )}
           </div>
-          <span className="text-[10px] font-bold text-gray-400 bg-pestle-card px-2.5 py-1 rounded-xl border border-pestle-border">
+          <span className="text-[10px] font-bold text-gray-400 bg-pestle-card px-2.5 py-1 rounded-xl border border-pestle-border shrink-0">
             {t('cooking_voiceCommands')}
           </span>
         </motion.div>
@@ -408,9 +431,9 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
                 <button
                   key={idx}
                   onClick={() => setCurrentStep(idx)}
-                  className={`flex-1 min-w-[36px] py-1.5 px-2 text-[11px] font-bold rounded-xl border transition-all cursor-pointer text-center truncate ${
+                  className={`flex-1 min-w-[36px] shrink-0 py-1.5 px-2 text-[11px] font-bold rounded-xl border transition-all cursor-pointer text-center truncate ${
                     idx === currentStep
-                      ? 'bg-mango text-white border-mango shadow-sm scale-102'
+                      ? 'bg-mango text-white border-mango shadow-sm'
                       : idx < currentStep
                       ? 'bg-mint/15 text-mint-ink border-mint/30'
                       : 'bg-pestle-bg text-gray-400 border-pestle-border hover:border-gray-400'
@@ -430,19 +453,22 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.2 }}
-              className="bg-pestle-card border border-pestle-border rounded-[28px] p-5 sm:p-7 space-y-6 shadow-xl relative overflow-hidden"
+              className="bg-pestle-card border border-pestle-border rounded-[28px] p-4 sm:p-7 space-y-6 shadow-xl relative overflow-hidden"
             >
               {/* Step Image with Overlay Badges */}
-              <div className="relative h-56 sm:h-72 rounded-2xl overflow-hidden border border-pestle-border shadow-inner">
-                <img
+              <div className="relative h-48 sm:h-72 rounded-2xl overflow-hidden border border-pestle-border shadow-inner">
+                {/* SmartImage: a missing step photo used to leave the white step
+                    title sitting on a blank box. */}
+                <SmartImage
                   src={step.image}
                   alt={step.title}
-                  className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                  emoji="🍳"
+                  className="w-full h-full transition-transform duration-500 hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
-                <div className="absolute bottom-3 left-4 right-4 flex justify-between items-end text-white">
-                  <div>
+                <div className="absolute bottom-3 left-3 right-3 sm:left-4 sm:right-4 flex flex-wrap justify-between items-end gap-2 text-white">
+                  <div className="min-w-0">
                     <span className="text-[10px] font-black uppercase tracking-widest bg-mango px-2.5 py-0.5 rounded-full text-white shadow-md">
                       {t('step')} {currentStep + 1}
                     </span>
@@ -455,7 +481,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
                   {step.heatLevel && (
                     <div className="bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1 rounded-xl text-xs font-extrabold flex items-center gap-1.5 text-amber-300">
                       <Flame size={14} className="text-amber-400" />
-                      <span>{step.heatLevel} Heat</span>
+                      <span>{t('cooking_heatLevel', { level: step.heatLevel })}</span>
                     </div>
                   )}
                 </div>
@@ -527,24 +553,26 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
                 )}
               </div>
 
-              {/* Interactive Step Timer (if specified for this step) */}
+              {/* Interactive Step Timer (if specified for this step). The row
+                  wraps on narrow screens: the readout plus two controls does not
+                  fit on one line at 320px. */}
               {step.timerMinutes && (
-                <div className="bg-gradient-to-r from-mango/15 via-amber-500/10 to-transparent border border-mango/30 p-4 rounded-2xl flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-mango text-white flex items-center justify-center font-black text-lg shadow-md">
+                <div className="bg-gradient-to-r from-mango/15 via-amber-500/10 to-transparent border border-mango/30 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-12 h-12 shrink-0 rounded-2xl bg-mango text-white flex items-center justify-center font-black text-lg shadow-md">
                       <Clock size={24} />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <span className="text-[10px] font-black uppercase tracking-wider text-mango-ink">
                         {t('cooking_stepTimer')}
                       </span>
-                      <h4 className="text-2xl font-black text-pestle-text font-mono">
+                      <h4 className="text-2xl font-black text-pestle-text font-mono tabular-nums">
                         {formatTimer(timerSeconds)}
                       </h4>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={() => setIsTimerRunning(!isTimerRunning)}
                       className="btn-primary p-3 rounded-xl shadow-md shadow-mango/20 cursor-pointer flex items-center gap-1.5 text-xs font-bold"

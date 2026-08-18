@@ -53,6 +53,7 @@ export function buildProductCartItem(product: CatalogProduct, displayName?: stri
   const pricePerUnit = product.pricePerUnit || FALLBACK_INGREDIENT_PRICE;
   return {
     id: `cart-${product.id}-${Date.now()}`,
+    productId: product.id,
     name: displayName || product.name,
     emoji: product.emoji,
     unit: product.unit,
@@ -64,28 +65,19 @@ export function buildProductCartItem(product: CatalogProduct, displayName?: stri
 
 /**
  * Build a cart line for a recipe ingredient. Resolves to the real store
- * product (name, emoji, unit, price) when one matches; otherwise falls back
- * to a generic priced line so checkout still works.
+ * product (name, emoji, unit, price) when one matches. Returns null for
+ * unmatched ingredients: the server prices every order from the catalog, so
+ * an invented generic line can no longer be checked out.
  */
 export function buildIngredientCartItem(
   ingredient: string,
   catalog: CatalogProduct[],
   lang: 'mn' | 'en' = 'mn'
-): CartItem {
+): CartItem | null {
   const product = matchIngredientToProduct(ingredient, catalog);
-  if (product) {
-    const displayName = lang === 'en' && product.nameEn ? product.nameEn : product.name;
-    return buildProductCartItem(product, displayName);
-  }
-  return {
-    id: `cart-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    name: ingredient,
-    emoji: '🛒',
-    unit: 'ш',
-    quantity: 1,
-    pricePerUnit: FALLBACK_INGREDIENT_PRICE,
-    totalPrice: FALLBACK_INGREDIENT_PRICE,
-  };
+  if (!product) return null;
+  const displayName = lang === 'en' && product.nameEn ? product.nameEn : product.name;
+  return buildProductCartItem(product, displayName);
 }
 
 export interface RecipeBundle {

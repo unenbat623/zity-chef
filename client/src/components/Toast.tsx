@@ -81,11 +81,12 @@ const ToastCard: React.FC<{ toast: ToastItem; onDismiss: () => void }> = ({
       transition={{ type: 'spring', damping: 22, stiffness: 280 }}
       className={`relative flex items-start gap-3 w-full max-w-sm px-4 py-3.5 rounded-2xl border shadow-xl backdrop-blur-md pointer-events-auto ${cfg.bg} ${cfg.border}`}
     >
-      {/* Progress bar — shrinks over the toast's lifetime */}
+      {/* Progress bar — shrinks over the toast's lifetime. scaleX rather than
+          width: animating width relayouts the card on every frame. */}
       <motion.div
-        className="absolute bottom-0 left-0 h-0.5 rounded-b-2xl bg-current opacity-25"
-        initial={{ width: '100%' }}
-        animate={{ width: '0%' }}
+        className="absolute bottom-0 left-0 h-0.5 w-full origin-left rounded-b-2xl bg-current opacity-25"
+        initial={{ scaleX: 1 }}
+        animate={{ scaleX: 0 }}
         transition={{ duration: (toast.duration ?? 3500) / 1000, ease: 'linear' }}
       />
 
@@ -105,9 +106,10 @@ const ToastCard: React.FC<{ toast: ToastItem; onDismiss: () => void }> = ({
       {/* Dismiss button */}
       <button
         onClick={onDismiss}
-        className="shrink-0 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-pestle-text rounded-full hover:bg-black/10 transition-all"
+        aria-label="Хаах"
+        className="shrink-0 w-9 h-9 -m-1.5 flex items-center justify-center text-gray-400 hover:text-pestle-text rounded-full hover:bg-black/10 transition-all"
       >
-        <X size={13} />
+        <X size={14} />
       </button>
     </motion.div>
   );
@@ -151,8 +153,10 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     <ToastContext.Provider value={{ toast, toastSuccess, toastError, toastWarning, toastInfo }}>
       {children}
 
-      {/* Toast Viewport — top-right corner, above all modals */}
-      <div className="fixed top-4 right-4 z-[300] flex flex-col gap-2 w-[340px] max-w-[calc(100vw-2rem)] pointer-events-none">
+      {/* Toast Viewport — top-right corner, above all modals. z-[400] because
+          several sheets sit at z-[350]/z-[360]; a toast fired from inside one
+          of them was rendered invisibly behind it at the old z-[300]. */}
+      <div className="fixed top-[calc(1rem+env(safe-area-inset-top,0px))] right-4 z-[400] flex flex-col gap-2 w-[340px] max-w-[calc(100%-2rem)] pointer-events-none">
         <AnimatePresence mode="popLayout">
           {toasts.map((t) => (
             <ToastCard key={t.id} toast={t} onDismiss={() => dismiss(t.id)} />

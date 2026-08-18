@@ -46,8 +46,22 @@ const app = createApp();
 // ── Production static asset serving (SPA) ────────────────────────────────────
 if (IS_PROD) {
   const distPath = path.resolve(__dirname, '../dist');
-  app.use(express.static(distPath));
+
+  // Hashed bundles under /assets are immutable — a content change produces a
+  // new filename. Without this every chunk was revalidated on every load,
+  // which vercel.json already avoided but the Node/Docker path did not.
+  app.use(
+    '/assets',
+    express.static(path.join(distPath, 'assets'), {
+      maxAge: '1y',
+      immutable: true,
+    })
+  );
+  // Everything else (icons, manifest, sw.js) keeps a short TTL: index.html and
+  // the service worker must never be pinned, or clients stick to an old build.
+  app.use(express.static(distPath, { maxAge: '1h', index: false }));
   app.get('*', (_req, res) => {
+    res.setHeader('Cache-Control', 'no-cache');
     res.sendFile(path.resolve(distPath, 'index.html'));
   });
 }

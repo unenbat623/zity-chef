@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
+import { useEscapeClose } from '../hooks/useEscapeClose';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -76,6 +78,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
   const [view, setView] = useState<AuthView>(isLoggedIn ? 'profile' : 'login');
 
+  // Each view gets its own field ids so the labels are really associated —
+  // they were only visually adjacent before.
+  const uid = useId();
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [fullName, setFullName] = useState<string>('');
@@ -101,6 +106,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoggedIn, isOpen]);
+
+  useEscapeClose(onClose, isOpen && !loading);
+  useScrollLock(isOpen);
+
+  // Names the dialog for screen readers as well as titling it on screen — the
+  // overlay had role="dialog" with no accessible name at all.
+  const viewTitle =
+    view === 'register'
+      ? t('auth_titleRegister')
+      : view === 'otp'
+        ? t('auth_titleOtp')
+        : view === 'forgot'
+          ? t('auth_titleForgot')
+          : view === 'profile'
+            ? t('auth_titleProfile')
+            : t('auth_titleLogin');
 
   // Resend OTP countdown timer
   useEffect(() => {
@@ -150,6 +171,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       setErrorMsg(t('auth_errFillAll'));
       return;
     }
+    if (password.length < 6) {
+      setErrorMsg(t('auth_recoveryTooShort'));
+      return;
+    }
     setLoading(true);
     setErrorMsg('');
     const res = await signUpWithPassword(email, password, fullName);
@@ -186,8 +211,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   };
 
   const handleResendOtp = async () => {
+    if (loading) return;
+    setLoading(true);
     setErrorMsg('');
     const res = await resendEmailOtp(email);
+    setLoading(false);
     if (!res.ok) {
       setErrorMsg(res.error || t('auth_errResendFailed'));
       return;
@@ -260,41 +288,45 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[220] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-md">
+      <div
+        onClick={() => {
+          if (!loading) onClose();
+        }}
+        className="fixed inset-0 z-[220] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-md"
+      >
         <motion.div
           initial={{ opacity: 0, scale: 0.96, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 20 }}
           transition={{ type: 'spring', damping: 25, stiffness: 240 }}
-          className="w-full max-w-[390px] bg-pestle-card border border-pestle-border/80 rounded-t-[32px] sm:rounded-[32px] shadow-2xl overflow-hidden relative"
+          onClick={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-label={viewTitle}
+          className="w-full max-w-[390px] bg-pestle-card border border-pestle-border/80 rounded-t-[32px] sm:rounded-[32px] shadow-2xl overflow-hidden relative flex flex-col max-h-[92dvh]"
         >
           {/* Mobile Bottom-Sheet Pull Bar */}
-          <div className="w-12 h-1.5 bg-gray-300 dark:bg-slate-700 rounded-full mx-auto my-2.5 sm:hidden" />
+          <div className="w-12 h-1.5 bg-gray-300 dark:bg-slate-700 rounded-full mx-auto my-2.5 sm:hidden shrink-0" />
           {/* Top Decorative Banner */}
-          <div className="px-5 pt-4 pb-3 bg-gradient-to-br from-mango/12 via-amber-500/5 to-transparent border-b border-pestle-border/60 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-mango text-white flex items-center justify-center shadow-md shadow-mango/20">
+          <div className="px-5 pt-4 pb-3 bg-gradient-to-br from-mango/12 via-amber-500/5 to-transparent border-b border-pestle-border/60 flex items-center justify-between gap-3 shrink-0">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 shrink-0 rounded-xl bg-mango text-white flex items-center justify-center shadow-md shadow-mango/20">
                 <ChefHat size={20} strokeWidth={2.5} />
               </div>
-              <div>
-                <h3 className="font-extrabold text-sm text-pestle-text">
-                  {view === 'login' && t('auth_titleLogin')}
-                  {view === 'register' && t('auth_titleRegister')}
-                  {view === 'otp' && t('auth_titleOtp')}
-                  {view === 'forgot' && t('auth_titleForgot')}
-                  {view === 'profile' && t('auth_titleProfile')}
-                </h3>
+              <div className="min-w-0">
+                <h3 className="font-extrabold text-sm text-pestle-text">{viewTitle}</h3>
                 <p className="text-[10px] text-gray-400 font-semibold">{t('brand_sidebarSubtitle')}</p>
               </div>
             </div>
 
-            <button onClick={onClose} aria-label={t('close')} className="modal-close-btn">
+            <button onClick={onClose} aria-label={t('close')} className="modal-close-btn shrink-0">
               <X size={18} />
             </button>
           </div>
 
-          {/* Form Body */}
-          <div className="px-5 py-4 space-y-3">
+          {/* Form Body — scrolls, so the register form still reaches its submit
+              button on a short screen (landscape phone, split view). */}
+          <div className="px-5 py-4 pb-sheet-safe sm:pb-4 space-y-3 flex-1 min-h-0 overflow-y-auto overscroll-contain">
             {errorMsg && (
               <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold rounded-xl flex items-center gap-2">
                 <span>⚠️ {errorMsg}</span>
@@ -311,10 +343,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             {view === 'login' && (
               <form onSubmit={handleLoginSubmit} className="space-y-3">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
+                  <label htmlFor={`${uid}-login-email`} className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
                     <Mail size={14} className="text-mango-ink" /> {t('auth_emailLabel')}
                   </label>
                   <input
+                    id={`${uid}-login-email`}
                     type="email"
                     required
                     autoComplete="email"
@@ -327,12 +360,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
                 <div className="space-y-1">
                   <div className="flex justify-between items-center">
-                    <label className="text-xs font-bold text-pestle-text flex items-center gap-1">
+                    <label htmlFor={`${uid}-login-password`} className="text-xs font-bold text-pestle-text flex items-center gap-1">
                       <Lock size={12} className="text-mango-ink" /> {t('auth_passwordLabel')}
                     </label>
                     <button
                       type="button"
-                      onClick={() => setView('forgot')}
+                      onClick={() => {
+                        setErrorMsg('');
+                        setSuccessMsg('');
+                        setView('forgot');
+                      }}
                       className="text-[11px] font-bold text-mango-ink hover:underline"
                     >
                       {t('auth_forgotQ')}
@@ -340,6 +377,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   </div>
                   <div className="relative">
                     <input
+                      id={`${uid}-login-password`}
                       type={showPassword ? 'text' : 'password'}
                       required
                       autoComplete="current-password"
@@ -382,6 +420,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     type="button"
                     onClick={() => {
                       setErrorMsg('');
+                      setSuccessMsg('');
                       setView('register');
                     }}
                     className="text-xs font-bold text-mango-ink hover:underline"
@@ -396,10 +435,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             {view === 'register' && (
               <form onSubmit={handleRegisterSubmit} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
+                  <label htmlFor={`${uid}-reg-name`} className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
                     <User size={14} className="text-mango-ink" /> {t('auth_fullNameLabel')}
                   </label>
                   <input
+                    id={`${uid}-reg-name`}
                     type="text"
                     required
                     autoComplete="name"
@@ -411,12 +451,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
+                  <label htmlFor={`${uid}-reg-email`} className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
                     <Mail size={14} className="text-mango-ink" /> {t('auth_emailLabel')}
                   </label>
                   <input
+                    id={`${uid}-reg-email`}
                     type="email"
                     required
+                    autoComplete="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@example.com"
@@ -425,12 +467,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
+                  <label htmlFor={`${uid}-reg-password`} className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
                     <Lock size={14} className="text-mango-ink" /> {t('auth_createPasswordLabel')}
                   </label>
                   <input
+                    id={`${uid}-reg-password`}
                     type="password"
                     required
+                    minLength={6}
                     autoComplete="new-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -463,6 +507,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     type="button"
                     onClick={() => {
                       setErrorMsg('');
+                      setSuccessMsg('');
                       setView('login');
                     }}
                     className="text-xs font-bold text-mango-ink hover:underline"
@@ -488,9 +533,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     <span className="font-bold text-mango-ink">{email}</span>{' '}
                     {t('auth_otpSentSuffix')}
                   </p>
+                  <p className="text-[11px] text-gray-400 mt-2 leading-relaxed">
+                    {t('auth_otpBothWays')}
+                  </p>
                 </div>
 
-                <div className="flex justify-center gap-2 my-2">
+                {/* Six fixed 44px boxes plus gaps overflowed a 320px screen —
+                    they now share the available width instead. */}
+                <div className="flex justify-center gap-1.5 sm:gap-2 my-2">
                   {otpValues.map((val, idx) => (
                     <input
                       key={idx}
@@ -498,11 +548,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                         otpInputRefs.current[idx] = el;
                       }}
                       type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      aria-label={`${t('auth_titleOtp')} ${idx + 1}`}
                       maxLength={1}
                       value={val}
                       onChange={(e) => handleOtpChange(idx, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                      className="w-11 h-12 text-center text-lg font-black bg-pestle-bg border border-pestle-border rounded-xl text-pestle-text focus:outline-none focus:border-mango"
+                      className="flex-1 min-w-0 max-w-[2.75rem] h-12 text-center text-lg font-black bg-pestle-bg border border-pestle-border rounded-xl text-pestle-text focus:outline-none focus:border-mango"
                     />
                   ))}
                 </div>
@@ -543,10 +596,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   {t('auth_forgotDesc')}
                 </p>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
+                  <label htmlFor={`${uid}-forgot-email`} className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
                     <Mail size={14} className="text-mango-ink" /> {t('auth_emailLabel')}
                   </label>
                   <input
+                    id={`${uid}-forgot-email`}
                     type="email"
                     required
                     autoComplete="email"
@@ -571,7 +625,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
                 <button
                   type="button"
-                  onClick={() => setView('login')}
+                  onClick={() => {
+                    setErrorMsg('');
+                    setSuccessMsg('');
+                    setView('login');
+                  }}
                   className="w-full text-xs font-bold text-gray-400 hover:text-pestle-text py-2"
                 >
                   ← {t('auth_backToLogin')}

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ShieldCheck, Cookie, X } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useEscapeClose } from '../hooks/useEscapeClose';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 export const CookieBanner: React.FC = () => {
   const { t } = useApp();
@@ -14,6 +16,9 @@ export const CookieBanner: React.FC = () => {
       setShowBanner(true);
     }
   }, []);
+
+  useEscapeClose(() => setShowModal(null), showModal !== null);
+  useScrollLock(showModal !== null);
 
   const handleAccept = () => {
     localStorage.setItem('zity_cookie_consent', 'true');
@@ -28,7 +33,11 @@ export const CookieBanner: React.FC = () => {
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
-            className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] left-3 right-3 md:bottom-4 md:left-auto md:right-6 md:max-w-md z-[180] bg-pestle-card/95 backdrop-blur-xl border border-pestle-border p-2 sm:p-4 rounded-2xl shadow-2xl flex flex-col gap-2 sm:gap-3"
+            // Mobile: sits ABOVE the floating assistant bubble (which anchors
+            // at 4.75rem); desktop: bottom-left, away from the assistant's
+            // bottom-right corner. It used to share the assistant's exact spot
+            // with a higher z-index, hiding the button until dismissed.
+            className="fixed bottom-[calc(8.5rem+env(safe-area-inset-bottom,0px))] left-3 right-3 md:bottom-4 md:left-6 md:right-auto md:max-w-md z-[180] bg-pestle-card/95 backdrop-blur-xl border border-pestle-border p-2 sm:p-4 rounded-2xl shadow-2xl flex flex-col gap-2 sm:gap-3"
           >
             <div className="flex items-start gap-3">
               <div className="hidden sm:flex w-10 h-10 bg-mango/15 text-mango-ink rounded-2xl items-center justify-center shrink-0">
@@ -59,7 +68,7 @@ export const CookieBanner: React.FC = () => {
               </div>
               <button
                 onClick={() => setShowBanner(false)}
-                className="absolute right-3 top-3 w-7 h-7 rounded-full bg-pestle-bg border border-pestle-border text-gray-400 hover:text-pestle-text flex items-center justify-center"
+                className="absolute right-2 top-2 w-9 h-9 rounded-full bg-pestle-bg border border-pestle-border text-gray-400 hover:text-pestle-text flex items-center justify-center"
                 aria-label={t('close')}
               >
                 <X size={14} />
@@ -91,13 +100,18 @@ export const CookieBanner: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-md z-[210] flex items-center justify-center p-4"
+            onClick={() => setShowModal(null)}
+            role="dialog"
+            aria-modal="true"
+            aria-label={showModal === 'privacy' ? t('privacyPolicy') : t('termsOfService')}
+            className="fixed inset-0 bg-black/70 backdrop-blur-md z-[210] flex items-end sm:items-center justify-center p-0 sm:p-4"
           >
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-pestle-card border border-pestle-border w-full max-w-lg rounded-3xl p-6 shadow-2xl space-y-4 max-h-[80vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+              className="bg-pestle-card border border-pestle-border w-full max-w-lg rounded-t-[32px] sm:rounded-3xl p-6 pb-sheet-safe sm:pb-6 shadow-2xl space-y-4 max-h-[92dvh] overflow-y-auto overscroll-contain"
             >
               <div className="flex justify-between items-center border-b border-pestle-border pb-3">
                 <h3 className="text-base font-black text-pestle-text">
@@ -105,24 +119,38 @@ export const CookieBanner: React.FC = () => {
                 </h3>
                 <button
                   onClick={() => setShowModal(null)}
+                  aria-label={t('close')}
                   className="w-8 h-8 rounded-full bg-pestle-bg text-gray-400 hover:text-pestle-text flex items-center justify-center"
                 >
                   <X size={18} />
                 </button>
               </div>
 
+              {/* Two distinct documents. The body used to render the privacy
+                  text under both headings — the Terms link opened the wrong
+                  document entirely, in English, in an otherwise Mongolian app. */}
               <div className="text-xs text-pestle-text space-y-3 font-medium leading-relaxed">
-                <p>
-                  Welcome to Zity Chef! We are committed to protecting your privacy and ensuring your personal data is handled safely in compliance with international standards (GDPR, CCPA).
-                </p>
-                <h4 className="font-bold text-mango-ink">1. Data Collection</h4>
-                <p>
-                  We only store essential data (pantry items, meal plans, and account preferences) to provide intelligent culinary recommendations.
-                </p>
-                <h4 className="font-bold text-mango-ink">2. AI & Data Security</h4>
-                <p>
-                  All vision receipt scans and AI chat queries are processed securely via encrypted proxies. We do not sell your personal data to third parties.
-                </p>
+                {showModal === 'privacy' ? (
+                  <>
+                    <p>{t('legal_privacyIntro')}</p>
+                    <h4 className="font-bold text-mango-ink">{t('legal_privacyH1')}</h4>
+                    <p>{t('legal_privacyP1')}</p>
+                    <h4 className="font-bold text-mango-ink">{t('legal_privacyH2')}</h4>
+                    <p>{t('legal_privacyP2')}</p>
+                    <h4 className="font-bold text-mango-ink">{t('legal_privacyH3')}</h4>
+                    <p>{t('legal_privacyP3')}</p>
+                  </>
+                ) : (
+                  <>
+                    <p>{t('legal_termsIntro')}</p>
+                    <h4 className="font-bold text-mango-ink">{t('legal_termsH1')}</h4>
+                    <p>{t('legal_termsP1')}</p>
+                    <h4 className="font-bold text-mango-ink">{t('legal_termsH2')}</h4>
+                    <p>{t('legal_termsP2')}</p>
+                    <h4 className="font-bold text-mango-ink">{t('legal_termsH3')}</h4>
+                    <p>{t('legal_termsP3')}</p>
+                  </>
+                )}
               </div>
 
               <button

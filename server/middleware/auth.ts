@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { supabaseAuth } from '../supabase.js';
+import { supabaseAuth, isSupabaseConfigured } from '../supabase.js';
 
 export const GUEST_ID = 'guest-user-00000000-0000-0000-0000-000000000000';
 
@@ -57,13 +57,18 @@ function assignGuest(req: AuthenticatedRequest) {
  *      default for Supabase projects using the shared JWT secret.
  *   2. Remote validation via supabaseAdmin.auth.getUser(token).
  *
- * If no token is present, or it cannot be verified, the request is treated as
- * an anonymous guest (data is served from the in-memory fallback store, never
- * from another user's rows).
+ * If no token is present, the request is treated as an anonymous guest (data
+ * is served from the in-memory fallback store, never from another user's rows).
+ * A token that IS present but fails verification gets a 401 — the caller
+ * believes they are signed in, and silently downgrading them to guest used to
+ * make an expired session look like a wiped account (empty fridge, no orders,
+ * no error). 401 lets the client refresh the session and retry. Only when
+ * Supabase itself is unreachable do we degrade to guest, so our outage doesn't
+ * sign everyone out.
  */
 export async function authenticateToken(
   req: AuthenticatedRequest,
-  _res: Response,
+  res: Response,
   next: NextFunction
 ) {
   const authHeader = req.headers['authorization'];
@@ -78,21 +83,29 @@ export async function authenticateToken(
   if (SUPABASE_JWT_SECRET) {
     try {
       // clockTolerance absorbs minor host/container clock skew ("iat in future").
+      // Algorithm and audience are pinned; projects on Supabase's asymmetric
+      // signing keys fail this check and fall through to the remote validation.
       const payload = jwt.verify(token, SUPABASE_JWT_SECRET, {
         clockTolerance: 30,
+        algorithms: ['HS256'],
+        audience: 'authenticated',
       }) as jwt.JwtPayload;
       if (payload.sub) {
         req.user = {
           id: payload.sub,
           email: (payload.email as string) || '',
           subscriptionTier: 'free',
-          isAnonymous: payload.is_anonymous === true || payload.role === 'anon',
+          isAnonymous: payload.is_anonymous === true,
         };
         req.accessToken = token;
         return next();
       }
-    } catch {
-      // fall through to remote validation / guest
+    } catch (err) {
+      if (err instanceof jwt.TokenExpiredError) {
+        return res.status(401).json({ error: 'TOKEN_EXPIRED' });
+      }
+      // Structurally invalid for HS256 — may still be a valid asymmetric-key
+      // token; let the remote check decide.
     }
   }
 
@@ -110,9 +123,16 @@ export async function authenticateToken(
         req.accessToken = token;
         return next();
       }
+      if (error) {
+        return res.status(401).json({ error: 'TOKEN_INVALID' });
+      }
     } catch {
-      // fall through to guest
+      // Supabase unreachable — degrade to guest rather than signing the
+      // caller out over an outage on our side.
     }
+  } else if (isSupabaseConfigured || SUPABASE_JWT_SECRET) {
+    // Auth is configured but this token failed every available check.
+    return res.status(401).json({ error: 'TOKEN_INVALID' });
   }
 
   assignGuest(req);

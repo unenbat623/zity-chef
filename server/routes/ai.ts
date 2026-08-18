@@ -2,7 +2,7 @@ import express from 'express';
 import crypto from 'crypto';
 import { GoogleGenAI } from '@google/genai';
 import { aiResponseCache, ocrResultCache } from '../cache.js';
-import { authenticateToken, AuthenticatedRequest } from '../middleware/auth.js';
+import { authenticateToken, AuthenticatedRequest, isGuestId } from '../middleware/auth.js';
 import { consumeAiQuota, peekAiQuota } from '../lib/subscription.js';
 import { getRecipeCatalog, renderCatalog } from '../lib/recipeCatalog.js';
 
@@ -267,7 +267,7 @@ router.get('/quota', authenticateToken, async (req: AuthenticatedRequest, res) =
 // ── GET /api/ai/provider (which backend is active) ────────────────────────────
 // `?check=1` additionally makes one tiny live call, so a broken key / exhausted
 // quota can be diagnosed without guessing from the chat UI.
-router.get('/provider', async (req, res) => {
+router.get('/provider', authenticateToken, async (req: AuthenticatedRequest, res) => {
   const info = {
     provider: PROVIDER,
     model: PROVIDER === 'gemini' ? GEMINI_MODEL : OLLAMA_MODEL,
@@ -276,6 +276,11 @@ router.get('/provider', async (req, res) => {
   };
 
   if (req.query.check !== '1') return res.json(info);
+
+  // The live check makes a real, billed model call — signed-in users only.
+  if (!req.user || isGuestId(req.user.id)) {
+    return res.status(403).json({ ...info, error: 'SIGN_IN_REQUIRED' });
+  }
 
   try {
     const sample = await chatComplete('Reply with the single word OK.', 'ping');
@@ -302,6 +307,20 @@ router.post('/chat', authenticateToken, async (req: AuthenticatedRequest, res) =
     return res.json({ text: cached, fromCache: true });
   }
 
+  // Joining a request already in flight costs nothing extra, exactly like a
+  // cache hit — so it must not spend the caller's allowance either. Checked
+  // before consumeAiQuota, which is where it used to silently burn one.
+  if (inflight.has(cacheKey)) {
+    try {
+      const text = await inflight.get(cacheKey)!;
+      return res.json({ text, fromCache: true });
+    } catch (err) {
+      return res
+        .status(503)
+        .json({ error: 'AI_UNAVAILABLE', text: unavailableMessage(err, lang), degraded: true });
+    }
+  }
+
   // Every uncached answer is a real bill — claim it against the daily quota
   // before calling the provider, not after.
   const quota = await consumeAiQuota(req);
@@ -321,17 +340,6 @@ router.post('/chat', authenticateToken, async (req: AuthenticatedRequest, res) =
       text,
       quota: { used: quota.used, limit: quota.limit, remaining: quota.remaining, tier: quota.tier },
     });
-  }
-
-  if (inflight.has(cacheKey)) {
-    try {
-      const text = await inflight.get(cacheKey)!;
-      return res.json({ text, fromCache: true });
-    } catch (err) {
-      return res
-        .status(503)
-        .json({ error: 'AI_UNAVAILABLE', text: unavailableMessage(err, lang), degraded: true });
-    }
   }
 
   const catalog = renderCatalog(await getRecipeCatalog());
@@ -360,14 +368,17 @@ router.post('/chat', authenticateToken, async (req: AuthenticatedRequest, res) =
 });
 
 // ── Receipt OCR (vision — Gemini only; falls back to a demo list otherwise) ───
-router.post('/ocr', async (req, res) => {
+router.post('/ocr', authenticateToken, async (req: AuthenticatedRequest, res) => {
   const { base64Image, mimeType = 'image/jpeg' } = req.body;
 
   if (!base64Image || typeof base64Image !== 'string') {
     return res.status(400).json({ error: 'base64Image is required' });
   }
 
-  const imageHash = crypto.createHash('md5').update(base64Image.slice(0, 1000)).digest('hex');
+  // Hash the whole payload: a prefix hash let two receipts photographed on the
+  // same device (identical JPEG headers) collide and serve each other's items
+  // from the shared cache.
+  const imageHash = crypto.createHash('sha256').update(base64Image).digest('hex');
   const cached = await ocrResultCache.get(imageHash);
   if (cached) {
     return res.json({ items: JSON.parse(cached), fromCache: true });
@@ -378,6 +389,17 @@ router.post('/ocr', async (req, res) => {
   // been read off the receipt.
   if (PROVIDER !== 'gemini') {
     return res.status(503).json({ error: 'OCR_UNAVAILABLE' });
+  }
+
+  // Every scan is a real vision-model bill — it spends the same daily allowance
+  // as chat. This route used to be the only unmetered, unauthenticated way to
+  // burn Gemini spend with 10MB payloads.
+  const quota = await consumeAiQuota(req);
+  if (!quota.allowed) {
+    return res.status(429).json({
+      error: quota.budgetExhausted ? 'AI_BUDGET_EXHAUSTED' : 'AI_QUOTA_EXCEEDED',
+      quota: { used: quota.used, limit: quota.limit, remaining: quota.remaining, tier: quota.tier },
+    });
   }
 
   try {

@@ -112,39 +112,47 @@
   background: rgba(148, 163, 184, 0.5);
 }
 
-.pestle-card {
-  @apply bg-pestle-card border border-pestle-border/80 rounded-2xl shadow-sm transition-all duration-200;
-  will-change: transform, opacity;
-}
+/* These live in the `components` layer on purpose. Tailwind emits utilities in a
+   later layer, so an unlayered `.btn-primary` would beat every `py-2.5` / `px-4`
+   written next to it — which is exactly how a compact button ended up rendering
+   at full desktop padding and overflowing narrow phones. */
+@layer components {
+  /* No `will-change` here: it was permanent, so a 40-item fridge grid held 40
+     compositor layers for the life of the page. It is a hint for an imminent
+     animation, not a decoration. */
+  .pestle-card {
+    @apply bg-pestle-card border border-pestle-border/80 rounded-2xl shadow-sm transition-all duration-200;
+  }
 
-.btn-primary {
-  background-color: var(--color-accent, #047857) !important;
-  color: var(--color-accent-fg, #FFFFFF) !important;
-  font-weight: 700;
-  padding: 0.875rem 1.5rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 14px var(--color-accent-shadow, rgba(16, 185, 129, 0.3));
-  transition: all 0.2s ease-in-out;
-  cursor: pointer;
-  user-select: none;
-}
+  .btn-primary {
+    background-color: var(--color-accent, #047857);
+    color: var(--color-accent-fg, #FFFFFF);
+    font-weight: 700;
+    padding: 0.875rem 1.5rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 14px var(--color-accent-shadow, rgba(16, 185, 129, 0.3));
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+    user-select: none;
+  }
 
-.btn-primary:hover {
-  filter: brightness(1.08);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px var(--color-accent-shadow, rgba(16, 185, 129, 0.4));
-}
+  .btn-primary:hover {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px var(--color-accent-shadow, rgba(16, 185, 129, 0.4));
+  }
 
-/* Filled accent surface with a foreground picked for contrast. Use this rather
-   than pairing a raw accent background with text-white — the bright brand green
-   only reaches 2.5:1 against white. */
-.on-accent {
-  background-color: var(--color-accent, #047857);
-  color: var(--color-accent-fg, #FFFFFF);
-}
+  /* Filled accent surface with a foreground picked for contrast. Use this rather
+     than pairing a raw accent background with text-white — the bright brand green
+     only reaches 2.5:1 against white. */
+  .on-accent {
+    background-color: var(--color-accent, #047857);
+    color: var(--color-accent-fg, #FFFFFF);
+  }
 
-.btn-secondary {
-  @apply bg-pestle-card border border-pestle-border text-pestle-text font-bold py-3.5 px-6 rounded-xl active:scale-[0.97] hover:bg-pestle-bg transition-all cursor-pointer select-none;
+  .btn-secondary {
+    @apply bg-pestle-card border border-pestle-border text-pestle-text font-bold py-3.5 px-6 rounded-xl active:scale-[0.97] hover:bg-pestle-bg transition-all cursor-pointer select-none;
+  }
 }
 
 /* Hide scrollbar but keep scroll functionality */
@@ -161,6 +169,16 @@
   padding-bottom: env(safe-area-inset-bottom, 14px);
 }
 
+/* Bottom sheets sit flush against the bottom edge on phones, so their last row
+   of controls lands under the home indicator without this. */
+.pb-sheet-safe {
+  padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
 /* Hardware accelerated smooth elements */
 .hardware-accelerated {
   transform: translateZ(0);
@@ -174,10 +192,34 @@
   word-break: break-word;
 }
 
-img, video, canvas, svg {
-  max-width: 100%;
-  height: auto;
-  user-select: none;
+/* iOS Safari auto-zooms (and stays panned) whenever a focused form control is
+   under 16px — and nearly every input in the app is text-xs. Unlayered on
+   purpose: it must beat the Tailwind font-size utilities on phones. Desktop
+   keeps the compact sizes. */
+@media (max-width: 640px) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+@layer base {
+  /* `height: auto` belongs to responsive raster media only. Applied to <svg> it
+     beat every `h-*` utility (unlayered CSS outranks Tailwind's layers) and let
+     icon boxes size themselves off their viewBox instead of the class. */
+  img, video, canvas {
+    max-width: 100%;
+    height: auto;
+  }
+
+  svg {
+    max-width: 100%;
+  }
+
+  img, video, canvas, svg {
+    user-select: none;
+  }
 }
 
 /* ── Modal & Overlay Utilities ───────────────────────────────── */
@@ -270,4 +312,26 @@ textarea:focus {
 /* ── Tab-switch smoothness: prevent content pop-in ───────────── */
 [data-framer-appear='true'] {
   will-change: opacity, transform;
+}
+
+/* ── Reduced motion ───────────────────────────────────────────
+   Honour the OS "reduce motion" setting: collapse every transition and
+   animation (including Motion's, which render as inline styles) to an
+   imperceptible duration rather than removing them, so animation-end
+   callbacks still fire and nothing gets stuck mid-state. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  html,
+  .overflow-y-auto,
+  .overflow-x-auto {
+    scroll-behavior: auto !important;
+  }
 }

@@ -55,13 +55,22 @@ function makeLimiter(max: number, prefix: string, message?: object) {
 export function createApp(): Express {
   const app = express();
 
+  // Behind a load balancer / CDN (Render, Vercel, Cloudflare) req.ip is the
+  // proxy's address unless the X-Forwarded-For chain is trusted. Without this,
+  // every visitor shares one rate-limit bucket — and express-rate-limit v8
+  // refuses the configuration outright.
+  app.set('trust proxy', 1);
+
   // ── Security ────────────────────────────────────────────────────────────
   app.use(
     helmet({
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: ["'self'", "'unsafe-inline'"],
+          // No 'unsafe-inline': the theme bootstrap and the service-worker
+          // registration were moved out of index.html, so nothing inline is
+          // left to allow — which is what makes this CSP worth having.
+          scriptSrc: ["'self'"],
           styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
           fontSrc: ["'self'", 'https://fonts.gstatic.com'],
           imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
@@ -114,7 +123,14 @@ export function createApp(): Express {
   app.use('/api/chef', chefRouter);
 
   // ── Health & metrics ────────────────────────────────────────────────────
+  // Public, so it stays a plain liveness signal in production. The cache and
+  // spend figures are operational detail and are only attached in development —
+  // an unauthenticated endpoint should not report what the app costs to run.
   app.get('/api/health', (_req, res) => {
+    if (IS_PROD) {
+      return res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    }
+
     const aiStats = aiResponseCache.stats();
     const ocrStats = ocrResultCache.stats();
     const totalSavedCalls = aiStats.totalCacheHits + ocrStats.totalCacheHits;
@@ -122,7 +138,7 @@ export function createApp(): Express {
 
     res.json({
       status: 'ok',
-      environment: IS_PROD ? 'production' : 'development',
+      environment: 'development',
       uptime: Math.floor(process.uptime()),
       cache: {
         backend: cacheBackend,
@@ -153,6 +169,11 @@ export function createApp(): Express {
 
   // Central error handler — consistent JSON, never leaks stack traces in prod.
   app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+    // A blocked origin is the caller's problem, not a server fault; it used to
+    // surface as a 500 and get logged as an unhandled error.
+    if (err instanceof Error && err.message === 'Blocked by CORS policy') {
+      return res.status(403).json({ error: 'CORS_ORIGIN_NOT_ALLOWED' });
+    }
     console.error('[Unhandled error]', err);
     const message = err instanceof Error ? err.message : 'Internal server error';
     res.status(500).json({ error: IS_PROD ? 'Internal server error' : message });

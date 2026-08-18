@@ -13,11 +13,12 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useChefDashboard } from '../hooks/useChefDashboard';
-
-const formatMoney = (amount: number) => `₮${Math.round(amount).toLocaleString()}`;
+import { formatOrderStatus, formatTier } from '../lib/format';
 
 export const ChefDashboardView: React.FC = () => {
-  const { orders, inventory, cart, setActiveTab, t } = useApp();
+  const { orders, inventory, cart, setActiveTab, formatPrice, t } = useApp();
+  // Money follows the user's currency setting like everywhere else.
+  const formatMoney = (amount: number) => formatPrice(Math.round(amount));
   const { dashboard, loading, error, refetch } = useChefDashboard();
 
   const fallbackStats = {
@@ -40,6 +41,16 @@ export const ChefDashboardView: React.FC = () => {
   }));
   const recentCustomers = dashboard?.recentCustomers ?? [];
   const adminNotice = dashboard?.adminEnabled === false ? dashboard.message : error;
+  // "Admin not configured" was shown for ANY error, so a network failure or a
+  // 502 was reported to the operator as a misconfiguration they'd go hunting
+  // for. Only the server's own access messages mean that.
+  const noticeKey = !adminNotice
+    ? null
+    : adminNotice.includes('CHEF_ADMIN_EMAILS')
+      ? 'dashboard_adminLocked'
+      : dashboard?.adminEnabled === false
+        ? 'dashboard_adminNotConfigured'
+        : 'dashboard_loadFailed';
 
   const cards = [
     { label: t('dashboard_customers'), value: stats.customers, icon: Users },
@@ -71,7 +82,7 @@ export const ChefDashboardView: React.FC = () => {
             </span>
             <button
               onClick={() => refetch()}
-              className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-black text-white hover:bg-white/15"
+              className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3.5 py-2.5 text-[11px] font-black text-white hover:bg-white/15"
             >
               <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
               {t('dashboard_refresh')}
@@ -80,17 +91,13 @@ export const ChefDashboardView: React.FC = () => {
         </div>
       </header>
 
-      {adminNotice && (
+      {noticeKey && (
         <div className="rounded-2xl border border-amber-500/25 bg-amber-500/10 p-4 text-xs font-semibold text-amber-700 dark:text-amber-300">
-          {t(
-            adminNotice.includes('CHEF_ADMIN_EMAILS')
-              ? 'dashboard_adminLocked'
-              : 'dashboard_adminNotConfigured'
-          )}
+          {t(noticeKey)}
         </div>
       )}
 
-      <section className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+      <section className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {cards.map((card) => {
           const Icon = card.icon;
           return (
@@ -103,8 +110,8 @@ export const ChefDashboardView: React.FC = () => {
                 <Icon size={18} />
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase text-gray-400">{card.label}</p>
-                <p className="text-lg sm:text-xl font-black text-pestle-text truncate">{card.value}</p>
+                <p className="text-[10px] font-black uppercase text-gray-400 line-clamp-2 leading-tight">{card.label}</p>
+                <p className="text-base sm:text-xl font-black text-pestle-text truncate tabular-nums">{card.value}</p>
               </div>
             </motion.div>
           );
@@ -122,9 +129,9 @@ export const ChefDashboardView: React.FC = () => {
           </div>
           <button
             onClick={() => setActiveTab('store')}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-700 px-4 py-3 text-xs font-black text-white shadow-md shadow-emerald-600/15"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-700 px-4 py-3 text-xs font-black text-white shadow-md shadow-emerald-600/15 shrink-0 whitespace-nowrap"
           >
-            <Store size={16} />
+            <Store size={16} className="shrink-0" />
             {t('dashboard_openStore')}
           </button>
         </div>
@@ -144,50 +151,52 @@ export const ChefDashboardView: React.FC = () => {
 
       <section className="grid grid-cols-1 xl:grid-cols-[1.4fr_0.9fr] gap-4">
         <div className="pestle-card p-4 sm:p-5 space-y-4 overflow-hidden">
-          <div className="flex items-center justify-between gap-3">
-            <div>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
               <h3 className="text-sm font-black text-pestle-text">{t('dashboard_recentOrders')}</h3>
               <p className="text-[11px] text-gray-400 font-semibold">{t('dashboard_recentOrdersSub')}</p>
             </div>
             <button
               onClick={() => setActiveTab('store')}
-              className="rounded-xl bg-emerald-700 px-3 py-2 text-[11px] font-black text-white shadow-md shadow-emerald-600/15"
+              className="rounded-xl bg-emerald-700 px-3 py-2 text-[11px] font-black text-white shadow-md shadow-emerald-600/15 shrink-0 whitespace-nowrap"
             >
               {t('dashboard_openStore')}
             </button>
           </div>
 
-          <div className="overflow-x-auto no-scrollbar">
-            <div className="min-w-[620px] space-y-2">
-              {loading && !dashboard ? (
-                [0, 1, 2].map((i) => <div key={i} className="h-14 rounded-xl bg-pestle-bg animate-pulse" />)
-              ) : recentOrders.length === 0 ? (
-                <div className="rounded-xl bg-pestle-bg p-6 text-center text-xs font-semibold text-gray-400">
-                  {t('dashboard_noOrders')}
-                </div>
-              ) : (
-                recentOrders.map((order) => (
-                  <div
-                    key={order.id}
-                    className="grid grid-cols-[1fr_1fr_120px_100px] items-center gap-3 rounded-xl border border-pestle-border/70 bg-pestle-bg/55 px-3 py-3 hover:border-emerald-500/40"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-xs font-black text-pestle-text truncate">{order.id}</p>
-                      <p className="text-[10px] text-gray-400 font-semibold truncate">{order.createdAt}</p>
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold text-pestle-text truncate">{order.customerName}</p>
-                      <p className="text-[10px] text-gray-400 truncate">{order.address}</p>
-                    </div>
-                    <span className="text-xs font-black text-emerald-700 dark:text-emerald-400">{formatMoney(order.totalAmount)}</span>
-                    <span className="inline-flex items-center justify-center gap-1 rounded-full bg-emerald-500/10 px-2 py-1 text-[10px] font-black text-emerald-700 dark:text-emerald-400">
-                      <Clock3 size={10} />
-                      {order.status}
-                    </span>
+          {/* The four-column row needed 620px, so on a phone the whole table had
+              to be swiped sideways. Below `sm` it stacks into a card instead. */}
+          <div className="space-y-2">
+            {loading && !dashboard ? (
+              [0, 1, 2].map((i) => <div key={i} className="h-14 rounded-xl bg-pestle-bg animate-pulse" />)
+            ) : recentOrders.length === 0 ? (
+              <div className="rounded-xl bg-pestle-bg p-6 text-center text-xs font-semibold text-gray-400">
+                {t('dashboard_noOrders')}
+              </div>
+            ) : (
+              recentOrders.map((order) => (
+                <div
+                  key={order.id}
+                  className="grid grid-cols-[minmax(0,1fr)_auto] sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_110px_100px] items-start sm:items-center gap-x-3 gap-y-2 rounded-xl border border-pestle-border/70 bg-pestle-bg/55 px-3 py-3 hover:border-emerald-500/40"
+                >
+                  <div className="min-w-0">
+                    <p className="text-xs font-black text-pestle-text truncate">{order.id}</p>
+                    <p className="text-[10px] text-gray-400 font-semibold truncate">{order.createdAt}</p>
                   </div>
-                ))
-              )}
-            </div>
+                  <span className="inline-flex items-center justify-center gap-1 rounded-full bg-emerald-500/10 px-2 py-1 text-[10px] font-black text-emerald-700 dark:text-emerald-400 shrink-0 sm:order-4">
+                    <Clock3 size={10} className="shrink-0" />
+                    {formatOrderStatus(order.status, t)}
+                  </span>
+                  <div className="min-w-0 col-span-2 sm:col-span-1 sm:order-2">
+                    <p className="text-xs font-bold text-pestle-text truncate">{order.customerName}</p>
+                    <p className="text-[10px] text-gray-400 truncate">{order.address}</p>
+                  </div>
+                  <span className="text-xs font-black text-emerald-700 dark:text-emerald-400 tabular-nums col-span-2 sm:col-span-1 sm:order-3">
+                    {formatMoney(order.totalAmount)}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
@@ -216,7 +225,7 @@ export const ChefDashboardView: React.FC = () => {
                       <p className="text-[10px] font-semibold text-gray-400 truncate">{customer.email}</p>
                     </div>
                     <span className="text-[9px] font-black uppercase text-gray-400">
-                      {customer.subscriptionTier}
+                      {formatTier(customer.subscriptionTier, t)}
                     </span>
                   </div>
                 ))

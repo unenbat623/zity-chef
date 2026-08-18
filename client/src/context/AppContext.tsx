@@ -7,11 +7,14 @@ import { useInventory } from '../hooks/useInventory';
 import { useOrders } from '../hooks/useOrders';
 import { useAiQuota } from '../hooks/useAiQuota';
 import { useAuth } from './AuthContext';
+import { supabase } from '../lib/supabase';
 
 interface PendingPayment {
   amount: number;
   title: string;
-  onSuccess?: (paymentMethod: 'qpay' | 'socialpay' | 'card') => void;
+  /** invoiceId identifies the verified payment; order creation must pass it
+   *  back so the server can match the order against what was actually paid. */
+  onSuccess?: (paymentMethod: 'qpay' | 'socialpay' | 'card', invoiceId?: string) => void;
   preferredMethod?: 'qpay' | 'socialpay' | 'card';
   /** Set when the invoice buys a subscription, so the server can grant it. */
   plan?: 'pro' | 'family';
@@ -44,7 +47,7 @@ interface AppContextType {
   orders: Order[];
   ordersLoading: boolean;
   ordersError: boolean;
-  createOrder: (address: string, paymentMethod: 'qpay' | 'socialpay' | 'card') => Order;
+  createOrder: (address: string, paymentMethod: 'qpay' | 'socialpay' | 'card', invoiceId?: string) => Order;
   activeTab: string;
   setActiveTab: (tab: string) => void;
   activeCookingRecipe: Recipe | null;
@@ -65,7 +68,7 @@ interface AppContextType {
   triggerPayment: (
     amount: number,
     title: string,
-    onSuccess?: (paymentMethod: 'qpay' | 'socialpay' | 'card') => void,
+    onSuccess?: (paymentMethod: 'qpay' | 'socialpay' | 'card', invoiceId?: string) => void,
     preferredMethod?: 'qpay' | 'socialpay' | 'card',
     plan?: 'pro' | 'family'
   ) => void;
@@ -158,7 +161,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const [isDark, setIsDark] = useState<boolean>(() => {
-    return localStorage.getItem('zity_theme') === 'dark';
+    // Explicit choice wins; otherwise follow the OS (same logic as the inline
+    // pre-hydration script in index.html, so React agrees with the first paint).
+    const stored = localStorage.getItem('zity_theme');
+    if (stored) return stored === 'dark';
+    return typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
   // ── TanStack Query server state ──────────────────────────────────────────
@@ -220,9 +227,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return normalizeProfile(readStoredJson<Partial<UserProfile>>('zity_profile', DEFAULT_PROFILE));
   });
 
-  const setProfile = useCallback((p: UserProfile) => {
-    setProfileState(p);
-  }, []);
+  const setProfile = useCallback(
+    (p: UserProfile) => {
+      setProfileState(p);
+      // Push the identity fields to Postgres so the edit survives a reload.
+      // Previously the profile lived in localStorage only, and hydration
+      // overwrote the name from auth metadata on every visit.
+      if (supabase && authUser && !isAnonymous) {
+        void supabase
+          .from('profiles')
+          .update({ display_name: p.name, avatar_url: p.avatarUrl || null })
+          .eq('id', authUser.id)
+          .then(({ error }) => {
+            if (error) console.warn('[Zity Chef] Profile save failed:', error.message);
+          });
+      }
+    },
+    [authUser, isAnonymous]
+  );
 
   const [savedRecipeIds, setSavedRecipeIds] = useState<string[]>(() => {
     const saved = localStorage.getItem('zity_saved_recipes');
@@ -298,9 +320,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       hasRealAccount
         ? {
             ...nextProfile,
-            name: displayName,
-            username,
-            avatarUrl: avatarUrl || nextProfile.avatarUrl,
+            // Auth metadata is a FALLBACK, not the source of truth: it used to
+            // overwrite these unconditionally, so a name edited in the profile
+            // screen was reset to the signup value on every reload.
+            name: storedProfileKey ? nextProfile.name : displayName,
+            username: storedProfileKey ? nextProfile.username : username,
+            avatarUrl: nextProfile.avatarUrl || avatarUrl,
             postsCount: 0,
             followersCount: 0,
             followingCount: 0,
@@ -308,6 +333,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           }
         : nextProfile
     );
+
+    // The database is authoritative across devices — reconcile once the row
+    // is read, without waiting for it on first paint.
+    if (hasRealAccount && supabase && authUser) {
+      void supabase
+        .from('profiles')
+        .select('display_name,avatar_url')
+        .eq('id', authUser.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (!data) return;
+          setProfileState((prev) => ({
+            ...prev,
+            name: (data.display_name as string) || prev.name,
+            avatarUrl: (data.avatar_url as string) || prev.avatarUrl,
+          }));
+        });
+    }
 
     setSubscriptionState(
       (localStorage.getItem(accountStorage.subscription) as SubscriptionTier | null) ||
@@ -343,12 +386,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [currency]);
 
   useEffect(() => {
-    localStorage.setItem('zity_theme', isDark ? 'dark' : 'light');
     if (isDark) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
+    // Keep the browser chrome (status bar) on the app's actual background —
+    // the static media-query metas track the OS, not the in-app toggle.
+    document
+      .querySelectorAll('meta[name="theme-color"]')
+      .forEach((m) => m.setAttribute('content', isDark ? '#0B0F17' : '#F8FAFB'));
   }, [isDark]);
 
   // Derive accessible shades from the (user-picked) accent. The accent plays two
@@ -416,7 +463,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return () => window.removeEventListener('storage', onStorage);
   }, [accountStorage]);
 
-  const toggleDarkMode = useCallback(() => setIsDark((prev) => !prev), []);
+  // Persist only on an explicit toggle — a visitor who never touched the
+  // switch keeps following their OS preference on future visits.
+  const toggleDarkMode = useCallback(
+    () =>
+      setIsDark((prev) => {
+        const next = !prev;
+        localStorage.setItem('zity_theme', next ? 'dark' : 'light');
+        return next;
+      }),
+    []
+  );
 
   const setSubscription = useCallback((tier: SubscriptionTier) => {
     setSubscriptionState(tier);
@@ -449,7 +506,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const totalCartAmount = cart.reduce((sum, item) => sum + item.totalPrice, 0);
 
   const handleCreateOrder = useCallback(
-    (address: string, paymentMethod: 'qpay' | 'socialpay' | 'card'): Order => {
+    (address: string, paymentMethod: 'qpay' | 'socialpay' | 'card', invoiceId?: string): Order => {
       const newOrder: Order = {
         id: `ZITY-${Math.floor(100000 + Math.random() * 900000)}`,
         items: [...cart],
@@ -465,6 +522,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         totalAmount: totalCartAmount,
         deliveryAddress: address,
         paymentMethod,
+        invoiceId,
       });
 
       clearCart();
@@ -477,8 +535,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     (
       amount: number,
       title: string,
-      onSuccess?: (paymentMethod: 'qpay' | 'socialpay' | 'card') => void,
-      preferredMethod: 'qpay' | 'socialpay' | 'card' = 'card',
+      onSuccess?: (paymentMethod: 'qpay' | 'socialpay' | 'card', invoiceId?: string) => void,
+      preferredMethod: 'qpay' | 'socialpay' | 'card' = 'qpay',
       plan?: 'pro' | 'family'
     ) => {
       setPaymentModalState({ amount, title, onSuccess, preferredMethod, plan });

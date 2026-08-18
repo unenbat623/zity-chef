@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useId, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Camera,
@@ -20,6 +20,7 @@ import {
   Bookmark,
   Calculator,
   UserPlus,
+  HelpCircle,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
@@ -29,6 +30,7 @@ import { StatRow, PostsGrid } from './ProfileParts';
 import { SmartImage } from './SmartImage';
 import { uploadImage } from '../lib/storage';
 import { ensureContrast, readableTextOn } from '../lib/contrast';
+import { useEscapeClose } from '../hooks/useEscapeClose';
 import { FoodCostCalculatorModal } from './FoodCostCalculatorModal';
 
 // ── Theme Gradient Options ───────────────────────────────────────────────────
@@ -47,11 +49,16 @@ const THEME_GRADIENTS = [
 const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const { profile, setProfile, t } = useApp();
   const [form, setForm] = useState({ ...profile });
+  // Ties each label to its control so screen readers announce the field name
+  // and tapping the label focuses the input.
+  const uid = useId();
   const [avatarPreview, setAvatarPreview] = useState<string | null>(profile.avatarUrl);
   const [activeSection, setActiveSection] = useState<'info' | 'theme'>('info');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEscapeClose(onClose, !saving);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -90,29 +97,38 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/70 backdrop-blur-md z-[350] flex items-center justify-center p-3 sm:p-4"
+      onClick={() => {
+        if (!saving) onClose();
+      }}
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('profile_editProfile')}
+      className="fixed inset-0 bg-black/70 backdrop-blur-md z-[350] flex items-end sm:items-center justify-center p-0 sm:p-4"
     >
       <motion.div
         initial={{ scale: 0.92, y: 16 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.92, y: 16 }}
-        className="w-full max-w-lg bg-pestle-card border border-pestle-border rounded-[32px] overflow-hidden shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-lg bg-pestle-card border border-pestle-border rounded-t-[32px] sm:rounded-[32px] overflow-hidden shadow-2xl flex flex-col max-h-[92dvh]"
       >
         {/* Header */}
-        <div className={`bg-gradient-to-r ${selectedTheme.value} p-5 flex items-center justify-between`}>
-          <h2 className="text-white font-black text-base flex items-center gap-2">
-            <Edit3 size={18} /> {t('profile_editProfile')}
+        <div className={`bg-gradient-to-r ${selectedTheme.value} p-4 sm:p-5 flex items-center justify-between gap-3 shrink-0`}>
+          <h2 className="text-white font-black text-base flex items-center gap-2 min-w-0">
+            <Edit3 size={18} className="shrink-0" />
+            <span className="truncate">{t('profile_editProfile')}</span>
           </h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 bg-white/20 text-white rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+            aria-label={t('profile_cancel')}
+            className="w-8 h-8 shrink-0 bg-white/20 text-white rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
           >
             <X size={16} />
           </button>
         </div>
 
         {/* Tab Bar */}
-        <div className="flex bg-pestle-bg border-b border-pestle-border">
+        <div className="flex bg-pestle-bg border-b border-pestle-border shrink-0">
           {(['info', 'theme'] as const).map((tab) => (
             <button
               key={tab}
@@ -132,7 +148,7 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           ))}
         </div>
 
-        <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
+        <div className="p-4 sm:p-5 space-y-4 flex-1 min-h-0 overflow-y-auto overscroll-contain">
           {activeSection === 'info' && (
             <>
               {/* Avatar Upload */}
@@ -169,10 +185,14 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 { label: t('profile_usernameLabel'), icon: AtSign, key: 'username', placeholder: '@username' },
               ].map(({ label, icon: Icon, key, placeholder }) => (
                 <div key={key} className="space-y-1.5">
-                  <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <label
+                    htmlFor={`${uid}-${key}`}
+                    className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider flex items-center gap-1.5"
+                  >
                     <Icon size={12} className="text-violet-500" /> {label}
                   </label>
                   <input
+                    id={`${uid}-${key}`}
                     type="text"
                     value={(form as any)[key]}
                     onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
@@ -183,10 +203,14 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               ))}
 
               <div className="space-y-1.5">
-                <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                <label
+                  htmlFor={`${uid}-bio`}
+                  className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider flex items-center gap-1.5"
+                >
                   <FileText size={12} className="text-violet-500" /> {t('profile_bioLabel')}
                 </label>
                 <textarea
+                  id={`${uid}-bio`}
                   rows={3}
                   value={form.bio}
                   onChange={(e) => setForm((prev) => ({ ...prev, bio: e.target.value }))}
@@ -242,7 +266,7 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         </div>
 
         {/* Footer Buttons */}
-        <div className="px-5 pb-5 flex gap-3">
+        <div className="px-4 sm:px-5 pt-3 pb-sheet-safe sm:pb-5 flex gap-3 shrink-0 border-t border-pestle-border/60">
           <button onClick={onClose} className="btn-secondary flex-1 py-3 text-xs font-bold">
             {t('profile_cancel')}
           </button>
@@ -299,7 +323,9 @@ export const ProfileView: React.FC = () => {
   const accentBorderStyle = { borderColor: profile.accentColor + '55' };
 
   return (
-    <div className="min-h-screen pb-24">
+    // The scroll container above already reserves room for the bottom nav, so a
+    // second `min-h-screen pb-24` here just added an empty screen of scroll.
+    <div className="pb-6">
       {/* ── COVER / HERO SECTION ─────────────────── */}
       <div className={`relative w-full h-36 sm:h-44 bg-gradient-to-br ${profile.coverGradient}`}>
         {/* Decorative blobs, clipped to the cover — the cover itself must not
@@ -373,8 +399,9 @@ export const ProfileView: React.FC = () => {
         {/* Stats — one card, same shape as another chef's profile sheet. */}
         <StatRow items={stats} loading={socialLoading} />
 
-        {/* Quick Action Buttons */}
-        <div className="grid grid-cols-3 gap-2.5">
+        {/* Quick Action Buttons — help lives here on mobile, where the sidebar
+            (its only other entry point) doesn't exist. */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={() => setActiveTab('community')}
@@ -399,6 +426,14 @@ export const ProfileView: React.FC = () => {
             <Calculator size={16} />
             <span className="leading-tight text-center">{t('profile_costCalculator')}</span>
           </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => setActiveTab('help')}
+            className="py-3 px-2 rounded-2xl text-[11px] font-black border border-pestle-border text-pestle-text hover:border-mango flex flex-col items-center justify-center gap-1.5 bg-pestle-card transition-colors shadow-xs"
+          >
+            <HelpCircle size={16} style={accentStyle} />
+            <span className="leading-tight text-center">{t('sidebar_help')}</span>
+          </motion.button>
         </div>
 
         {/* ── POST GRID TABS ─────────────────────── */}
@@ -408,7 +443,7 @@ export const ProfileView: React.FC = () => {
               <button
                 key={tab}
                 onClick={() => setActiveGrid(tab)}
-                className={`flex-1 pb-2.5 text-xs font-bold flex items-center justify-center gap-1.5 border-b-2 transition-all ${
+                className={`flex-1 pt-2 pb-3 text-xs font-bold flex items-center justify-center gap-1.5 border-b-2 transition-all ${
                   activeGrid === tab
                     ? 'text-pestle-text'
                     : 'text-gray-400 border-transparent'
@@ -480,10 +515,11 @@ export const ProfileView: React.FC = () => {
                         key={r.id}
                         className="pestle-card border border-pestle-border rounded-2xl overflow-hidden p-3 flex gap-3 hover:shadow-md transition-shadow group relative"
                       >
-                        <img
+                        <SmartImage
                           src={r.image}
                           alt={r.title}
-                          className="w-20 h-20 rounded-xl object-cover shrink-0 group-hover:scale-105 transition-transform"
+                          emoji="🍽️"
+                          className="w-20 h-20 rounded-xl shrink-0 group-hover:scale-105 transition-transform"
                         />
                         <div className="flex-1 min-w-0 flex flex-col justify-between">
                           <div>

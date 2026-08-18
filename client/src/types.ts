@@ -81,6 +81,9 @@ export interface MealPlanDay {
 
 export interface CartItem {
   id: string;
+  /** The store_products id this line resolves to. The server re-prices every
+   *  order from the catalog by this id — a line without one can't be bought. */
+  productId?: string;
   name: string;
   emoji: string;
   unit: string;

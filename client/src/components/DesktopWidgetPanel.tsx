@@ -58,6 +58,7 @@ export const DesktopWidgetPanel: React.FC = () => {
     activeCookingRecipe,
     setActiveCookingRecipe,
     setActiveTab,
+    formatPrice,
     t,
   } = useApp();
   const { recipes } = useRecipes();
@@ -100,6 +101,16 @@ export const DesktopWidgetPanel: React.FC = () => {
   useEffect(() => {
     getServerHealth().then((data) => setHealthData(data));
   }, []);
+
+  // Re-translate the greeting on a language switch, but only while it is still
+  // the sole message — never rewrite an actual conversation.
+  useEffect(() => {
+    setChatLog((prev) =>
+      prev.length === 1 && prev[0].role === 'assistant'
+        ? [{ role: 'assistant', text: t('aiInitialGreeting') }]
+        : prev
+    );
+  }, [lang, t]);
 
   const handleSendText = async (textToSend: string) => {
     if (!textToSend.trim() || loading) return;
@@ -238,7 +249,8 @@ export const DesktopWidgetPanel: React.FC = () => {
             <button
               onClick={resetLog}
               title={t('widget_resetDay')}
-              className="text-gray-400 hover:text-mango-ink p-0.5 rounded-md transition-colors shrink-0"
+              aria-label={t('widget_resetDay')}
+              className="text-gray-400 hover:text-mango-ink p-2 -m-1 rounded-md transition-colors shrink-0"
             >
               <RotateCcw size={12} />
             </button>
@@ -306,13 +318,13 @@ export const DesktopWidgetPanel: React.FC = () => {
               <ShoppingBag size={14} className="text-teal-600" /> {t('widget_cart', { n: cart.length })}
             </span>
             <span className="text-xs font-black text-mango-ink">
-              ₮{totalCartAmount.toLocaleString()}
+              {formatPrice(totalCartAmount)}
             </span>
           </div>
           <button
             onClick={() => {
-              triggerPayment(totalCartAmount, 'Quick Grocery Store Delivery', () => {
-                createOrder('Zity Tower 402', 'qpay');
+              triggerPayment(totalCartAmount, t('widget_qpayOrder'), (_method, invoiceId) => {
+                createOrder('Zity Tower 402', 'qpay', invoiceId);
               });
             }}
             className="w-full bg-teal-600 text-white text-xs font-bold py-2.5 rounded-xl shadow-md shadow-teal-600/20 hover:bg-teal-700 transition-colors"

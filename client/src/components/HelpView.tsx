@@ -239,15 +239,18 @@ export const HelpView: React.FC = () => {
           ].map((link) => {
             const Icon = link.icon;
             return (
+              // The card used to carry both `bg-pestle-card` and the tint's own
+              // `bg-*`, so which one won was down to utility order. The tint now
+              // lives only on the icon chip.
               <button
                 key={link.label}
                 onClick={() => setActiveTab(link.tab)}
-                className={`flex items-center gap-2.5 p-3.5 rounded-2xl border text-left transition-all cursor-pointer hover:shadow-md active:scale-[0.98] bg-pestle-card ${link.color}`}
+                className="flex items-center gap-2.5 p-3 sm:p-3.5 rounded-2xl border border-pestle-border text-left transition-all cursor-pointer hover:shadow-md hover:border-mango active:scale-[0.98] bg-pestle-card min-w-0"
               >
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${link.color}`}>
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${link.color}`}>
                   <Icon size={16} />
                 </div>
-                <span className="text-xs font-bold text-pestle-text leading-snug">{link.label}</span>
+                <span className="text-xs font-bold text-pestle-text leading-snug min-w-0">{link.label}</span>
               </button>
             );
           })}

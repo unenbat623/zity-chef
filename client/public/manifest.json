@@ -34,10 +34,10 @@
   "scope": "/",
   "id": "/",
   "background_color": "#F8FAFB",
-  "theme_color": "#10B981",
+  "theme_color": "#F8FAFB",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "prefer_related_applications": false,
   "categories": ["food", "lifestyle", "productivity"],
   "shortcuts": [

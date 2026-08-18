@@ -1,11 +1,19 @@
-import React, { useState, useRef } from 'react';
+import React, { useId, useState, useRef } from 'react';
 import { motion } from 'motion/react';
 import { X, Plus, Minus, Camera, Upload, Trash2, CheckCircle2 } from 'lucide-react';
 import { Ingredient, Category } from '../types';
 import { CATEGORIES } from '../constants';
 import { useApp } from '../context/AppContext';
 import { getIngredientImageUrl } from '../lib/imageService';
+import { uploadImage } from '../lib/storage';
+import { useEscapeClose } from '../hooks/useEscapeClose';
+import { useScrollLock } from '../hooks/useScrollLock';
 import { SmartImage } from './SmartImage';
+
+/** Photos are stored in Supabase Storage, not inlined into the row — a phone
+ *  photo as a base64 data URL is megabytes of text in the database and in
+ *  every subsequent inventory response. */
+export const MAX_INGREDIENT_IMAGE_BYTES = 5 * 1024 * 1024;
 
 interface EditIngredientModalProps {
   ingredient: Ingredient;
@@ -24,23 +32,52 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
   const [unit, setUnit] = useState<any>(ingredient.unit);
   const [expiryDays, setExpiryDays] = useState<number>(ingredient.expiryDays);
   const [imageBase64, setImageBase64] = useState<string | null>(ingredient.imageUrl || null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageError, setImageError] = useState<string>('');
+  const [saving, setSaving] = useState<boolean>(false);
+  const [confirmDelete, setConfirmDelete] = useState<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  // Labels were only visually adjacent to their controls — screen readers
+  // announced every field as unlabelled, and tapping a label did nothing.
+  const uid = useId();
+
+  useEscapeClose(onClose);
+  useScrollLock(true);
 
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImageBase64(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    setImageError('');
+    if (!file.type.startsWith('image/')) {
+      setImageError(t('edit_imageTypeError'));
+      return;
     }
+    if (file.size > MAX_INGREDIENT_IMAGE_BYTES) {
+      setImageError(t('edit_imageTooLarge'));
+      return;
+    }
+    setImageFile(file);
+    // Instant local preview; the real upload happens on save.
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImageBase64(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || saving) return;
+    setSaving(true);
+
+    let imageUrl = imageBase64 || ingredient.imageUrl;
+    if (imageFile) {
+      const uploaded = await uploadImage(imageFile, 'ingredients');
+      // Without Storage the base64 preview is the only thing left; keeping it
+      // is better than losing the photo the user just picked.
+      if (uploaded) imageUrl = uploaded;
+    }
 
     updateIngredient({
       ...ingredient,
@@ -49,12 +86,18 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
       quantity,
       unit,
       expiryDays,
-      imageUrl: imageBase64 || ingredient.imageUrl,
+      imageUrl,
     });
+    setSaving(false);
     onClose();
   };
 
   const handleDelete = () => {
+    // Deleting used to be a single unconfirmed tap with no undo.
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
     removeIngredient(ingredient.id);
     onClose();
   };
@@ -64,6 +107,10 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('edit_title')}
       className="fixed inset-0 bg-black/65 backdrop-blur-md z-[210] flex items-end sm:items-center sm:justify-center p-0 sm:p-4"
     >
       <motion.div
@@ -71,29 +118,34 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: '100%', opacity: 0 }}
         transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-        className="bg-pestle-card border border-pestle-border/80 w-full max-w-lg rounded-t-[32px] sm:rounded-[32px] p-6 max-h-[90vh] flex flex-col shadow-2xl overflow-hidden relative"
+        onClick={(e) => e.stopPropagation()}
+        className="bg-pestle-card border border-pestle-border/80 w-full max-w-lg rounded-t-[32px] sm:rounded-[32px] p-5 sm:p-6 max-h-[92dvh] flex flex-col shadow-2xl overflow-hidden relative"
       >
         {/* Mobile Bottom-Sheet Pull Bar */}
-        <div className="w-12 h-1.5 bg-gray-300 dark:bg-slate-700 rounded-full mx-auto mb-3 sm:hidden" />
+        <div className="w-12 h-1.5 bg-gray-300 dark:bg-slate-700 rounded-full mx-auto mb-3 sm:hidden shrink-0" />
         {/* Modal Header */}
-        <div className="flex justify-between items-center pb-4 border-b border-pestle-border/60">
-          <div>
+        <div className="flex justify-between items-start gap-3 pb-4 border-b border-pestle-border/60 shrink-0">
+          <div className="min-w-0">
             <h2 className="text-lg font-extrabold text-pestle-text">{t('edit_title')}</h2>
-            <p className="text-xs text-gray-400 font-medium">{ingredient.name}</p>
+            <p className="text-xs text-gray-400 font-medium truncate">{ingredient.name}</p>
           </div>
-          <button onClick={onClose} aria-label={t('close')} className="modal-close-btn">
+          <button onClick={onClose} aria-label={t('close')} className="modal-close-btn shrink-0">
             <X size={18} />
           </button>
         </div>
 
         {/* Content Form */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto py-4 space-y-4">
+        <form
+          onSubmit={handleSubmit}
+          className="flex-1 min-h-0 overflow-y-auto overscroll-contain py-4 pb-sheet-safe sm:pb-4 space-y-4"
+        >
           {/* Image Upload / Preview */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-pestle-text flex justify-between">
+            {/* A caption, not a <label>: the real control is the dropzone below. */}
+            <p className="text-xs font-bold text-pestle-text flex justify-between">
               <span>{t('edit_ingredientImage')}</span>
               <span className="text-[10px] text-mango-ink font-semibold">{t('edit_tapToChange')}</span>
-            </label>
+            </p>
 
             <input
               ref={fileInputRef}
@@ -104,7 +156,16 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
             />
 
             <div
+              role="button"
+              tabIndex={0}
+              aria-label={t('edit_ingredientImage')}
               onClick={() => fileInputRef.current?.click()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  fileInputRef.current?.click();
+                }
+              }}
               className="w-full h-36 bg-pestle-bg border-2 border-dashed border-pestle-border hover:border-mango rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden relative group transition-colors"
             >
               {imageBase64 ? (
@@ -126,8 +187,9 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-pestle-text">{t('edit_name')}</label>
+            <label htmlFor={`${uid}-name`} className="text-xs font-bold text-pestle-text">{t('edit_name')}</label>
             <input
+              id={`${uid}-name`}
               type="text"
               required
               value={name}
@@ -138,8 +200,9 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-pestle-text">{t('edit_category')}</label>
+              <label htmlFor={`${uid}-category`} className="text-xs font-bold text-pestle-text">{t('edit_category')}</label>
               <select
+                id={`${uid}-category`}
                 value={category}
                 onChange={(e) => setCategory(e.target.value as Category)}
                 className="w-full bg-pestle-bg border border-pestle-border rounded-xl px-3 py-2.5 text-xs font-medium text-pestle-text focus:outline-none focus:border-mango"
@@ -153,8 +216,9 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-pestle-text">{t('edit_expiryDays')}</label>
+              <label htmlFor={`${uid}-expiry`} className="text-xs font-bold text-pestle-text">{t('edit_expiryDays')}</label>
               <input
+                id={`${uid}-expiry`}
                 type="number"
                 min={1}
                 max={180}
@@ -167,8 +231,10 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
 
           {/* Quantity Controls */}
           <div className="space-y-2 pt-2">
-            <div className="flex justify-between items-center">
-              <label className="text-xs font-bold text-pestle-text">{t('edit_quantityAndUnit')}</label>
+            {/* Wraps rather than overflowing: label + three unit chips do not fit
+                on one line at 320px. */}
+            <div className="flex flex-wrap justify-between items-center gap-2">
+              <label htmlFor={`${uid}-quantity`} className="text-xs font-bold text-pestle-text">{t('edit_quantityAndUnit')}</label>
               <div className="flex bg-pestle-bg p-1 rounded-xl border border-pestle-border text-xs font-bold">
                 {(['гр', 'л', 'ш'] as const).map((u) => (
                   <button
@@ -194,6 +260,7 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
                 <Minus size={16} />
               </button>
               <input
+                id={`${uid}-quantity`}
                 type="number"
                 value={quantity}
                 onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
@@ -209,21 +276,34 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
             </div>
           </div>
 
+          {imageError && (
+            <p className="text-xs font-semibold text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">
+              {imageError}
+            </p>
+          )}
+
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4 border-t border-pestle-border/60">
             <button
               type="button"
               onClick={handleDelete}
-              className="bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white px-4 py-3 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
+              onBlur={() => setConfirmDelete(false)}
+              aria-label={confirmDelete ? t('edit_deleteConfirm') : t('edit_delete')}
+              className={`px-3.5 sm:px-4 py-3 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shrink-0 border ${
+                confirmDelete
+                  ? 'bg-red-500 border-red-500 text-white'
+                  : 'bg-red-500/10 border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white'
+              }`}
             >
-              <Trash2 size={16} />
-              <span>{t('edit_delete')}</span>
+              <Trash2 size={16} className="shrink-0" />
+              <span>{confirmDelete ? t('edit_deleteConfirm') : t('edit_delete')}</span>
             </button>
             <button
               type="submit"
-              className="btn-primary flex-1 py-3 text-xs shadow-md shadow-mango/20"
+              disabled={saving}
+              className="btn-primary flex-1 py-3 text-xs shadow-md shadow-mango/20 disabled:opacity-50"
             >
-              {t('edit_saveChanges')}
+              {saving ? t('edit_saving') : t('edit_saveChanges')}
             </button>
           </div>
         </form>

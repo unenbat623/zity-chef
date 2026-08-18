@@ -16,6 +16,8 @@ async function createOrderApi(payload: {
   totalAmount: number;
   deliveryAddress: string;
   paymentMethod: string;
+  /** The paid QPay invoice this order settles against (server-verified). */
+  invoiceId?: string;
 }): Promise<OrderRecord> {
   const res = await authedFetch('/api/orders', {
     method: 'POST',
