@@ -1,15 +1,15 @@
 import express from 'express';
-import { AuthenticatedRequest, authenticateToken, isGuestId, requireSignedIn } from '../middleware/auth.js';
+import {
+  AuthenticatedRequest,
+  authenticateToken,
+  isGuestId,
+  requireSignedIn,
+} from '../middleware/auth.js';
 import { refundOrderPayment } from './payments.js';
 import { stockFridgeFromOrder } from '../lib/fridgeRestock.js';
 import { releaseStock } from '../lib/stock.js';
 import { awardPointsForOrder, refundPointsForOrder } from '../lib/loyalty.js';
-import {
-  getSupabaseForUser,
-  isSupabaseConfigured,
-  supabaseAdmin,
-  supabasePublic,
-} from '../supabase.js';
+import { isSupabaseConfigured, supabaseAdmin, supabasePublic } from '../supabase.js';
 
 const router = express.Router();
 
@@ -138,33 +138,6 @@ function isChefAdmin(req: AuthenticatedRequest): boolean {
     .map((email) => email.trim().toLowerCase())
     .filter(Boolean);
   return admins.includes((req.user?.email || '').toLowerCase());
-}
-
-async function logOdooSync(params: {
-  orderId?: string | null;
-  orderRef?: string | null;
-  externalOrderId?: string | null;
-  action: string;
-  status: 'success' | 'warning' | 'error' | 'failed' | 'info';
-  message: string;
-  details?: Record<string, unknown>;
-  request?: Record<string, unknown>;
-  response?: Record<string, unknown>;
-}) {
-  if (!supabaseAdmin) return;
-  const { error } = await supabaseAdmin.from('odoo_sync_logs').insert({
-    order_id: params.orderId || null,
-    order_ref: params.orderRef || null,
-    external_order_id: params.externalOrderId || params.orderRef || null,
-    operation: params.action,
-    action: params.action,
-    status: params.status,
-    message: params.message,
-    details: params.details || {},
-    request_payload: params.request || {},
-    response_payload: params.response || {},
-  });
-  if (error) console.error('[Odoo sync log error]', error.message);
 }
 
 async function jsonRpc<T>(service: string, method: string, args: unknown[]): Promise<T> {
@@ -339,34 +312,13 @@ function normalizeOrderItems(
     .filter((item) => item.storeProductId && item.quantity > 0);
 }
 
-async function loadOwnOrder(
-  req: AuthenticatedRequest,
-  orderKey: string
-): Promise<StoreOrderRow | null> {
-  if (!isSupabaseConfigured || !req.accessToken) return null;
-
-  const db = getSupabaseForUser(req.accessToken);
-  const query = db
-    .from('orders')
-    .select(
-      'id,user_id,order_ref,external_order_id,items_snapshot,total_amount,delivery_address,payment_method,status,odoo_order_ref,odoo_order_id,odoo_invoice_id,odoo_invoice_ref,odoo_invoice_status,odoo_sync_error,odoo_synced_at,payment_invoice_id,points_redeemed'
-    );
-  const { data, error } = await (
-    UUID_RE.test(orderKey)
-      ? query.or(`id.eq.${orderKey},order_ref.eq.${orderKey},external_order_id.eq.${orderKey}`)
-      : query.or(`order_ref.eq.${orderKey},external_order_id.eq.${orderKey}`)
-  ).maybeSingle();
-  if (error) throw new Error(`Order lookup failed: ${error.message}`);
-  return data as StoreOrderRow | null;
-}
-
 async function loadOrderForSync(options: SyncOrderOptions): Promise<StoreOrderRow | null> {
   if (!isSupabaseConfigured || !supabaseAdmin) return null;
 
   const query = supabaseAdmin
     .from('orders')
     .select(
-      'id,user_id,order_ref,external_order_id,items_snapshot,total_amount,delivery_address,payment_method,status,created_at,odoo_order_ref,odoo_order_id,odoo_invoice_id,odoo_invoice_ref,odoo_invoice_status,odoo_sync_error,odoo_synced_at,payment_invoice_id,points_redeemed'
+      'id,user_id,order_ref,external_order_id,items_snapshot,total_amount,delivery_address,payment_method,status,created_at,odoo_order_ref,odoo_order_id,odoo_invoice_id,odoo_invoice_ref,odoo_invoice_status,odoo_sync_error,odoo_synced_at,payment_invoice_id,points_redeemed,delivery_fee,discount_amount'
     );
   const scoped = options.userId ? query.eq('user_id', options.userId) : query;
   const { data, error } = await (
@@ -889,12 +841,7 @@ export async function syncChefOrderToOdoo(options: SyncOrderOptions) {
     // invoice to the admin's own partner record.
     const customerEmail = (await orderOwnerEmail(order)) || options.userEmail;
 
-    const odooOrder = await createOdooSaleOrder(
-      customerEmail,
-      options.payload || {},
-      order,
-      items
-    );
+    const odooOrder = await createOdooSaleOrder(customerEmail, options.payload || {}, order, items);
     await markOrderSynced(order.id, odooOrder.name, odooOrder.id);
 
     // Totals are compared at sync time, not just by the nightly reconciliation:
@@ -1007,10 +954,6 @@ async function invoiceFromIds(invoiceIds: number[] | undefined) {
     invoiceRef: invoice.name || invoice.payment_reference || String(invoice.id),
     status: invoice.payment_state || invoice.state || 'open',
   };
-}
-
-async function invoiceRefFromIds(invoiceIds: number[] | undefined): Promise<string> {
-  return (await invoiceFromIds(invoiceIds))?.invoiceRef || '';
 }
 
 async function postAndMaybePayInvoice(invoiceId: number, paid: boolean) {
@@ -1478,7 +1421,7 @@ function shopUnitFromOdoo(uom: string): string {
 
 /** SKUs the bridge uses for its own accounting lines, never for the shop. */
 function isInternalSku(sku: string): boolean {
-  return [ODOO_DELIVERY_PRODUCT_SKU, ODOO_POINTS_PRODUCT_SKU]
+  return [ODOO_DELIVERY_PRODUCT_SKU, ODOO_POINTS_PRODUCT_SKU, ODOO_COUPON_PRODUCT_SKU]
     .filter(Boolean)
     .some((internal) => internal.toLowerCase() === sku.toLowerCase());
 }
@@ -1620,7 +1563,20 @@ function serializeOdooProducts(products: any[]) {
   }));
 }
 
-router.get('/status', async (_req, res) => {
+/**
+ * Bridge health.
+ *
+ * Public, because the storefront and the deployment smoke test both need to
+ * know whether the bridge is alive — but only that. Everything below the first
+ * two fields is operational detail: which Odoo instance and database this
+ * talks to, the raw text of the last sync error, and how much revenue is
+ * sitting outside the ledger. All of that used to be served to anyone who
+ * asked, which named the ERP to attack and quoted the shop's figures back at
+ * them. Chef admins still get the whole picture.
+ */
+router.get('/status', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  const forOperator = isChefAdmin(req);
+
   if (!isOdooConfigured) {
     return res.json({ configured: false, connected: false });
   }
@@ -1629,7 +1585,7 @@ router.get('/status', async (_req, res) => {
     let failedSyncs = 0;
     let neverSynced = 0;
     let lastError = '';
-    if (supabaseAdmin) {
+    if (supabaseAdmin && forOperator) {
       const [countRes, lastRes, neverRes] = await Promise.all([
         supabaseAdmin
           .from('orders')
@@ -1656,6 +1612,8 @@ router.get('/status', async (_req, res) => {
       neverSynced = neverRes.count || 0;
       lastError = String((lastRes.data as any)?.odoo_sync_error || '');
     }
+    if (!forOperator) return res.json({ configured: true, connected: true });
+
     return res.json({
       configured: true,
       connected: true,
@@ -1745,7 +1703,13 @@ router.post(
       }
 
       try {
-        const order = await loadOrderForSync({ orderKey, userId: req.user!.id });
+        // An admin pushes status for other people's orders; scoping the lookup
+        // to the caller made every such attempt 404. Non-admins stay scoped to
+        // their own, which is what keeps this route safe to expose.
+        const order = await loadOrderForSync({
+          orderKey,
+          userId: isChefAdmin(req) ? undefined : req.user!.id,
+        });
         if (!order) return res.status(404).json({ success: false, message: 'ORDER_NOT_FOUND' });
         const sync = await syncChefOrderToOdoo({
           orderKey,
@@ -2035,7 +1999,7 @@ async function applyOdooCancellation(order: StoreOrderRow): Promise<string | nul
     // nothing at all.
     const { data: full, error: readError } = await supabaseAdmin
       .from('orders')
-      .select('id,order_ref,items_snapshot,odoo_invoice_id')
+      .select('id,order_ref,items_snapshot,odoo_invoice_id,total_amount,payment_invoice_id')
       .eq('id', order.id)
       .maybeSingle();
     if (readError) throw new Error(readError.message);
@@ -2057,10 +2021,16 @@ async function applyOdooCancellation(order: StoreOrderRow): Promise<string | nul
     const invoiceId = Number((full as any)?.odoo_invoice_id || 0);
     if (invoiceId > 0) await createCreditNoteForInvoice(invoiceId);
 
+    // A cancellation owes the customer their money whichever side made it. The
+    // customer's own cancel refunds through the same helper; reaching it only
+    // from that path meant an order cancelled by the operator in Odoo left them
+    // out of pocket with a credit note they never see.
+    await refundCancelledOrder({ ...order, ...(full as any) } as StoreOrderRow);
+
     await addPersistentLog(
       'Odoo reconciliation',
       'warning',
-      `${order.order_ref} was cancelled in Odoo — cancelled in Chef, stock and points returned`,
+      `${order.order_ref} was cancelled in Odoo — cancelled in Chef; stock, points and payment returned`,
       { odooOrderRef: order.odoo_order_ref },
       order
     );

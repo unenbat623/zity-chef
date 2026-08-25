@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { readFileSync } from 'node:fs';
 import type { Response } from 'express';
 import {
   isGuestId,
@@ -588,5 +589,73 @@ describe('customerFrom', () => {
   it('falls back to a generic name rather than an empty partner', () => {
     // An empty name would make Odoo reject the partner outright.
     expect(customerFrom({}, undefined).name).toBe('Zity Delguur Customer');
+  });
+});
+
+/**
+ * `/api/odoo/status` is public so the storefront and the deployment smoke test
+ * can ask whether the bridge is alive. Everything beyond that — which Odoo
+ * instance and database it talks to, the raw text of the last sync error, how
+ * many orders and how much money are missing from the ledger — is for the
+ * operator, and used to be served to anyone who asked.
+ */
+describe('Odoo status disclosure', () => {
+  it('tells an anonymous caller only whether the bridge is up', async () => {
+    vi.resetModules();
+    vi.stubEnv('ODOO_URL', 'https://odoo.example.com');
+    vi.stubEnv('ODOO_DB', 'secretdb');
+    vi.stubEnv('ODOO_USERNAME', 'api@example.com');
+    vi.stubEnv('ODOO_API_KEY', 'key');
+    vi.stubEnv('CHEF_ADMIN_EMAILS', 'chef@zitychef.mn');
+    const { createApp } = await import('./app.js');
+    const server = createApp().listen(0);
+    await new Promise((resolve) => server.once('listening', resolve));
+    const { port } = server.address() as { port: number };
+
+    const res = await fetch(`http://127.0.0.1:${port}/api/odoo/status`);
+    const body = (await res.json()) as Record<string, unknown>;
+
+    await new Promise((resolve) => server.close(resolve));
+    vi.unstubAllEnvs();
+
+    // Unreachable Odoo in a test, so `connected` is false — the point is what
+    // is absent either way.
+    expect(body).not.toHaveProperty('host');
+    expect(body).not.toHaveProperty('db');
+    expect(body).not.toHaveProperty('lastError');
+    expect(body).not.toHaveProperty('failedSyncs');
+    expect(body).not.toHaveProperty('neverSynced');
+  });
+});
+
+/**
+ * The columns the Odoo sync loads for an order.
+ *
+ * `deliveryFeeFrom` and `discountAmountFrom` fall back to the stored row when
+ * the caller sends no payload — which is exactly what a retry does. A column
+ * missing from the select makes those reads `undefined` and the sale order
+ * silently loses its delivery line and its coupon discount, so Odoo's total
+ * comes up short. That regression has happened once already, by an unrelated
+ * edit to the same string, and nothing failed until the money did.
+ */
+describe('order sync select list', () => {
+  const selectList = readFileSync(
+    new URL('./routes/odoo.ts', import.meta.url),
+    'utf8'
+  ).match(/'id,user_id,order_ref[^']*'/)?.[0];
+
+  it('loads the order', () => {
+    expect(selectList).toBeTruthy();
+  });
+
+  it.each([
+    ['delivery_fee', 'the DELIVERY line disappears from re-synced orders'],
+    ['discount_amount', 'the coupon discount disappears and Odoo overstates revenue'],
+    ['payment_invoice_id', 'a cancelled order cannot be refunded'],
+    ['points_redeemed', 'points already spent get invoiced again'],
+    ['total_amount', 'reconciliation has nothing to compare'],
+    ['status', 'the syncable-state check cannot run'],
+  ])('selects %s, or %s', (column) => {
+    expect(selectList).toContain(column);
   });
 });
