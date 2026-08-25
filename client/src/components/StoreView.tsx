@@ -86,7 +86,13 @@ export const StoreView: React.FC = () => {
   const { balance: pointsBalance } = useLoyalty();
   const [usePoints, setUsePoints] = useState(false);
   const [validating, setValidating] = useState(false);
-  const { products, loading, isError: catalogError, refetch: refreshCatalog } = useStoreProducts();
+  const {
+    products,
+    delivery,
+    loading,
+    isError: catalogError,
+    refetch: refreshCatalog,
+  } = useStoreProducts();
   const { recipes } = useRecipes();
   const catalog: CatalogItem[] = products;
 
@@ -152,13 +158,17 @@ export const StoreView: React.FC = () => {
 
   // Mirrors maxRedeemablePoints() on the server: one point is one tugrik, and
   // at least MIN_PAYABLE has to stay chargeable so there is still an invoice.
+  const deliveryFee =
+    delivery.freeFrom > 0 && totalCartAmount >= delivery.freeFrom ? 0 : delivery.fee;
+  const orderTotal = totalCartAmount + deliveryFee;
+
   const MIN_PAYABLE = 1000;
   const redeemablePoints = Math.max(
     0,
-    Math.min(pointsBalance, Math.floor(totalCartAmount - MIN_PAYABLE))
+    Math.min(pointsBalance, Math.floor(orderTotal - MIN_PAYABLE))
   );
   const pointsDiscount = usePoints ? redeemablePoints : 0;
-  const payableAmount = Math.max(0, totalCartAmount - pointsDiscount);
+  const payableAmount = Math.max(0, orderTotal - pointsDiscount);
 
   const addressValid = address.trim().length >= 8;
 
@@ -186,16 +196,21 @@ export const StoreView: React.FC = () => {
       // Pull the new prices in and let the customer confirm the new total,
       // rather than refusing a basket nothing was updating.
       const fresh = await refreshCatalog();
-      const priceById = new Map(
-        (fresh.data ?? catalog).map((product) => [product.id, product.pricePerUnit])
+      const priceById = new Map<string, number>(
+        (fresh.data?.products ?? catalog).map((product) => [product.id, product.pricePerUnit])
       );
       repriceCart((productId) => priceById.get(productId) ?? null);
       toastError(t('store_priceChangedTitle'), t('store_priceChangedBody'));
       return;
     }
 
+    // The quote the server just gave is what the payment is raised for:
+    // order creation recomputes the same number and refuses anything else, so
+    // a basket paid for at a stale total would come back as PAYMENT_REQUIRED.
+    const quoted = Math.max(0, (preflight.totalAmount ?? orderTotal) - pointsDiscount);
+
     triggerPayment(
-      payableAmount,
+      quoted,
       t('store_checkoutTitle'),
       async (paymentMethod, invoiceId) => {
         // The payment has already gone through by the time this runs, so a
@@ -570,10 +585,26 @@ export const StoreView: React.FC = () => {
 
               {/* Order Summary & QPay Checkout */}
               <div className="bg-pestle-card border border-pestle-border p-5 rounded-2xl space-y-4">
+                {/* The delivery fee was charged by the server and shown
+                    nowhere, so the amount on this screen was not the amount
+                    taken. It only appears when the shop actually charges one. */}
+                {deliveryFee > 0 && (
+                  <div className="space-y-1.5 border-b border-pestle-border/60 pb-3">
+                    <div className="flex justify-between items-center text-xs font-bold text-gray-500">
+                      <span>{t('store_subtotal')}</span>
+                      <span className="tabular-nums">{formatPrice(totalCartAmount)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs font-bold text-gray-500">
+                      <span>{t('store_deliveryFee')}</span>
+                      <span className="tabular-nums">{formatPrice(deliveryFee)}</span>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex justify-between items-center text-sm font-bold border-b border-pestle-border/60 pb-3">
                   <span className="text-pestle-text">{t('total')}</span>
                   <span className="text-xl font-black text-mango-ink">
-                    {formatPrice(totalCartAmount)}
+                    {formatPrice(orderTotal)}
                   </span>
                 </div>
 

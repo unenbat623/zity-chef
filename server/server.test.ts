@@ -13,6 +13,7 @@ import {
 } from './routes/odoo.js';
 import { maxRedeemablePoints, pointsForAmount } from './lib/loyalty.js';
 import { toFridgeQuantity } from './lib/fridgeRestock.js';
+import { deliveryFeeFor } from './routes/store.js';
 
 /**
  * Covers the auth middleware's identity decisions, which every route depends
@@ -498,5 +499,39 @@ describe('toFridgeQuantity', () => {
   it('falls back to pieces for a unit it does not know', () => {
     expect(toFridgeQuantity(2, 'Units')).toEqual({ quantity: 2, unit: 'ш' });
     expect(toFridgeQuantity(2, '')).toEqual({ quantity: 2, unit: 'ш' });
+  });
+});
+
+/**
+ * Delivery is charged by order creation and quoted by checkout validation
+ * through this one function, so the price on the screen and the price taken
+ * cannot disagree. It defaults to free: charging for delivery is the shop
+ * owner's decision, made by setting STORE_DELIVERY_FEE.
+ */
+describe('deliveryFeeFor', () => {
+  it('is free until the shop says otherwise', () => {
+    vi.stubEnv('STORE_DELIVERY_FEE', '');
+    expect(deliveryFeeFor('delivery', 50_000)).toBe(0);
+    vi.unstubAllEnvs();
+  });
+
+  it('charges the configured fee for delivery', () => {
+    vi.stubEnv('STORE_DELIVERY_FEE', '5000');
+    expect(deliveryFeeFor('delivery', 20_000)).toBe(5000);
+    vi.unstubAllEnvs();
+  });
+
+  it('never charges for a pickup', () => {
+    vi.stubEnv('STORE_DELIVERY_FEE', '5000');
+    expect(deliveryFeeFor('pickup', 20_000)).toBe(0);
+    vi.unstubAllEnvs();
+  });
+
+  it('honours a free-delivery threshold', () => {
+    vi.stubEnv('STORE_DELIVERY_FEE', '5000');
+    vi.stubEnv('STORE_FREE_DELIVERY_MIN_SUBTOTAL', '50000');
+    expect(deliveryFeeFor('delivery', 49_999)).toBe(5000);
+    expect(deliveryFeeFor('delivery', 50_000)).toBe(0);
+    vi.unstubAllEnvs();
   });
 });

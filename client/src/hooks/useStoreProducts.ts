@@ -14,13 +14,32 @@ export interface StoreProduct {
   expiryDays: number;
 }
 
-const NO_PRODUCTS: StoreProduct[] = [];
+/** What delivery costs, so the cart can show a total before checkout. */
+export interface DeliveryTerms {
+  fee: number;
+  /** Basket value from which delivery is free; 0 when there is no such rule. */
+  freeFrom: number;
+}
 
-async function fetchProducts(): Promise<StoreProduct[]> {
+const NO_PRODUCTS: StoreProduct[] = [];
+const NO_DELIVERY: DeliveryTerms = { fee: 0, freeFrom: 0 };
+
+interface Catalog {
+  products: StoreProduct[];
+  delivery: DeliveryTerms;
+}
+
+async function fetchProducts(): Promise<Catalog> {
   const res = await fetch(`${API_BASE}/api/store/products`);
   if (!res.ok) throw new Error('Failed to load products');
   const data = await res.json();
-  return data.products || [];
+  return {
+    products: data.products || NO_PRODUCTS,
+    delivery: {
+      fee: Number(data.delivery?.fee ?? 0),
+      freeFrom: Number(data.delivery?.freeFrom ?? 0),
+    },
+  };
 }
 
 export function useStoreProducts() {
@@ -31,7 +50,8 @@ export function useStoreProducts() {
     refetchOnWindowFocus: true,
   });
   return {
-    products: query.data ?? NO_PRODUCTS,
+    products: query.data?.products ?? NO_PRODUCTS,
+    delivery: query.data?.delivery ?? NO_DELIVERY,
     loading: query.isLoading,
     isError: query.isError,
     refetch: query.refetch,

@@ -9,6 +9,16 @@ export interface CheckoutValidation {
   code?: string;
   /** Catalog price of the basket, before delivery and any discount. */
   subtotal?: number;
+  /** What delivery adds, by the server's own rule. */
+  deliveryFee?: number;
+  /** What a coupon takes off. */
+  discountAmount?: number;
+  /**
+   * What the server will charge for this basket: subtotal − discount + delivery.
+   * The payment is raised for exactly this, so the quote and the charge cannot
+   * drift — order creation recomputes it and refuses anything else.
+   */
+  totalAmount?: number;
 }
 
 /**
@@ -42,7 +52,13 @@ export async function validateCheckout(
     // an access one; reading only the first left a signed-out shopper staring
     // at an empty reason.
     if (!res.ok) return { ok: false, message: data.message, code: data.error };
-    return { ok: true, subtotal: Number(data.subtotal ?? 0) };
+    return {
+      ok: true,
+      subtotal: Number(data.subtotal ?? 0),
+      deliveryFee: Number(data.deliveryFee ?? 0),
+      discountAmount: Number(data.discountAmount ?? 0),
+      totalAmount: Number(data.totalAmount ?? data.subtotal ?? 0),
+    };
   } catch {
     return { ok: true };
   }
