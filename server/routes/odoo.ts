@@ -1,5 +1,5 @@
 import express from 'express';
-import { AuthenticatedRequest, authenticateToken, requireSignedIn } from '../middleware/auth.js';
+import { AuthenticatedRequest, authenticateToken, isGuestId, requireSignedIn } from '../middleware/auth.js';
 import { refundOrderPayment } from './payments.js';
 import { stockFridgeFromOrder } from '../lib/fridgeRestock.js';
 import { releaseStock } from '../lib/stock.js';
@@ -521,6 +521,24 @@ async function loadStoreProducts(ids: string[]) {
   );
 }
 
+/**
+ * The e-mail of the account that placed the order.
+ *
+ * Returns empty when there is no profile to read — a guest order, or a
+ * deployment without the admin client — and the caller falls back to whatever
+ * it was given.
+ */
+async function orderOwnerEmail(order: StoreOrderRow): Promise<string> {
+  if (!supabaseAdmin || !order.user_id || isGuestId(order.user_id)) return '';
+  const { data, error } = await supabaseAdmin
+    .from('profiles')
+    .select('email')
+    .eq('id', order.user_id)
+    .maybeSingle();
+  if (error || !data?.email) return '';
+  return String(data.email);
+}
+
 async function findOrCreatePartner(
   payload: any,
   userEmail: string | undefined,
@@ -865,8 +883,14 @@ export async function syncChefOrderToOdoo(options: SyncOrderOptions) {
     const items = normalizeOrderItems(order, storeProducts);
     if (!items.length) return { success: false, status: 400, message: 'Order items are required' };
 
+    // Whose order this is, not who asked for the sync. The admin routes —
+    // invoice, status push, retry — all pass the signed-in operator's address,
+    // so an admin re-syncing a customer's order attached the sale order and its
+    // invoice to the admin's own partner record.
+    const customerEmail = (await orderOwnerEmail(order)) || options.userEmail;
+
     const odooOrder = await createOdooSaleOrder(
-      options.userEmail,
+      customerEmail,
       options.payload || {},
       order,
       items

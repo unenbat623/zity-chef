@@ -535,3 +535,58 @@ describe('deliveryFeeFor', () => {
     vi.unstubAllEnvs();
   });
 });
+
+/**
+ * Who an Odoo sale order is billed to.
+ *
+ * `customerFrom` decides the partner. The admin routes — invoice, status push,
+ * retry — pass the signed-in operator's address, so before the order owner was
+ * resolved first, an admin re-syncing someone else's order filed the sale order
+ * and its invoice under the admin's own name.
+ */
+describe('customerFrom', () => {
+  // Mirrors server/routes/odoo.ts.
+  const firstString = (...values: unknown[]): string => {
+    for (const value of values) {
+      if (typeof value === 'string' && value.trim()) return value.trim();
+      if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+    }
+    return '';
+  };
+  const customerFrom = (payload: any, userEmail?: string) => {
+    const customer = payload?.partner || payload?.customer || payload?.user || payload?.buyer || {};
+    return {
+      name: firstString(
+        customer.name,
+        customer.displayName,
+        payload?.customerName,
+        userEmail?.split('@')[0],
+        'Zity Delguur Customer'
+      ),
+      email: firstString(customer.email, payload?.email, userEmail),
+      phone: firstString(customer.phone, customer.mobile, payload?.phone),
+    };
+  };
+
+  it('bills the order owner, not the admin who triggered the sync', () => {
+    // The retry route hands over an empty payload, so the e-mail argument is
+    // the only thing deciding the partner — it has to be the customer's.
+    const owner = customerFrom({}, 'customer@example.mn');
+    expect(owner.email).toBe('customer@example.mn');
+    expect(owner.email).not.toBe('admin@example.mn');
+  });
+
+  it('prefers an explicit customer on the payload over the caller', () => {
+    const c = customerFrom({ partner: { email: 'buyer@example.mn' } }, 'admin@example.mn');
+    expect(c.email).toBe('buyer@example.mn');
+  });
+
+  it('names the customer from their address when no name was given', () => {
+    expect(customerFrom({}, 'customer@example.mn').name).toBe('customer');
+  });
+
+  it('falls back to a generic name rather than an empty partner', () => {
+    // An empty name would make Odoo reject the partner outright.
+    expect(customerFrom({}, undefined).name).toBe('Zity Delguur Customer');
+  });
+});
