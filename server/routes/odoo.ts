@@ -45,6 +45,14 @@ const isOdooConfigured = Boolean(ODOO_URL && ODOO_DB && ODOO_USERNAME && ODOO_AP
 
 let authCache: { uid: number; expiresAt: number } | null = null;
 
+/** Odoo compares datetimes as `YYYY-MM-DD HH:MM:SS` in UTC. */
+function odooDateTime(ms: number): string {
+  return new Date(ms).toISOString().slice(0, 19).replace('T', ' ');
+}
+
+/** How long a new order may go unsynced before it counts as a problem. */
+const SYNC_GRACE_MS = 5 * 60_000;
+
 /** Order states that are supposed to exist in Odoo. */
 const SYNCABLE_ORDER_STATUSES = ['paid', 'packing', 'shipping', 'delivered'] as const;
 
@@ -1606,7 +1614,8 @@ router.get('/status', authenticateToken, async (req: AuthenticatedRequest, res) 
           .from('orders')
           .select('id', { count: 'exact', head: true })
           .is('odoo_order_ref', null)
-          .in('status', SYNCABLE_ORDER_STATUSES),
+          .in('status', SYNCABLE_ORDER_STATUSES)
+          .lt('created_at', new Date(Date.now() - SYNC_GRACE_MS).toISOString()),
       ]);
       failedSyncs = countRes.count || 0;
       neverSynced = neverRes.count || 0;
@@ -2075,11 +2084,18 @@ export async function reconcileOdooOrders() {
   // order that was never even attempted has neither, so it fell between the two
   // filters and no screen in the system could show it — revenue booked in Chef
   // and absent from the ledger, while reconciliation reported "clean".
+  // Orders sync in the background the moment they are created, so one placed
+  // seconds ago legitimately has no reference yet. Counting those made the
+  // dashboard raise an alert on every new order for as long as the sync took —
+  // and an alert that fires on normal behaviour is one people learn to ignore,
+  // which is the whole reason this check was added.
+  const syncGraceCutoff = new Date(Date.now() - SYNC_GRACE_MS).toISOString();
   const { data: neverSyncedRows } = await supabaseAdmin
     .from('orders')
     .select('id,order_ref,total_amount,status,created_at')
     .is('odoo_order_ref', null)
     .in('status', SYNCABLE_ORDER_STATUSES)
+    .lt('created_at', syncGraceCutoff)
     .order('created_at', { ascending: false })
     .limit(200);
   const neverSynced = neverSyncedRows || [];
@@ -2095,10 +2111,20 @@ export async function reconcileOdooOrders() {
   const byExternal = new Map(
     (localOrders || []).map((order: any) => [String(order.order_ref), order])
   );
+  // Chef's order list was read before this call, so an order created in between
+  // exists in Odoo and not in that snapshot — which read as "missing in
+  // Delguur" when nothing was missing at all. Skipping the last few minutes of
+  // Odoo orders removes the race; a genuinely orphaned one is still reported on
+  // the next run.
   const remoteByExternal = await executeKw<OdooOrderRef[]>(
     'sale.order',
     'search_read',
-    [[['client_order_ref', 'ilike', 'ZITY-']]],
+    [
+      [
+        ['client_order_ref', 'ilike', 'ZITY-'],
+        ['create_date', '<', odooDateTime(Date.now() - SYNC_GRACE_MS)],
+      ],
+    ],
     {
       fields: ['id', 'name', 'state', 'amount_total', 'client_order_ref'],
       limit: 500,
