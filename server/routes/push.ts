@@ -38,7 +38,10 @@ router.post('/subscribe', async (req: AuthenticatedRequest, res) => {
     const db = getSupabaseForUser(req.accessToken!);
     const { error } = await db
       .from('push_subscriptions')
-      .upsert({ user_id: uid, endpoint: sub.endpoint, subscription: sub }, { onConflict: 'endpoint' });
+      .upsert(
+        { user_id: uid, endpoint: sub.endpoint, subscription: sub },
+        { onConflict: 'endpoint' }
+      );
     if (error) {
       console.error('[Push Subscribe Error]', error.message);
       return res.status(502).json({ error: 'Failed to save subscription' });
@@ -55,7 +58,8 @@ router.post('/subscribe', async (req: AuthenticatedRequest, res) => {
 // ── POST /api/push/send-test ──────────────────────────────────────────────────
 // Sends a push to all of the current user's subscriptions (demo / self-test).
 router.post('/send-test', async (req: AuthenticatedRequest, res) => {
-  if (!isPushConfigured) return res.status(503).json({ error: 'Push not configured (VAPID keys unset)' });
+  if (!isPushConfigured)
+    return res.status(503).json({ error: 'Push not configured (VAPID keys unset)' });
   const uid = req.user!.id;
   const { title = '🍳 Zity Chef', body = 'Туршилтын мэдэгдэл амжилттай ирлээ!' } = req.body || {};
 

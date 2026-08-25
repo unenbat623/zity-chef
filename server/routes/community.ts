@@ -16,7 +16,11 @@ function avatarFor(name: string, url?: string | null): string {
 }
 
 function relativeTime(iso: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime();
+  const at = new Date(iso).getTime();
+  // A row with a missing or malformed timestamp used to render as "NaN өдөр":
+  // every comparison below is false for NaN, so it fell through to the last line.
+  if (!Number.isFinite(at)) return '';
+  const diffMs = Date.now() - at;
   const min = Math.floor(diffMs / 60000);
   if (min < 1) return 'Дөнгөж сая';
   if (min < 60) return `${min} мин`;
@@ -42,6 +46,8 @@ interface FeedPost {
   saved: boolean;
   time: string;
   comments: Comment[];
+  /** Total comments on the post; `comments` only carries the newest few. */
+  commentCount?: number;
 }
 
 // ── In-memory demo feed (used only when Supabase is unconfigured) ─────────────
@@ -86,47 +92,43 @@ router.get('/posts', async (req: AuthenticatedRequest, res) => {
   }
 
   const db = getSupabaseForUser(req.accessToken!);
-  const uid = req.user!.id;
 
-  const { data: posts, error } = await db
-    .from('community_posts')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(50);
+  // One page, counted in Postgres. Reading every like and comment row back to
+  // count them in JS cost more the more popular a post was, and capped the feed
+  // at the newest 50 posts with no way to reach older ones.
+  const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 20));
+  const offset = Math.max(0, Number(req.query.offset) || 0);
+
+  const { data: posts, error } = await db.rpc('community_feed', {
+    p_limit: limit,
+    p_offset: offset,
+  });
   if (error) {
     console.error('[Community Feed Error]', error.message);
     return res.status(502).json({ error: 'Failed to load feed' });
   }
 
-  const ids = (posts || []).map((p) => p.id);
-  const [{ data: likes }, { data: comments }] = await Promise.all([
-    db.from('post_likes').select('post_id, user_id').in('post_id', ids.length ? ids : ['none']),
-    db
-      .from('post_comments')
-      .select('post_id, author_name, text')
-      .in('post_id', ids.length ? ids : ['none'])
-      .order('created_at', { ascending: true }),
-  ]);
+  const feed: FeedPost[] = (posts || []).map((p: any) => ({
+    id: p.id,
+    user: { id: p.user_id, name: p.author_name, avatar: avatarFor(p.author_name, p.author_avatar) },
+    image: p.image_url,
+    caption: p.caption,
+    recipe: null,
+    likes: Number(p.like_count || 0),
+    liked: Boolean(p.liked),
+    saved: false,
+    time: relativeTime(p.created_at),
+    commentCount: Number(p.comment_count || 0),
+    comments: (p.recent_comments || []).map((c: any) => ({ user: c.user, text: c.text })),
+  }));
 
-  const feed: FeedPost[] = (posts || []).map((p) => {
-    const postLikes = (likes || []).filter((l) => l.post_id === p.id);
-    return {
-      id: p.id,
-      user: { id: p.user_id, name: p.author_name, avatar: avatarFor(p.author_name, p.author_avatar) },
-      image: p.image_url,
-      caption: p.caption,
-      recipe: null,
-      likes: postLikes.length,
-      liked: postLikes.some((l) => l.user_id === uid),
-      saved: false,
-      time: relativeTime(p.created_at),
-      comments: (comments || [])
-        .filter((c) => c.post_id === p.id)
-        .map((c) => ({ user: c.author_name, text: c.text })),
-    };
+  return res.json({
+    posts: feed,
+    source: 'supabase',
+    // Lets the client ask for the next page without guessing whether one exists.
+    hasMore: feed.length === limit,
+    nextOffset: offset + feed.length,
   });
-
-  return res.json({ posts: feed, source: 'supabase' });
 });
 
 // ── POST /api/community/posts ─────────────────────────────────────────────────
@@ -143,7 +145,10 @@ router.post('/posts', async (req: AuthenticatedRequest, res) => {
   if (typeof rawCaption !== 'string' || rawCaption.length > MAX_CAPTION_LENGTH) {
     return res.status(400).json({ error: 'CAPTION_TOO_LONG' });
   }
-  if (rawImageUrl !== null && (typeof rawImageUrl !== 'string' || rawImageUrl.length > MAX_IMAGE_URL_LENGTH)) {
+  if (
+    rawImageUrl !== null &&
+    (typeof rawImageUrl !== 'string' || rawImageUrl.length > MAX_IMAGE_URL_LENGTH)
+  ) {
     return res.status(400).json({ error: 'IMAGE_URL_INVALID' });
   }
   const caption = rawCaption;
@@ -187,7 +192,11 @@ router.post('/posts', async (req: AuthenticatedRequest, res) => {
 
   const post: FeedPost = {
     id: data.id,
-    user: { id: data.user_id, name: data.author_name, avatar: avatarFor(data.author_name, data.author_avatar) },
+    user: {
+      id: data.user_id,
+      name: data.author_name,
+      avatar: avatarFor(data.author_name, data.author_avatar),
+    },
     image: data.image_url,
     caption: data.caption,
     recipe: null,
@@ -266,7 +275,16 @@ interface MemStory {
   createdAt: number;
 }
 function groupStories(
-  rows: { user_id: string; author_name: string; author_avatar: string | null; id: string; image_url: string | null; caption: string | null; sticker: string | null; created_at: string }[],
+  rows: {
+    user_id: string;
+    author_name: string;
+    author_avatar: string | null;
+    id: string;
+    image_url: string | null;
+    caption: string | null;
+    sticker: string | null;
+    created_at: string;
+  }[],
   meId: string
 ) {
   const groups = new Map<string, any>();
@@ -325,7 +343,13 @@ router.get('/stories', async (req: AuthenticatedRequest, res) => {
 
 // ── POST /api/community/stories ───────────────────────────────────────────────
 router.post('/stories', async (req: AuthenticatedRequest, res) => {
-  const { imageUrl = null, caption = null, sticker = null, authorName = 'Zity Chef', authorAvatar = '' } = req.body;
+  const {
+    imageUrl = null,
+    caption = null,
+    sticker = null,
+    authorName = 'Zity Chef',
+    authorAvatar = '',
+  } = req.body;
   const uid = req.user!.id;
 
   if (!usesDb(req)) {
@@ -419,7 +443,10 @@ router.get('/users/:id', async (req: AuthenticatedRequest, res) => {
       .eq('user_id', targetId)
       .order('created_at', { ascending: false })
       .limit(24),
-    db.from('user_follows').select('*', { count: 'exact', head: true }).eq('following_id', targetId),
+    db
+      .from('user_follows')
+      .select('*', { count: 'exact', head: true })
+      .eq('following_id', targetId),
     db.from('user_follows').select('*', { count: 'exact', head: true }).eq('follower_id', targetId),
     db
       .from('user_follows')
@@ -446,7 +473,11 @@ router.get('/users/:id', async (req: AuthenticatedRequest, res) => {
     const postLikes = (likes || []).filter((l) => l.post_id === p.id);
     return {
       id: p.id,
-      user: { id: p.user_id, name: p.author_name, avatar: avatarFor(p.author_name, p.author_avatar) },
+      user: {
+        id: p.user_id,
+        name: p.author_name,
+        avatar: avatarFor(p.author_name, p.author_avatar),
+      },
       image: p.image_url,
       caption: p.caption,
       recipe: null,
@@ -462,7 +493,10 @@ router.get('/users/:id', async (req: AuthenticatedRequest, res) => {
     user: {
       id: targetId,
       name: rows[0]?.author_name || fallbackName,
-      avatar: avatarFor(rows[0]?.author_name || fallbackName, rows[0]?.author_avatar || fallbackAvatar),
+      avatar: avatarFor(
+        rows[0]?.author_name || fallbackName,
+        rows[0]?.author_avatar || fallbackAvatar
+      ),
     },
     stats: {
       posts: posts.length,

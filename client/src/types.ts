@@ -1,6 +1,14 @@
 import type { ReactNode } from 'react';
 
-export type Category = '🥦 Ногоо' | '🥩 Мах' | '🥛 Сүү, өндөг' | '🧂 Амтлагч' | '🍎 Жимс';
+export type Category =
+  | '🥦 Ногоо'
+  | '🥩 Мах'
+  | '🥛 Сүү, өндөг'
+  | '🧂 Амтлагч'
+  | '🍎 Жимс'
+  // The store sells bread and flour; without this they had nowhere to land when
+  // a delivered order restocks the fridge.
+  | '🍞 Гурилан бүтээгдэхүүн';
 
 export type Language = 'mn' | 'en';
 
@@ -96,8 +104,18 @@ export interface Order {
   id: string;
   items: CartItem[];
   totalAmount: number;
-  status: 'pending' | 'paid' | 'delivering' | 'completed';
+  status:
+    | 'pending'
+    | 'paid'
+    | 'packing'
+    | 'shipping'
+    | 'delivered'
+    | 'delivering'
+    | 'completed'
+    | 'cancelled';
   paymentMethod: PaymentMethod;
+  odooOrderRef?: string;
+  odooSyncError?: string;
   createdAt: string;
   address: string;
 }
@@ -124,9 +142,9 @@ export interface UserProfile {
   name: string;
   username: string;
   bio: string;
-  avatarUrl: string | null;       // base64 or URL
-  coverGradient: string;          // tailwind gradient class
-  accentColor: string;            // hex or tailwind color token
+  avatarUrl: string | null; // base64 or URL
+  coverGradient: string; // tailwind gradient class
+  accentColor: string; // hex or tailwind color token
   postsCount: number;
   followersCount: number;
   followingCount: number;

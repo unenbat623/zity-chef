@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 import { Refrigerator, Store, BookOpen, Flame, Users, User, Calendar } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -17,7 +17,12 @@ export const BottomNav: React.FC = () => {
     { id: 'recipe', icon: BookOpen, label: t('tabRecipe'), short: t('bottomnav_recipe') },
     { id: 'calendar', icon: Calendar, label: t('tabCalendar'), short: t('bottomnav_calendar') },
     { id: 'cooking', icon: Flame, label: t('tabCooking'), short: t('bottomnav_cooking') },
-    { id: 'community', icon: Users, label: t('bottomnav_community'), short: t('bottomnav_community') },
+    {
+      id: 'community',
+      icon: Users,
+      label: t('bottomnav_community'),
+      short: t('bottomnav_community'),
+    },
     {
       id: 'store',
       icon: Store,
@@ -25,7 +30,13 @@ export const BottomNav: React.FC = () => {
       short: t('bottomnav_store'),
       badge: cart.length > 0 ? cart.length : null,
     },
-    { id: 'profile', icon: User, label: t('bottomnav_profile'), short: t('bottomnav_profile'), isProfile: true },
+    {
+      id: 'profile',
+      icon: User,
+      label: t('bottomnav_profile'),
+      short: t('bottomnav_profile'),
+      isProfile: true,
+    },
   ];
 
   return (
@@ -56,7 +67,9 @@ export const BottomNav: React.FC = () => {
                   {profile.avatarUrl ? (
                     <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <div className={`w-full h-full bg-gradient-to-br ${profile.coverGradient} flex items-center justify-center`}>
+                    <div
+                      className={`w-full h-full bg-gradient-to-br ${profile.coverGradient} flex items-center justify-center`}
+                    >
                       <User size={13} className="text-white" />
                     </div>
                   )}
@@ -85,7 +98,7 @@ export const BottomNav: React.FC = () => {
               {tab.short}
             </span>
             {isActive && (
-              <motion.div
+              <m.div
                 layoutId="activeDot"
                 className="absolute -bottom-1 w-1 h-1 rounded-full"
                 style={{ backgroundColor: profile.accentColor }}

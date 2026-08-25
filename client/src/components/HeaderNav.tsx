@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { Sparkles, Sun, Moon, User } from 'lucide-react';
@@ -91,7 +91,7 @@ export const HeaderNav: React.FC = () => {
             <option value="en">🇬🇧 EN</option>
           </select>
           {/* Animated Dark Mode Toggle */}
-          <motion.button
+          <m.button
             whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.9 }}
             onClick={toggleDarkMode}
@@ -105,7 +105,7 @@ export const HeaderNav: React.FC = () => {
           >
             <AnimatePresence mode="wait" initial={false}>
               {isDark ? (
-                <motion.div
+                <m.div
                   key="dark"
                   initial={{ scale: 0, rotate: -90 }}
                   animate={{ scale: 1, rotate: 0 }}
@@ -113,9 +113,9 @@ export const HeaderNav: React.FC = () => {
                   transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                 >
                   <Sun size={15} className="text-amber-400" />
-                </motion.div>
+                </m.div>
               ) : (
-                <motion.div
+                <m.div
                   key="light"
                   initial={{ scale: 0, rotate: 90 }}
                   animate={{ scale: 1, rotate: 0 }}
@@ -123,10 +123,10 @@ export const HeaderNav: React.FC = () => {
                   transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                 >
                   <Moon size={15} className="text-slate-700" />
-                </motion.div>
+                </m.div>
               )}
             </AnimatePresence>
-          </motion.button>
+          </m.button>
         </div>
       </header>
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import {
   X,
   Sparkles,
@@ -16,6 +16,7 @@ import {
   Star,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEscapeClose } from '../hooks/useEscapeClose';
 import { useScrollLock } from '../hooks/useScrollLock';
@@ -26,10 +27,10 @@ interface PlanDef {
   id: SubscriptionTier;
   name: string;
   price: string;
-  priceRaw: number;        // for payment trigger
+  priceRaw: number; // for payment trigger
   period: string;
   tagline: string;
-  color: string;           // tailwind accent
+  color: string; // tailwind accent
   bgClass: string;
   borderClass: string;
   icon: React.ReactNode;
@@ -107,7 +108,6 @@ const getPlanDefs = (
   },
 ];
 
-
 // ── Plan Card ─────────────────────────────────────────────────────────────────
 const PlanCard: React.FC<{
   plan: PlanDef;
@@ -118,7 +118,7 @@ const PlanCard: React.FC<{
   const isActive = plan.id !== 'free';
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className={`relative p-4 sm:p-5 rounded-2xl border transition-all duration-200 ${plan.bgClass} ${
@@ -126,8 +126,8 @@ const PlanCard: React.FC<{
           ? plan.id === 'pro'
             ? 'border-mango ring-2 ring-mango/20'
             : plan.id === 'family'
-            ? 'border-teal-500 ring-2 ring-teal-500/20'
-            : 'border-mango/40'
+              ? 'border-teal-500 ring-2 ring-teal-500/20'
+              : 'border-mango/40'
           : plan.borderClass
       }`}
     >
@@ -141,13 +141,15 @@ const PlanCard: React.FC<{
       {/* Plan Header */}
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex items-center gap-3 min-w-0">
-          <div className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center shadow-sm ${
-            plan.id === 'pro'
-              ? 'bg-amber-600 text-white'
-              : plan.id === 'family'
-              ? 'bg-teal-600 text-white'
-              : 'bg-pestle-card border border-pestle-border'
-          }`}>
+          <div
+            className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center shadow-sm ${
+              plan.id === 'pro'
+                ? 'bg-amber-600 text-white'
+                : plan.id === 'family'
+                  ? 'bg-teal-600 text-white'
+                  : 'bg-pestle-card border border-pestle-border'
+            }`}
+          >
             {plan.icon}
           </div>
           <div className="min-w-0">
@@ -157,7 +159,9 @@ const PlanCard: React.FC<{
         </div>
 
         <div className="text-right shrink-0">
-          <p className={`text-base sm:text-lg font-black tabular-nums ${plan.color}`}>{plan.price}</p>
+          <p className={`text-base sm:text-lg font-black tabular-nums ${plan.color}`}>
+            {plan.price}
+          </p>
           <p className="text-[10px] text-gray-400 font-bold">{plan.period}</p>
         </div>
       </div>
@@ -174,13 +178,15 @@ const PlanCard: React.FC<{
 
       {/* CTA Button */}
       {isCurrent ? (
-        <div className={`w-full py-2.5 rounded-xl text-xs font-extrabold text-center ${
-          plan.id === 'pro'
-            ? 'bg-mango/15 text-mango-ink border border-mango/30'
-            : plan.id === 'family'
-            ? 'bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30'
-            : 'bg-pestle-bg text-gray-400 border border-pestle-border'
-        }`}>
+        <div
+          className={`w-full py-2.5 rounded-xl text-xs font-extrabold text-center ${
+            plan.id === 'pro'
+              ? 'bg-mango/15 text-mango-ink border border-mango/30'
+              : plan.id === 'family'
+                ? 'bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30'
+                : 'bg-pestle-bg text-gray-400 border border-pestle-border'
+          }`}
+        >
           ✓ {t('sub_currentPlan')}
         </div>
       ) : (
@@ -196,18 +202,28 @@ const PlanCard: React.FC<{
           </button>
         )
       )}
-    </motion.div>
+    </m.div>
   );
 };
 
 // ── Main Modal ─────────────────────────────────────────────────────────────────
 export const SubscriptionModal: React.FC = () => {
-  const { showSubModal, setShowSubModal, subscription, setSubscription, triggerPayment, formatPrice, t } = useApp();
+  const {
+    showSubModal,
+    setShowSubModal,
+    subscription,
+    setSubscription,
+    triggerPayment,
+    formatPrice,
+    t,
+  } = useApp();
   const queryClient = useQueryClient();
   const PLAN_DEFS = getPlanDefs(t, formatPrice);
 
   useEscapeClose(() => setShowSubModal(false), showSubModal);
   useScrollLock(showSubModal);
+
+  const dialogRef = useFocusTrap<HTMLDivElement>(showSubModal);
 
   if (!showSubModal) return null;
 
@@ -230,19 +246,21 @@ export const SubscriptionModal: React.FC = () => {
 
   return (
     <AnimatePresence>
-      <motion.div
+      <m.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={() => setShowSubModal(false)}
         className="fixed inset-0 bg-black/70 backdrop-blur-md z-[190] flex items-end sm:items-center justify-center p-0 sm:p-4"
       >
-        <motion.div
+        <m.div
           initial={{ y: '100%', opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: '100%', opacity: 0 }}
           transition={{ type: 'spring', damping: 26, stiffness: 240 }}
           onClick={(e) => e.stopPropagation()}
+          ref={dialogRef}
+          tabIndex={-1}
           role="dialog"
           aria-modal="true"
           aria-label={t('sub_membershipPlans')}
@@ -258,9 +276,7 @@ export const SubscriptionModal: React.FC = () => {
                 <Sparkles size={11} /> Zity Premium
               </span>
               <h2 className="text-xl font-black text-pestle-text">{t('sub_membershipPlans')}</h2>
-              <p className="text-xs text-gray-400 font-medium">
-                {t('sub_choosePlan')}
-              </p>
+              <p className="text-xs text-gray-400 font-medium">{t('sub_choosePlan')}</p>
             </div>
             <button
               onClick={() => setShowSubModal(false)}
@@ -287,8 +303,8 @@ export const SubscriptionModal: React.FC = () => {
               {t('sub_trustFooter')}
             </p>
           </div>
-        </motion.div>
-      </motion.div>
+        </m.div>
+      </m.div>
     </AnimatePresence>
   );
 };

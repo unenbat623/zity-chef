@@ -71,7 +71,9 @@ export async function getSisterAdvice(
     body: JSON.stringify({ message, inventoryContext, lang }),
   })
     .then(async (res) => {
-      const data = await res.json().catch(() => null as { text?: string; error?: string; errorEn?: string } | null);
+      const data = await res
+        .json()
+        .catch(() => null as { text?: string; error?: string; errorEn?: string } | null);
 
       if (!res.ok) {
         // The API answers degraded states with an honest, localized message

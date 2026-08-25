@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import { X, CheckCircle2, QrCode, ShieldCheck, RefreshCw, AlertTriangle } from 'lucide-react';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import { useApp } from '../context/AppContext';
 import { useToast } from './Toast';
 import { BANK_APPS } from '../constants';
@@ -97,11 +98,10 @@ export const PaymentModal: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [invoice, isSuccess]);
 
-  useEscapeClose(
-    closePaymentModal,
-    Boolean(paymentModalState) && !isSuccess && !isProcessing
-  );
+  useEscapeClose(closePaymentModal, Boolean(paymentModalState) && !isSuccess && !isProcessing);
   useScrollLock(Boolean(paymentModalState));
+
+  const dialogRef = useFocusTrap<HTMLDivElement>(Boolean(paymentModalState));
 
   if (!paymentModalState) return null;
 
@@ -139,7 +139,7 @@ export const PaymentModal: React.FC = () => {
 
   return (
     <AnimatePresence>
-      <motion.div
+      <m.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -148,12 +148,14 @@ export const PaymentModal: React.FC = () => {
         onClick={() => {
           if (!isProcessing && !isSuccess) closePaymentModal();
         }}
+        ref={dialogRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={title}
         className="fixed inset-0 bg-black/70 backdrop-blur-md z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4"
       >
-        <motion.div
+        <m.div
           initial={{ scale: 0.9, y: 30, opacity: 0 }}
           animate={{ scale: 1, y: 0, opacity: 1 }}
           exit={{ scale: 0.9, y: 30, opacity: 0 }}
@@ -172,7 +174,9 @@ export const PaymentModal: React.FC = () => {
               <span className="text-[10px] font-extrabold uppercase tracking-widest bg-white/20 px-2 py-0.5 rounded-full">
                 {t('pay_secureCheckout')}
               </span>
-              <h2 className="text-lg sm:text-xl font-bold mt-1 leading-snug line-clamp-2">{title}</h2>
+              <h2 className="text-lg sm:text-xl font-bold mt-1 leading-snug line-clamp-2">
+                {title}
+              </h2>
             </div>
             <button
               onClick={closePaymentModal}
@@ -188,7 +192,7 @@ export const PaymentModal: React.FC = () => {
               way to reach the pay button. */}
           <div className="p-4 sm:p-5 pb-sheet-safe sm:pb-5 flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-5">
             {isSuccess ? (
-              <motion.div
+              <m.div
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 className="py-10 text-center flex flex-col items-center justify-center"
@@ -198,7 +202,7 @@ export const PaymentModal: React.FC = () => {
                 </div>
                 <h3 className="text-xl font-bold text-pestle-text mb-2">{t('paymentSuccess')}</h3>
                 <p className="text-xs text-gray-400">{t('pay_transactionConfirmed')}</p>
-              </motion.div>
+              </m.div>
             ) : invoiceError ? (
               // The invoice could not be created — say why, instead of the
               // skeleton spinning forever with a permanently disabled button.
@@ -311,8 +315,8 @@ export const PaymentModal: React.FC = () => {
               </>
             )}
           </div>
-        </motion.div>
-      </motion.div>
+        </m.div>
+      </m.div>
     </AnimatePresence>
   );
 };

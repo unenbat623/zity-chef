@@ -63,7 +63,8 @@ function toMessage(error: unknown): string {
   if (m.includes('password should be at least'))
     return 'Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой.';
   if (m.includes('is invalid') && m.includes('email')) return 'Имэйл хаяг буруу байна.';
-  if (m.includes('expired') && m.includes('token')) return 'Кодын хугацаа дууссан байна. Дахин илгээнэ үү.';
+  if (m.includes('expired') && m.includes('token'))
+    return 'Кодын хугацаа дууссан байна. Дахин илгээнэ үү.';
   if (m.includes('otp')) return 'Баталгаажуулах код буруу байна.';
   if (m.includes('rate limit') || m.includes('too many'))
     return 'Хэт олон оролдлого хийлээ. Түр хүлээгээд дахин оролдоно уу.';
@@ -128,11 +129,7 @@ function getUserDisplayName(user: User): string | null {
 
 function getUserAvatarUrl(user: User): string | null {
   const meta = user.user_metadata ?? {};
-  return (
-    (meta.avatar_url as string | undefined) ||
-    (meta.picture as string | undefined) ||
-    null
-  );
+  return (meta.avatar_url as string | undefined) || (meta.picture as string | undefined) || null;
 }
 
 /**
@@ -399,7 +396,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           });
           // signInWithOAuth redirects the browser — error only if the call itself failed.
           return error
-            ? { ok: false, error: 'Google нэвтрэх тохиргоо хийгдээгүй байна. .env-д credentials нэмнэ үү.' }
+            ? {
+                ok: false,
+                error: 'Google нэвтрэх тохиргоо хийгдээгүй байна. .env-д credentials нэмнэ үү.',
+              }
             : { ok: true };
         } catch (err) {
           return { ok: false, error: toMessage(err) };

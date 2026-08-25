@@ -26,7 +26,10 @@ const invalidateByTable: Record<RealtimeTable, string[][]> = {
   orders: [['orders'], ['chef', 'dashboard']],
   meal_plans: [['mealPlans']],
   chat_sessions: [['chat']],
-  store_products: [['store', 'products'], ['chef', 'dashboard']],
+  store_products: [
+    ['store', 'products'],
+    ['chef', 'dashboard'],
+  ],
   community_posts: [['community', 'feed']],
   post_likes: [['community', 'feed']],
   post_comments: [['community', 'feed']],
@@ -49,17 +52,16 @@ export function useRealtimeSync() {
 
     setStatus('connecting');
 
-    const channel = realtimeTables.reduce((nextChannel, table) => {
-      return nextChannel.on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table },
-        () => {
+    const channel = realtimeTables.reduce(
+      (nextChannel, table) => {
+        return nextChannel.on('postgres_changes', { event: '*', schema: 'public', table }, () => {
           invalidateByTable[table].forEach((queryKey) => {
             queryClient.invalidateQueries({ queryKey });
           });
-        }
-      );
-    }, supabase.channel(`zity-live-${user.id}`));
+        });
+      },
+      supabase.channel(`zity-live-${user.id}`)
+    );
 
     channel.subscribe((nextStatus) => {
       if (nextStatus === 'SUBSCRIBED') setStatus('connected');

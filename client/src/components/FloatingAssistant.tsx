@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import { MessageCircle, X, ChevronRight, Sparkles, Send } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getSisterAdvice } from '../services/geminiService';
@@ -83,7 +83,7 @@ export const FloatingAssistant: React.FC = () => {
       <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:bottom-6 right-3 sm:right-5 z-40 flex flex-col items-end gap-2 pointer-events-none">
         <AnimatePresence>
           {showBubble && !isOpen && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: 10, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
@@ -100,11 +100,11 @@ export const FloatingAssistant: React.FC = () => {
                 {t('assistant_greetingBubble')}
               </p>
               <div className="absolute -bottom-1 right-4 w-2.5 h-2.5 bg-pestle-card border-r border-b border-pestle-border rotate-45" />
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
 
-        <motion.button
+        <m.button
           onClick={() => setIsOpen(!isOpen)}
           aria-label={t('assistantName')}
           aria-expanded={isOpen}
@@ -113,13 +113,13 @@ export const FloatingAssistant: React.FC = () => {
           className="w-12 h-12 sm:w-14 sm:h-14 bg-mango rounded-full shadow-xl flex items-center justify-center text-white active:scale-90 transition-transform pointer-events-auto border-2 border-white dark:border-slate-900 cursor-pointer"
         >
           {isOpen ? <X size={22} /> : <MessageCircle size={22} />}
-        </motion.button>
+        </m.button>
       </div>
 
       {/* Floating Chat Modal */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -170,7 +170,9 @@ export const FloatingAssistant: React.FC = () => {
               {isLoading && (
                 <div className="bg-pestle-card border border-pestle-border p-3 rounded-2xl rounded-tl-none self-start shadow-xs flex gap-1.5 items-center">
                   <span className="w-1.5 h-1.5 bg-mango rounded-full animate-ping" />
-                  <span className="text-[11px] font-bold text-gray-400">{t('assistant_thinking')}</span>
+                  <span className="text-[11px] font-bold text-gray-400">
+                    {t('assistant_thinking')}
+                  </span>
                 </div>
               )}
             </div>
@@ -194,7 +196,7 @@ export const FloatingAssistant: React.FC = () => {
                 <Send size={15} />
               </button>
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </>

@@ -1,5 +1,6 @@
 import express, { type Express, type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
+import compression from 'compression';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { Ratelimit } from '@upstash/ratelimit';
@@ -14,6 +15,8 @@ import storeRouter from './routes/store.js';
 import pushRouter from './routes/push.js';
 import recipesRouter from './routes/recipes.js';
 import chefRouter from './routes/chef.js';
+import loyaltyRouter from './routes/loyalty.js';
+import odooRouter from './routes/odoo.js';
 
 const IS_PROD = process.env.NODE_ENV === 'production';
 
@@ -41,7 +44,13 @@ function makeLimiter(max: number, prefix: string, message?: object) {
       }
     };
   }
-  return rateLimit({ windowMs: 60 * 1000, max, standardHeaders: true, legacyHeaders: false, message });
+  return rateLimit({
+    windowMs: 60 * 1000,
+    max,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message,
+  });
 }
 
 /**
@@ -83,9 +92,21 @@ export function createApp(): Express {
 
   const allowedOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
-    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003'];
+    : [
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'http://localhost:3002',
+        'http://localhost:3003',
+      ];
 
+  // Scoped to the API on purpose. Applied globally, a request carrying an
+  // Origin header this list does not know was rejected before it ever reached
+  // the static handlers — so a deployment whose ALLOWED_ORIGINS did not happen
+  // to include its own address served 403 for its own index.html, stylesheet
+  // and every chunk, and the app rendered as a blank page. Serving the app
+  // shell is not a cross-origin concern; calling the API is.
   app.use(
+    '/api',
     cors({
       origin: (origin, callback) => {
         if (!origin || allowedOrigins.includes(origin) || !IS_PROD) {
@@ -99,7 +120,20 @@ export function createApp(): Express {
     })
   );
 
-  app.use(express.json({ limit: '10mb' }));
+  // JSON responses (the catalog, a recipe, a feed page) compress to a fraction
+  // of their size, which is the difference between a snappy and a sluggish app
+  // on a Mongolian mobile connection. A CDN in front would do this too, but the
+  // single-service deployments (Render, Docker, Fly) have nothing in front.
+  app.use(compression());
+
+  // Only the OCR endpoint receives bytes — it takes a base64 image. Everything
+  // else exchanges small JSON: community posts carry an image *URL*, because the
+  // client uploads to Supabase Storage directly. A 10mb ceiling on every route
+  // was free memory pressure for any unauthenticated caller, so the large limit
+  // is mounted on the one path that needs it. body-parser skips a request whose
+  // body is already parsed, so the general parser below leaves OCR alone.
+  app.use('/api/ai/ocr', express.json({ limit: '10mb' }));
+  app.use(express.json({ limit: '256kb' }));
 
   // ── Rate limiting (Redis-backed when configured, else per-instance) ──────
   app.use('/api/', makeLimiter(250, 'general'));
@@ -108,6 +142,27 @@ export function createApp(): Express {
     makeLimiter(30, 'ai', {
       error: 'Хэт олон AI хүсэлт илгээгдлээ. 1 минут хүлээгээд дахин оролдоно уу.',
       errorEn: 'Too many AI requests. Please wait 1 minute before retrying.',
+    })
+  );
+  // Creating an invoice calls QPay and mints a real payment object, so it gets
+  // the tightest bucket of all — a loop here is abuse of QPay, not just of us.
+  app.use(
+    '/api/payments/qpay/create',
+    makeLimiter(20, 'payments-create', {
+      error: 'Хэт олон төлбөрийн хүсэлт. 1 минут хүлээгээд дахин оролдоно уу.',
+      errorEn: 'Too many payment requests. Please wait 1 minute before retrying.',
+    })
+  );
+  // The rest of /api/payments, including the public QPay callback. The callback
+  // takes no auth and makes an outbound QPay call per hit, so leaving it on the
+  // general 250 bucket made it an amplifier. This still sits far above the rate
+  // QPay itself calls at, and a dropped callback is recoverable — the client's
+  // /qpay/check poll settles the invoice either way.
+  app.use(
+    '/api/payments/',
+    makeLimiter(90, 'payments', {
+      error: 'Хэт олон төлбөрийн хүсэлт. 1 минут хүлээгээд дахин оролдоно уу.',
+      errorEn: 'Too many payment requests. Please wait 1 minute before retrying.',
     })
   );
 
@@ -121,6 +176,8 @@ export function createApp(): Express {
   app.use('/api/push', pushRouter);
   app.use('/api/recipes', recipesRouter);
   app.use('/api/chef', chefRouter);
+  app.use('/api/loyalty', loyaltyRouter);
+  app.use('/api/odoo', odooRouter);
 
   // ── Health & metrics ────────────────────────────────────────────────────
   // Public, so it stays a plain liveness signal in production. The cache and
@@ -174,6 +231,26 @@ export function createApp(): Express {
     if (err instanceof Error && err.message === 'Blocked by CORS policy') {
       return res.status(403).json({ error: 'CORS_ORIGIN_NOT_ALLOWED' });
     }
+    // Errors that already carry a 4xx are the caller's, not ours. body-parser
+    // throws `entity.too.large` with status 413 and malformed JSON with 400;
+    // flattening both to 500 told the client the server had broken when it had
+    // in fact rejected their request on purpose — and buried each one in the
+    // logs as an unhandled fault.
+    const status =
+      (err as { status?: number; statusCode?: number } | null)?.status ??
+      (err as { statusCode?: number } | null)?.statusCode;
+    if (typeof status === 'number' && status >= 400 && status < 500) {
+      const code = (err as { type?: string } | null)?.type;
+      return res.status(status).json({
+        error:
+          code === 'entity.too.large'
+            ? 'PAYLOAD_TOO_LARGE'
+            : code === 'entity.parse.failed'
+              ? 'INVALID_JSON'
+              : 'BAD_REQUEST',
+      });
+    }
+
     console.error('[Unhandled error]', err);
     const message = err instanceof Error ? err.message : 'Internal server error';
     res.status(500).json({ error: IS_PROD ? 'Internal server error' : message });

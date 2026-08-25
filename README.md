@@ -187,6 +187,21 @@ includes, among others:
 - `recipes` / `store_products`: the catalog the app serves.
 - `community_posts`, `stories`, `direct_messages`, `user_follows`: the social side.
 
+### Odoo Bridge
+
+Chef backend exposes the Odoo bridge under `/api/odoo/*`. Odoo credentials stay
+server-side only (`ODOO_URL`, `ODOO_DB`, `ODOO_USERNAME`, `ODOO_API_KEY`).
+
+Supported production checks:
+
+```bash
+npm run db:push
+SMOKE_API_URL=https://YOUR_DOMAIN SMOKE_ACCESS_TOKEN=... SMOKE_ORDER_ID=ZITY-123456 npm run odoo:smoke
+```
+
+`SMOKE_ORDER_ID` is optional. When set, the smoke test verifies idempotent
+sale.order sync, invoice creation, status sync, reconciliation, and sync logs.
+
 ---
 
 ## 🚢 Production Deployment

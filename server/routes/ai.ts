@@ -30,7 +30,10 @@ function describeKeyProblem(key: string): string | null {
       .charCodeAt(0)
       .toString(16)
       .toUpperCase()
-      .padStart(4, '0')}) at position ${bad} — it cannot be sent as an HTTP header. Re-paste the key with a Latin keyboard layout.`;
+      .padStart(
+        4,
+        '0'
+      )}) at position ${bad} — it cannot be sent as an HTTP header. Re-paste the key with a Latin keyboard layout.`;
   }
   return null;
 }
@@ -39,8 +42,7 @@ const GEMINI_KEY_PROBLEM = describeKeyProblem(GEMINI_KEY);
 
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3.2:1b';
-const PROVIDER =
-  process.env.AI_PROVIDER || (GEMINI_KEY ? 'gemini' : 'ollama');
+const PROVIDER = process.env.AI_PROVIDER || (GEMINI_KEY ? 'gemini' : 'ollama');
 
 // Primary model first; the `-latest` alias is a safety net for the day the
 // pinned id is retired or is temporarily out of capacity.
@@ -93,8 +95,11 @@ function errorInfo(err: unknown): { status: number; message: string } {
 /** Transient = worth retrying: rate limit, overload, gateway/5xx blips. */
 function isTransient(err: unknown): boolean {
   const { status, message } = errorInfo(err);
-  if (status === 429 || status === 500 || status === 502 || status === 503 || status === 504) return true;
-  return /RESOURCE_EXHAUSTED|UNAVAILABLE|overloaded|ETIMEDOUT|ECONNRESET|fetch failed/i.test(message);
+  if (status === 429 || status === 500 || status === 502 || status === 503 || status === 504)
+    return true;
+  return /RESOURCE_EXHAUSTED|UNAVAILABLE|overloaded|ETIMEDOUT|ECONNRESET|fetch failed/i.test(
+    message
+  );
 }
 
 // ── Chat completion across providers ──────────────────────────────────────────
@@ -150,7 +155,9 @@ async function geminiChat(system: string, message: string): Promise<string> {
       } catch (err) {
         lastError = err;
         const { status, message: msg } = errorInfo(err);
-        console.warn(`[ai] ${model} attempt ${attempt + 1} failed (status=${status || '?'}): ${msg}`);
+        console.warn(
+          `[ai] ${model} attempt ${attempt + 1} failed (status=${status || '?'}): ${msg}`
+        );
         if (!isTransient(err)) break; // bad key / bad model id → next model
         if (attempt < 2) await sleep(500 * 2 ** attempt);
       }
@@ -195,7 +202,8 @@ function unavailableMessage(err: unknown, lang: string): string {
   const misconfigured = /AI_MISCONFIGURED|ByteString/i.test(message);
 
   if (lang === 'mn') {
-    if (misconfigured) return 'AI тохиргоо буруу байна. Админ GEMINI_API_KEY-г шалгах шаардлагатай. ⚙️';
+    if (misconfigured)
+      return 'AI тохиргоо буруу байна. Админ GEMINI_API_KEY-г шалгах шаардлагатай. ⚙️';
     return quota
       ? 'AI-н хүсэлтийн хязгаар түр дүүрлээ. 1 минутын дараа дахин оролдоно уу. 🙏'
       : 'AI туслах түр холбогдохгүй байна. Хэсэг хүлээгээд дахин оролдоно уу. 🙏';
@@ -242,7 +250,11 @@ function buildSystemPrompt(inventoryContext: string, catalog: string, lang: stri
     '',
     mn ? `ХЭРЭГЛЭГЧИЙН ХӨРГӨГЧ:\n${fridge}` : `THE USER'S FRIDGE:\n${fridge}`,
     '',
-    catalog ? (mn ? `АППАД БАЙГАА ЖОРУУД (id | нэр | орц):\n${catalog}` : `RECIPES AVAILABLE IN THE APP (id | name | ingredients):\n${catalog}`) : '',
+    catalog
+      ? mn
+        ? `АППАД БАЙГАА ЖОРУУД (id | нэр | орц):\n${catalog}`
+        : `RECIPES AVAILABLE IN THE APP (id | name | ingredients):\n${catalog}`
+      : '',
     '',
     rules,
   ]
@@ -272,7 +284,7 @@ router.get('/provider', authenticateToken, async (req: AuthenticatedRequest, res
     provider: PROVIDER,
     model: PROVIDER === 'gemini' ? GEMINI_MODEL : OLLAMA_MODEL,
     keyConfigured: PROVIDER !== 'gemini' || Boolean(GEMINI_KEY),
-    keyProblem: PROVIDER === 'gemini' ? GEMINI_KEY_PROBLEM ?? undefined : undefined,
+    keyProblem: PROVIDER === 'gemini' ? (GEMINI_KEY_PROBLEM ?? undefined) : undefined,
   };
 
   if (req.query.check !== '1') return res.json(info);
@@ -287,7 +299,9 @@ router.get('/provider', authenticateToken, async (req: AuthenticatedRequest, res
     return res.json({ ...info, live: true, sample: sample.slice(0, 60) });
   } catch (err) {
     const { status, message } = errorInfo(err);
-    return res.status(503).json({ ...info, live: false, status: status || undefined, reason: message });
+    return res
+      .status(503)
+      .json({ ...info, live: false, status: status || undefined, reason: message });
   }
 });
 
@@ -381,7 +395,15 @@ router.post('/ocr', authenticateToken, async (req: AuthenticatedRequest, res) =>
   const imageHash = crypto.createHash('sha256').update(base64Image).digest('hex');
   const cached = await ocrResultCache.get(imageHash);
   if (cached) {
-    return res.json({ items: JSON.parse(cached), fromCache: true });
+    // A corrupt entry must read as a miss, not as a crash. This parse sits
+    // outside the try below, so a half-written or foreign value in the shared
+    // cache threw here — and an unhandled rejection from an async handler takes
+    // the whole process down, not just this request.
+    try {
+      return res.json({ items: JSON.parse(cached), fromCache: true });
+    } catch {
+      console.warn('[ai] /ocr: discarding a corrupt cache entry');
+    }
   }
 
   // OCR needs a vision model — only Gemini is wired for it. This used to answer

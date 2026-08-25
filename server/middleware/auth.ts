@@ -138,3 +138,10 @@ export async function authenticateToken(
   assignGuest(req);
   return next();
 }
+
+export function requireSignedIn(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  if (!req.user || isGuestId(req.user.id) || req.user.isAnonymous || !req.accessToken) {
+    return res.status(401).json({ error: 'AUTH_REQUIRED' });
+  }
+  return next();
+}

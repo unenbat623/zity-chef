@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import {
   Heart,
   MessageCircle,
@@ -158,7 +158,7 @@ const StoryViewerModal: React.FC<{
   };
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.96 }}
@@ -177,6 +177,8 @@ const StoryViewerModal: React.FC<{
           <img
             src={currentStory.img}
             alt=""
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover absolute inset-0 transition-all duration-300"
           />
         ) : (
@@ -195,7 +197,7 @@ const StoryViewerModal: React.FC<{
         {/* Floating Heart Animation on reaction */}
         <AnimatePresence>
           {floatingHeart && (
-            <motion.div
+            <m.div
               initial={{ opacity: 1, y: 0, scale: 0.5 }}
               animate={{ opacity: 0, y: -180, scale: 2 }}
               exit={{ opacity: 0 }}
@@ -203,7 +205,7 @@ const StoryViewerModal: React.FC<{
               className="absolute inset-x-0 bottom-24 flex justify-center pointer-events-none z-50 text-6xl"
             >
               ❤️
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
 
@@ -241,6 +243,8 @@ const StoryViewerModal: React.FC<{
                 <img
                   src={storyGroup.userAvatar}
                   alt={storyGroup.userName}
+                  loading="lazy"
+                  decoding="async"
                   className="w-8 h-8 rounded-full border border-black object-cover"
                 />
               </div>
@@ -278,13 +282,13 @@ const StoryViewerModal: React.FC<{
         {/* BOTTOM CAPTION & REACTION BAR */}
         <div className="relative z-20 p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:pb-4 space-y-3">
           {currentStory.img && currentStory.caption && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               className="bg-black/50 backdrop-blur-md border border-white/10 p-3 rounded-2xl text-white text-xs font-semibold leading-relaxed drop-shadow"
             >
               {currentStory.caption}
-            </motion.div>
+            </m.div>
           )}
 
           {/* Quick Emojis Row */}
@@ -326,7 +330,7 @@ const StoryViewerModal: React.FC<{
           </div>
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 
@@ -366,7 +370,7 @@ const CreateStoryModal: React.FC<{
   };
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -376,7 +380,7 @@ const CreateStoryModal: React.FC<{
       aria-label={t('community_createStoryTitle')}
       className="fixed inset-0 bg-black/80 backdrop-blur-md z-[350] flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
     >
-      <motion.div
+      <m.div
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.9, y: 20 }}
@@ -483,7 +487,12 @@ const CreateStoryModal: React.FC<{
           />
 
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-            {[t('community_stickerUlaanbaatar'), '🍳 Zity Chef', '🥑 Healthy Food', t('community_stickerNewRecipe')].map((st) => (
+            {[
+              t('community_stickerUlaanbaatar'),
+              '🍳 Zity Chef',
+              '🥑 Healthy Food',
+              t('community_stickerNewRecipe'),
+            ].map((st) => (
               <button
                 key={st}
                 onClick={() => setSticker(st)}
@@ -506,8 +515,8 @@ const CreateStoryModal: React.FC<{
         >
           <Sparkles size={16} /> {t('community_publishStory')}
         </button>
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 };
 
@@ -579,7 +588,7 @@ const DirectChatDrawer: React.FC<{
   const openProfile = () => onOpenProfile(recipient);
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -589,7 +598,7 @@ const DirectChatDrawer: React.FC<{
       aria-label={recipient.name}
       className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[350] flex justify-end"
     >
-      <motion.div
+      <m.div
         initial={{ x: '100%' }}
         animate={{ x: 0 }}
         exit={{ x: '100%' }}
@@ -709,7 +718,8 @@ const DirectChatDrawer: React.FC<{
           <div className="space-y-1">
             {messages.map((m, i) => {
               const previous = messages[i - 1];
-              const showDay = !previous || dayLabel(previous.createdAt, t) !== dayLabel(m.createdAt, t);
+              const showDay =
+                !previous || dayLabel(previous.createdAt, t) !== dayLabel(m.createdAt, t);
               // Consecutive messages from the same person within 5 minutes read
               // as one turn: only the last of the run carries a tail and a time.
               const grouped =
@@ -732,7 +742,9 @@ const DirectChatDrawer: React.FC<{
                     </div>
                   )}
 
-                  <div className={`flex items-end gap-2 ${m.mine ? 'justify-end' : 'justify-start'}`}>
+                  <div
+                    className={`flex items-end gap-2 ${m.mine ? 'justify-end' : 'justify-start'}`}
+                  >
                     {!m.mine &&
                       (endsRun ? (
                         <SmartImage
@@ -745,7 +757,9 @@ const DirectChatDrawer: React.FC<{
                         <div className="w-6 shrink-0" />
                       ))}
 
-                    <div className={`flex flex-col ${m.mine ? 'items-end' : 'items-start'} max-w-[78%]`}>
+                    <div
+                      className={`flex flex-col ${m.mine ? 'items-end' : 'items-start'} max-w-[78%]`}
+                    >
                       <div
                         className={`px-3.5 py-2.5 text-[13px] font-medium leading-relaxed whitespace-pre-wrap break-words shadow-sm ${
                           m.mine
@@ -786,7 +800,7 @@ const DirectChatDrawer: React.FC<{
         {/* Jump back to the newest message after scrolling up. */}
         <AnimatePresence>
           {!atBottom && messages.length > 0 && (
-            <motion.button
+            <m.button
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 8 }}
@@ -798,7 +812,7 @@ const DirectChatDrawer: React.FC<{
               className="absolute bottom-24 right-5 w-9 h-9 rounded-full bg-pestle-card border border-pestle-border shadow-lg flex items-center justify-center text-pestle-text z-10"
             >
               <ChevronDown size={16} />
-            </motion.button>
+            </m.button>
           )}
         </AnimatePresence>
 
@@ -843,8 +857,8 @@ const DirectChatDrawer: React.FC<{
             {t('chat_inputHint')}
           </p>
         </div>
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 };
 
@@ -853,11 +867,7 @@ const CreatePostModal: React.FC<{
   onClose: () => void;
   onPost: (p: any) => void;
   author: { name: string; avatar: string };
-}> = ({
-  onClose,
-  onPost,
-  author,
-}) => {
+}> = ({ onClose, onPost, author }) => {
   const { t } = useApp();
   const { recipes } = useRecipes();
   const [caption, setCaption] = useState('');
@@ -894,7 +904,7 @@ const CreatePostModal: React.FC<{
   };
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -904,7 +914,7 @@ const CreatePostModal: React.FC<{
       aria-label={t('community_createPostTitle')}
       className="fixed inset-0 bg-black/75 backdrop-blur-md z-[350] flex items-end sm:items-center justify-center p-0 sm:p-4"
     >
-      <motion.div
+      <m.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
@@ -913,7 +923,9 @@ const CreatePostModal: React.FC<{
         className="bg-pestle-card border border-pestle-border w-full max-w-lg rounded-t-[32px] sm:rounded-[32px] p-4 sm:p-5 pb-sheet-safe sm:pb-5 space-y-4 shadow-2xl max-h-[92dvh] overflow-y-auto overscroll-contain"
       >
         <div className="flex justify-between items-center gap-3">
-          <h2 className="text-base font-black text-pestle-text min-w-0 truncate">{t('community_createPostTitle')}</h2>
+          <h2 className="text-base font-black text-pestle-text min-w-0 truncate">
+            {t('community_createPostTitle')}
+          </h2>
           <button
             onClick={onClose}
             aria-label={t('community_cancel')}
@@ -986,7 +998,13 @@ const CreatePostModal: React.FC<{
                     : 'border-pestle-border bg-pestle-bg'
                 }`}
               >
-                <img src={r.image} alt={r.title} className="w-12 h-12 rounded-lg object-cover" />
+                <img
+                  src={r.image}
+                  alt={r.title}
+                  loading="lazy"
+                  decoding="async"
+                  className="w-12 h-12 rounded-lg object-cover"
+                />
                 <div className="flex-1 min-w-0">
                   <p className="text-[11px] font-extrabold text-pestle-text truncate">{r.title}</p>
                   <p className="text-[9px] text-gray-400">{r.category}</p>
@@ -1016,8 +1034,8 @@ const CreatePostModal: React.FC<{
             <Send size={14} /> {t('community_publish')}
           </button>
         </div>
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 };
 
@@ -1054,7 +1072,7 @@ const PostCard: React.FC<{
   };
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       className="pestle-card overflow-hidden rounded-3xl border border-pestle-border shadow-sm hover:shadow-md transition-shadow"
@@ -1107,7 +1125,10 @@ const PostCard: React.FC<{
 
       {/* Image Container with Double Tap Heart Overlay */}
       {(post.image || post.recipe?.image) && (
-        <div className="relative overflow-hidden cursor-pointer select-none" onDoubleClick={handleDoubleTap}>
+        <div
+          className="relative overflow-hidden cursor-pointer select-none"
+          onDoubleClick={handleDoubleTap}
+        >
           <SmartImage
             src={post.image || post.recipe?.image}
             alt={post.caption}
@@ -1117,15 +1138,18 @@ const PostCard: React.FC<{
 
           <AnimatePresence>
             {showHeartOverlay && (
-              <motion.div
+              <m.div
                 initial={{ opacity: 0, scale: 0.3 }}
                 animate={{ opacity: 1, scale: 1.2 }}
                 exit={{ opacity: 0, scale: 1.5 }}
                 transition={{ duration: 0.3 }}
                 className="absolute inset-0 flex items-center justify-center pointer-events-none z-30"
               >
-                <Heart size={90} className="text-red-500 fill-red-500 drop-shadow-2xl animate-pulse" />
-              </motion.div>
+                <Heart
+                  size={90}
+                  className="text-red-500 fill-red-500 drop-shadow-2xl animate-pulse"
+                />
+              </m.div>
             )}
           </AnimatePresence>
         </div>
@@ -1150,7 +1174,7 @@ const PostCard: React.FC<{
           looking as tight as before. */}
       <div className="px-4 pt-1 pb-0.5 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <motion.button
+          <m.button
             whileTap={{ scale: 1.3 }}
             onClick={onLike}
             aria-label={t('community_likeAria')}
@@ -1161,7 +1185,7 @@ const PostCard: React.FC<{
           >
             <Heart size={20} fill={post.liked ? 'currentColor' : 'none'} />
             <span className="text-xs font-extrabold">{post.likes}</span>
-          </motion.button>
+          </m.button>
 
           <button
             onClick={() => setShowComments(!showComments)}
@@ -1223,7 +1247,7 @@ const PostCard: React.FC<{
       {/* Comments Drawer */}
       <AnimatePresence>
         {showComments && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
@@ -1232,7 +1256,9 @@ const PostCard: React.FC<{
             {post.comments.map((c: any, i: number) => (
               <div key={i} className="flex items-start gap-2 text-xs">
                 <span className="font-black text-pestle-text shrink-0">{c.user}</span>
-                <span className="text-gray-600 dark:text-gray-300 font-medium flex-1">{c.text}</span>
+                <span className="text-gray-600 dark:text-gray-300 font-medium flex-1">
+                  {c.text}
+                </span>
               </div>
             ))}
 
@@ -1253,10 +1279,10 @@ const PostCard: React.FC<{
                 <Send size={14} />
               </button>
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </m.div>
   );
 };
 
@@ -1265,14 +1291,26 @@ export const CommunityView: React.FC = () => {
   const { profile, accountId, t } = useApp();
   const { user: authUser } = useAuth();
   const { toastWarning } = useToast();
-  const { feedPosts, feedLoading, persistLike, persistComment, persistPost, serverStoryGroups, persistStory } =
-    useCommunity();
+  const {
+    feedPosts,
+    feedLoading,
+    hasMorePosts,
+    loadingMorePosts,
+    loadMorePosts,
+    persistLike,
+    persistComment,
+    persistPost,
+    serverStoryGroups,
+    persistStory,
+  } = useCommunity();
 
   // Build own story group from profile
   const ownStoryGroup: UserStoryGroup = {
     id: 'user-me',
     userName: profile.name || t('community_yourStory'),
-    userAvatar: profile.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile.name || 'Zity Chef')}`,
+    userAvatar:
+      profile.avatarUrl ||
+      `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile.name || 'Zity Chef')}`,
     isOwn: true,
     seen: true,
     stories: [],
@@ -1328,7 +1366,12 @@ export const CommunityView: React.FC = () => {
   useEffect(() => {
     const ownFromServer = serverStoryGroups.find((g: UserStoryGroup) => g.isOwn);
     const own = ownFromServer
-      ? { ...ownFromServer, userName: profile.name || ownFromServer.userName, userAvatar: profile.avatarUrl || ownFromServer.userAvatar, isOwn: true }
+      ? {
+          ...ownFromServer,
+          userName: profile.name || ownFromServer.userName,
+          userAvatar: profile.avatarUrl || ownFromServer.userAvatar,
+          isOwn: true,
+        }
       : ownStoryGroup;
     const others = serverStoryGroups.filter((g: UserStoryGroup) => !g.isOwn);
     setStories([own, ...others]);
@@ -1425,7 +1468,9 @@ export const CommunityView: React.FC = () => {
         {
           id: `user-me-${Date.now()}`,
           userName: profile.name || t('community_yourStory'),
-          userAvatar: profile.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile.name || 'Zity Chef')}`,
+          userAvatar:
+            profile.avatarUrl ||
+            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile.name || 'Zity Chef')}`,
           isOwn: true,
           seen: false,
           stories: [newStory],
@@ -1490,14 +1535,16 @@ export const CommunityView: React.FC = () => {
                   group.isOwn
                     ? 'bg-gradient-to-tr from-mango to-amber-400'
                     : group.seen
-                    ? 'bg-pestle-border'
-                    : 'bg-gradient-to-tr from-amber-500 via-rose-500 to-fuchsia-600'
+                      ? 'bg-pestle-border'
+                      : 'bg-gradient-to-tr from-amber-500 via-rose-500 to-fuchsia-600'
                 }`}
               >
                 <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-pestle-card overflow-hidden relative">
                   <img
                     src={group.userAvatar}
                     alt={group.userName}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover"
                   />
 
@@ -1522,7 +1569,10 @@ export const CommunityView: React.FC = () => {
         {feedLoading && posts.length === 0 && (
           <>
             {[0, 1].map((i) => (
-              <div key={`feed-skeleton-${i}`} className="pestle-card p-0 overflow-hidden animate-pulse">
+              <div
+                key={`feed-skeleton-${i}`}
+                className="pestle-card p-0 overflow-hidden animate-pulse"
+              >
                 <div className="flex items-center gap-3 p-4">
                   <div className="w-10 h-10 rounded-full bg-pestle-bg" />
                   <div className="h-3 w-24 bg-pestle-bg rounded" />
@@ -1560,6 +1610,18 @@ export const CommunityView: React.FC = () => {
             />
           );
         })}
+
+        {/* The feed used to stop at the newest 20 posts with nothing below. */}
+        {hasMorePosts && (
+          <button
+            type="button"
+            onClick={loadMorePosts}
+            disabled={loadingMorePosts}
+            className="w-full min-h-11 rounded-2xl border border-pestle-border bg-pestle-card text-xs font-black text-pestle-text hover:border-mango/40 disabled:opacity-60 transition-colors"
+          >
+            {loadingMorePosts ? t('community_loadingMore') : t('community_loadMore')}
+          </button>
+        )}
       </div>
 
       {/* MODALS & DRAWERS */}
@@ -1576,10 +1638,7 @@ export const CommunityView: React.FC = () => {
         )}
 
         {showCreateStory && (
-          <CreateStoryModal
-            onClose={() => setShowCreateStory(false)}
-            onAddStory={handleAddStory}
-          />
+          <CreateStoryModal onClose={() => setShowCreateStory(false)} onAddStory={handleAddStory} />
         )}
 
         {showCreatePost && (
@@ -1587,7 +1646,9 @@ export const CommunityView: React.FC = () => {
             onClose={() => setShowCreatePost(false)}
             author={{
               name: profile.name || 'Zity Chef',
-              avatar: profile.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile.name || 'Zity Chef')}`,
+              avatar:
+                profile.avatarUrl ||
+                `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile.name || 'Zity Chef')}`,
             }}
             onPost={handleNewPost}
           />

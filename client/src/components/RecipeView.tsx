@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import {
   Search,
   Clock,
@@ -44,8 +44,19 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
   recipe,
   onClose,
 }) => {
-  const { lang, subscription, setShowSubModal, setActiveCookingRecipe, setActiveTab, inventory, addToCart, savedRecipeIds, toggleSaveRecipe, formatPrice, t } =
-    useApp();
+  const {
+    lang,
+    subscription,
+    setShowSubModal,
+    setActiveCookingRecipe,
+    setActiveTab,
+    inventory,
+    addToCart,
+    savedRecipeIds,
+    toggleSaveRecipe,
+    formatPrice,
+    t,
+  } = useApp();
   const { products } = useStoreProducts();
   // Same catalog the store tab sells from — recipe orders resolve to real products.
   const storeCatalog: CatalogProduct[] = products;
@@ -67,7 +78,8 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
   };
 
   // Calculate fridge match for ingredients
-  const recipeIngredients = lang === 'mn' ? recipe.ingredients : recipe.ingredientsEn || recipe.ingredients;
+  const recipeIngredients =
+    lang === 'mn' ? recipe.ingredients : recipe.ingredientsEn || recipe.ingredients;
   const matchDetails = useMemo(() => {
     const inventoryNames = inventory.map((inv) => inv.name.toLowerCase());
     const present: string[] = [];
@@ -102,13 +114,21 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
     [matchDetails.missing, storeCatalog]
   );
 
+  // Only what the shop actually sells is priced. The estimate used to add a
+  // placeholder 3,500₮ for every ingredient the catalog does not carry, so the
+  // "order the missing items" total quoted money for things nobody could buy.
+  const buyableMissing = useMemo(
+    () => missingWithProducts.filter((m) => m.product),
+    [missingWithProducts]
+  );
+
   const missingTotalPrice = useMemo(
     () =>
-      missingWithProducts.reduce(
+      buyableMissing.reduce(
         (sum, m) => sum + (m.product?.pricePerUnit || FALLBACK_INGREDIENT_PRICE),
         0
       ),
-    [missingWithProducts]
+    [buyableMissing]
   );
 
   const handleAddMissingToCart = (ingName: string) => {
@@ -117,11 +137,17 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
   };
 
   const handleAddAllMissing = () => {
+    let added = 0;
     matchDetails.missing.forEach((ing) => {
       const item = buildIngredientCartItem(ing, storeCatalog, lang);
-      if (item) addToCart(item);
+      if (item) {
+        addToCart(item);
+        added += 1;
+      }
     });
-    setMissingAdded(true);
+    // Claiming success after adding nothing is how an empty cart used to look
+    // like a completed order.
+    if (added > 0) setMissingAdded(true);
   };
 
   const handleGoToStore = () => {
@@ -130,7 +156,7 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
   };
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: '100%' }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: '100%' }}
@@ -142,7 +168,12 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
     >
       {/* Cover Image */}
       <div className="relative h-60 sm:h-96">
-        <SmartImage src={recipe.image} alt={recipe.title} emoji="🍽️" className="w-full h-full object-cover" />
+        <SmartImage
+          src={recipe.image}
+          alt={recipe.title}
+          emoji="🍽️"
+          className="w-full h-full object-cover"
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/40" />
 
         <button
@@ -157,9 +188,7 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
           <button
             onClick={() => toggleSaveRecipe(recipe.id)}
             className={`w-11 h-11 backdrop-blur-md rounded-full flex items-center justify-center shadow-xl transition-all ${
-              isSaved
-                ? 'bg-mango text-white'
-                : 'bg-black/60 text-white hover:bg-black/80'
+              isSaved ? 'bg-mango text-white' : 'bg-black/60 text-white hover:bg-black/80'
             }`}
             title={isSaved ? t('recipe_removeBookmark') : t('recipe_saveBookmark')}
             aria-label={isSaved ? t('recipe_removeBookmark') : t('recipe_saveBookmark')}
@@ -201,17 +230,25 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
         <div className="grid grid-cols-3 gap-3 bg-pestle-card p-4 rounded-2xl border border-pestle-border text-center shadow-md">
           <div className="flex flex-col items-center gap-1">
             <Clock size={20} className="text-mango-ink" />
-            <span className="text-[10px] text-gray-400 font-extrabold uppercase">{t('recipe_timeLabel')}</span>
+            <span className="text-[10px] text-gray-400 font-extrabold uppercase">
+              {t('recipe_timeLabel')}
+            </span>
             <span className="text-xs sm:text-sm font-black text-pestle-text">{recipe.time}</span>
           </div>
           <div className="flex flex-col items-center gap-1 border-x border-pestle-border/60">
             <Flame size={20} className="text-mint-ink" />
-            <span className="text-[10px] text-gray-400 font-extrabold uppercase">{t('recipe_levelLabel')}</span>
-            <span className="text-xs sm:text-sm font-black text-pestle-text">{formatDifficulty(recipe.difficulty, t)}</span>
+            <span className="text-[10px] text-gray-400 font-extrabold uppercase">
+              {t('recipe_levelLabel')}
+            </span>
+            <span className="text-xs sm:text-sm font-black text-pestle-text">
+              {formatDifficulty(recipe.difficulty, t)}
+            </span>
           </div>
           <div className="flex flex-col items-center gap-1">
             <Utensils size={20} className="text-amber-700 dark:text-amber-400" />
-            <span className="text-[10px] text-gray-400 font-extrabold uppercase">{t('calories')}</span>
+            <span className="text-[10px] text-gray-400 font-extrabold uppercase">
+              {t('calories')}
+            </span>
             <span className="text-xs sm:text-sm font-black text-pestle-text">
               {recipe.nutrition.calories} kcal
             </span>
@@ -222,7 +259,11 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
         <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/5 p-4 rounded-2xl border border-emerald-500/20 space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-              <ChefHat size={16} className="shrink-0" /> {t('recipe_fridgeReadiness', { count: matchDetails.count, total: matchDetails.total })}
+              <ChefHat size={16} className="shrink-0" />{' '}
+              {t('recipe_fridgeReadiness', {
+                count: matchDetails.count,
+                total: matchDetails.total,
+              })}
             </span>
             <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 shrink-0">
               {t('recipe_percentReady', { n: readyPct })}
@@ -243,15 +284,23 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
           </h3>
           <div className="grid grid-cols-3 gap-3 bg-pestle-card p-3.5 rounded-xl border border-pestle-border text-center text-xs">
             <div>
-              <span className="text-[10px] text-gray-400 font-bold block uppercase">{t('protein')}</span>
-              <span className="text-sm font-black text-pestle-text">{recipe.nutrition.protein}g</span>
+              <span className="text-[10px] text-gray-400 font-bold block uppercase">
+                {t('protein')}
+              </span>
+              <span className="text-sm font-black text-pestle-text">
+                {recipe.nutrition.protein}g
+              </span>
             </div>
             <div>
-              <span className="text-[10px] text-gray-400 font-bold block uppercase">{t('carbs')}</span>
+              <span className="text-[10px] text-gray-400 font-bold block uppercase">
+                {t('carbs')}
+              </span>
               <span className="text-sm font-black text-pestle-text">{recipe.nutrition.carbs}g</span>
             </div>
             <div>
-              <span className="text-[10px] text-gray-400 font-bold block uppercase">{t('fat')}</span>
+              <span className="text-[10px] text-gray-400 font-bold block uppercase">
+                {t('fat')}
+              </span>
               <span className="text-sm font-black text-pestle-text">{recipe.nutrition.fat}g</span>
             </div>
           </div>
@@ -267,7 +316,7 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
               const isPresent = matchDetails.present.includes(ing);
               const storeProduct = isPresent
                 ? null
-                : missingWithProducts.find((m) => m.ingredient === ing)?.product ?? null;
+                : (missingWithProducts.find((m) => m.ingredient === ing)?.product ?? null);
               return (
                 <div
                   key={i}
@@ -290,35 +339,37 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
                     <span className="min-w-0">{ing}</span>
                   </div>
 
-                  {!isPresent && (
-                    <button
-                      onClick={() => handleAddMissingToCart(ing)}
-                      className="text-[10px] bg-mango/15 hover:bg-mango text-mango-ink hover:text-white px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 font-bold shrink-0"
-                      title={
-                        storeProduct
-                          ? t('recipe_inStoreAs', { name: storeProduct.name })
-                          : t('recipe_order')
-                      }
-                    >
-                      <ShoppingBag size={11} />
-                      <span>
-                        {storeProduct ? `${storeProduct.emoji} ` : ''}
-                        {formatPrice(storeProduct?.pricePerUnit || FALLBACK_INGREDIENT_PRICE)}
+                  {!isPresent &&
+                    (storeProduct ? (
+                      <button
+                        onClick={() => handleAddMissingToCart(ing)}
+                        className="text-[10px] bg-mango/15 hover:bg-mango text-mango-ink hover:text-white px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 font-bold shrink-0"
+                        title={t('recipe_inStoreAs', { name: storeProduct.name })}
+                      >
+                        <ShoppingBag size={11} />
+                        <span>
+                          {storeProduct.emoji} {formatPrice(storeProduct.pricePerUnit || 0)}
+                        </span>
+                      </button>
+                    ) : (
+                      // An ingredient the shop does not carry used to show a
+                      // made-up 3,500₮ and a button that silently did nothing.
+                      <span className="text-[10px] font-bold text-gray-400 shrink-0 whitespace-nowrap">
+                        {t('recipe_notInStore')}
                       </span>
-                    </button>
-                  )}
+                    ))}
                 </div>
               );
             })}
           </div>
 
           {/* Order every missing ingredient from the store in one tap */}
-          {matchDetails.missing.length > 0 && (
+          {buyableMissing.length > 0 && (
             <div className="bg-mango/8 border border-mango/25 rounded-2xl p-4 space-y-3">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-black text-pestle-text flex items-center gap-1.5">
                   <ShoppingBag size={15} className="text-mango-ink" />
-                  {t('recipe_missingFromStore', { n: matchDetails.missing.length })}
+                  {t('recipe_missingFromStore', { n: buyableMissing.length })}
                 </span>
                 <span className="text-xs font-black text-mango-ink">
                   ≈ {formatPrice(missingTotalPrice)}
@@ -342,7 +393,7 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
                   className="w-full btn-primary py-3 text-xs font-bold flex items-center justify-center gap-2"
                 >
                   <ShoppingBag size={15} />
-                  <span>{t('recipe_addAllMissing', { n: matchDetails.missing.length })}</span>
+                  <span>{t('recipe_addAllMissing', { n: buyableMissing.length })}</span>
                 </button>
               )}
             </div>
@@ -373,7 +424,10 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
                 </p>
                 {step.sisterTip && (
                   <div className="bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl text-[11px] text-amber-700 dark:text-amber-300 flex items-start gap-2 font-medium">
-                    <Sparkles size={14} className="text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
+                    <Sparkles
+                      size={14}
+                      className="text-amber-700 dark:text-amber-400 shrink-0 mt-0.5"
+                    />
                     <span>
                       <strong>{t('sisterTip')}</strong>{' '}
                       {lang === 'mn' ? step.sisterTip : step.sisterTipEn || step.sisterTip}
@@ -403,7 +457,7 @@ export const RecipeDetailModal: React.FC<{ recipe: Recipe; onClose: () => void }
           )}
         </button>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 
@@ -441,12 +495,15 @@ export const RecipeView: React.FC = () => {
     const inventoryNames = inventory.map((item) => item.name.toLowerCase());
 
     return recipes.map((recipe) => {
-      const recipeIngredients = lang === 'mn' ? recipe.ingredients : recipe.ingredientsEn || recipe.ingredients;
+      const recipeIngredients =
+        lang === 'mn' ? recipe.ingredients : recipe.ingredientsEn || recipe.ingredients;
       let matchedCount = 0;
 
       recipeIngredients.forEach((ing) => {
         const ingLower = ing.toLowerCase();
-        if (inventoryNames.some((invName) => invName.includes(ingLower) || ingLower.includes(invName))) {
+        if (
+          inventoryNames.some((invName) => invName.includes(ingLower) || ingLower.includes(invName))
+        ) {
           matchedCount++;
         }
       });
@@ -502,7 +559,9 @@ export const RecipeView: React.FC = () => {
 
     // Difficulty filter
     if (selectedDifficulty !== 'all') {
-      result = result.filter((r) => r.difficulty.toLowerCase() === selectedDifficulty.toLowerCase());
+      result = result.filter(
+        (r) => r.difficulty.toLowerCase() === selectedDifficulty.toLowerCase()
+      );
     }
 
     // Sorting logic
@@ -598,7 +657,7 @@ export const RecipeView: React.FC = () => {
         {/* Live Autocomplete Dropdown */}
         <AnimatePresence>
           {isSearchFocused && searchSuggestions.length > 0 && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 6 }}
@@ -639,13 +698,16 @@ export const RecipeView: React.FC = () => {
                       <span>{rec.time}</span>
                       <span>•</span>
                       <span className="text-emerald-700 dark:text-emerald-400 font-bold">
-                        {t('recipe_ingredientsReady', { matched: rec.matchedCount, total: rec.totalIngredients })}
+                        {t('recipe_ingredientsReady', {
+                          matched: rec.matchedCount,
+                          total: rec.totalIngredients,
+                        })}
                       </span>
                     </div>
                   </div>
                 </div>
               ))}
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>
@@ -730,7 +792,10 @@ export const RecipeView: React.FC = () => {
         <section className="space-y-3 bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-mango/10 p-4 sm:p-5 rounded-3xl border border-emerald-500/20 relative overflow-hidden">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-black text-pestle-text flex items-center gap-2">
-              <Sparkles size={18} className="text-emerald-700 dark:text-emerald-400 animate-pulse" />
+              <Sparkles
+                size={18}
+                className="text-emerald-700 dark:text-emerald-400 animate-pulse"
+              />
               <span>{t('recipe_fridgeRecommendations')}</span>
             </h3>
             <span className="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest bg-emerald-500/15 px-2.5 py-1 rounded-full">
@@ -740,7 +805,7 @@ export const RecipeView: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {fridgeRecommendedRecipes.map((recipe) => (
-              <motion.div
+              <m.div
                 key={recipe.id}
                 whileHover={{ y: -3 }}
                 onClick={() => setSelectedRecipe(recipe)}
@@ -753,7 +818,11 @@ export const RecipeView: React.FC = () => {
                 />
                 <div className="flex-1 min-w-0">
                   <span className="text-[9px] font-black text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full inline-block">
-                    ✓ {t('recipe_ingredientsReady', { matched: recipe.matchedCount, total: recipe.totalIngredients })}
+                    ✓{' '}
+                    {t('recipe_ingredientsReady', {
+                      matched: recipe.matchedCount,
+                      total: recipe.totalIngredients,
+                    })}
                   </span>
                   <h4 className="text-xs font-black text-pestle-text truncate mt-1">
                     {lang === 'mn' ? recipe.title : recipe.titleEn || recipe.title}
@@ -762,7 +831,7 @@ export const RecipeView: React.FC = () => {
                     ⏱️ {recipe.time} • 🔥 {recipe.nutrition.calories} kcal
                   </span>
                 </div>
-              </motion.div>
+              </m.div>
             ))}
           </div>
         </section>
@@ -804,10 +873,10 @@ export const RecipeView: React.FC = () => {
               🔍
             </div>
             <div className="space-y-1">
-              <h3 className="text-base font-black text-pestle-text">{t('recipe_noRecipesTitle')}</h3>
-              <p className="text-xs text-gray-400 max-w-xs mx-auto">
-                {t('recipe_noRecipesDesc')}
-              </p>
+              <h3 className="text-base font-black text-pestle-text">
+                {t('recipe_noRecipesTitle')}
+              </h3>
+              <p className="text-xs text-gray-400 max-w-xs mx-auto">{t('recipe_noRecipesDesc')}</p>
             </div>
             <button onClick={resetFilters} className="btn-primary py-2.5 px-6 text-xs font-bold">
               {t('recipe_viewAllRecipes')}
@@ -816,7 +885,7 @@ export const RecipeView: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredRecipes.map((recipe) => (
-              <motion.div
+              <m.div
                 key={recipe.id}
                 whileHover={{ y: -4 }}
                 whileTap={{ scale: 0.98 }}
@@ -850,9 +919,16 @@ export const RecipeView: React.FC = () => {
                             ? 'bg-mango text-white'
                             : 'bg-black/60 text-white hover:bg-black/80'
                         }`}
-                        title={savedRecipeIds.includes(recipe.id) ? t('recipe_removeBookmark') : t('recipe_saveBookmark')}
+                        title={
+                          savedRecipeIds.includes(recipe.id)
+                            ? t('recipe_removeBookmark')
+                            : t('recipe_saveBookmark')
+                        }
                       >
-                        <Bookmark size={13} className={savedRecipeIds.includes(recipe.id) ? 'fill-white' : ''} />
+                        <Bookmark
+                          size={13}
+                          className={savedRecipeIds.includes(recipe.id) ? 'fill-white' : ''}
+                        />
                       </button>
 
                       {recipe.isPremium && (
@@ -882,7 +958,11 @@ export const RecipeView: React.FC = () => {
                               : 'bg-black/50 text-gray-300 border-white/10'
                           }`}
                         >
-                          ✓ {t('recipe_ingredientsInFridge', { matched: recipe.matchedCount, total: recipe.totalIngredients })}
+                          ✓{' '}
+                          {t('recipe_ingredientsInFridge', {
+                            matched: recipe.matchedCount,
+                            total: recipe.totalIngredients,
+                          })}
                         </span>
                       </div>
                     </div>
@@ -904,7 +984,7 @@ export const RecipeView: React.FC = () => {
                     <span>{recipe.nutrition.calories} kcal</span>
                   </div>
                 </div>
-              </motion.div>
+              </m.div>
             ))}
           </div>
         )}

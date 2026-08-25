@@ -1,5 +1,5 @@
 import React, { useId, useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import {
   X,
   Plus,
@@ -76,10 +76,7 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
   // could never match what the shop actually sells.
   const { products, loading: catalogLoading, isError: catalogError } = useStoreProducts();
 
-  const catalogItems: Ingredient[] = React.useMemo(
-    () => products.map(toIngredient),
-    [products]
-  );
+  const catalogItems: Ingredient[] = React.useMemo(() => products.map(toIngredient), [products]);
 
   const filteredItems = catalogItems.filter((item) => {
     const matchesCat = selectedCategory === 'all' || item.category === selectedCategory;
@@ -148,7 +145,7 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
   };
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -158,7 +155,7 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
       aria-label={t('picker_addIngredientToFridge')}
       className="fixed inset-0 bg-black/65 backdrop-blur-md z-[200] flex items-end sm:items-center sm:justify-center p-0 sm:p-4"
     >
-      <motion.div
+      <m.div
         initial={{ y: '100%', opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: '100%', opacity: 0 }}
@@ -277,7 +274,7 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
               {/* Ingredients Grid with High Quality Photos */}
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {filteredItems.map((item) => (
-                  <motion.button
+                  <m.button
                     key={item.id}
                     whileTap={{ scale: 0.96 }}
                     onClick={() => {
@@ -301,7 +298,7 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                         {item.category}
                       </span>
                     </div>
-                  </motion.button>
+                  </m.button>
                 ))}
               </div>
 
@@ -389,7 +386,9 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor={`${uid}-name`} className="text-xs font-bold text-pestle-text">{t('picker_ingredientName')}</label>
+                <label htmlFor={`${uid}-name`} className="text-xs font-bold text-pestle-text">
+                  {t('picker_ingredientName')}
+                </label>
                 <input
                   id={`${uid}-name`}
                   type="text"
@@ -403,7 +402,9 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label htmlFor={`${uid}-category`} className="text-xs font-bold text-pestle-text">{t('picker_category')}</label>
+                  <label htmlFor={`${uid}-category`} className="text-xs font-bold text-pestle-text">
+                    {t('picker_category')}
+                  </label>
                   <select
                     id={`${uid}-category`}
                     value={customCategory}
@@ -437,7 +438,9 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
               {/* Quantity Picker */}
               <div className="space-y-2 pt-2">
                 <div className="flex flex-wrap justify-between items-center gap-2">
-                  <label htmlFor={`${uid}-quantity`} className="text-xs font-bold text-pestle-text">{t('picker_quantityAndUnit')}</label>
+                  <label htmlFor={`${uid}-quantity`} className="text-xs font-bold text-pestle-text">
+                    {t('picker_quantityAndUnit')}
+                  </label>
                   <div className="flex bg-pestle-bg p-1 rounded-xl border border-pestle-border text-xs font-bold">
                     {(['гр', 'л', 'ш'] as const).map((u) => (
                       <button
@@ -448,7 +451,11 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
                           unit === u ? 'bg-mango text-white' : 'text-gray-400'
                         }`}
                       >
-                        {u === 'гр' ? t('picker_unitGram') : u === 'л' ? t('picker_unitLiter') : t('picker_unitPiece')}
+                        {u === 'гр'
+                          ? t('picker_unitGram')
+                          : u === 'л'
+                            ? t('picker_unitLiter')
+                            : t('picker_unitPiece')}
                       </button>
                     ))}
                   </div>
@@ -516,7 +523,9 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
               </div>
               <div className="text-center">
                 <h3 className="text-lg font-black text-pestle-text">{selectedIngredient.name}</h3>
-                <span className="text-xs text-mango-ink font-bold">{selectedIngredient.category}</span>
+                <span className="text-xs text-mango-ink font-bold">
+                  {selectedIngredient.category}
+                </span>
               </div>
 
               <div className="w-full space-y-3 bg-pestle-bg p-4 rounded-2xl border border-pestle-border">
@@ -571,7 +580,7 @@ export const IngredientPicker: React.FC<{ onClose: () => void }> = ({ onClose })
             </div>
           )}
         </div>
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 };

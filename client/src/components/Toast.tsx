@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import { CheckCircle2, AlertTriangle, Info, XCircle, X } from 'lucide-react';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -66,14 +66,11 @@ const TOAST_CONFIG: Record<
 };
 
 // ── Single Toast Card ─────────────────────────────────────────────────────────
-const ToastCard: React.FC<{ toast: ToastItem; onDismiss: () => void }> = ({
-  toast,
-  onDismiss,
-}) => {
+const ToastCard: React.FC<{ toast: ToastItem; onDismiss: () => void }> = ({ toast, onDismiss }) => {
   const cfg = TOAST_CONFIG[toast.type];
 
   return (
-    <motion.div
+    <m.div
       layout
       initial={{ opacity: 0, x: 80, scale: 0.92 }}
       animate={{ opacity: 1, x: 0, scale: 1 }}
@@ -83,7 +80,7 @@ const ToastCard: React.FC<{ toast: ToastItem; onDismiss: () => void }> = ({
     >
       {/* Progress bar — shrinks over the toast's lifetime. scaleX rather than
           width: animating width relayouts the card on every frame. */}
-      <motion.div
+      <m.div
         className="absolute bottom-0 left-0 h-0.5 w-full origin-left rounded-b-2xl bg-current opacity-25"
         initial={{ scaleX: 1 }}
         animate={{ scaleX: 0 }}
@@ -111,7 +108,7 @@ const ToastCard: React.FC<{ toast: ToastItem; onDismiss: () => void }> = ({
       >
         <X size={14} />
       </button>
-    </motion.div>
+    </m.div>
   );
 };
 

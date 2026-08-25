@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import { X, Scan, Camera, Upload, CheckCircle2, Loader2, Sparkles, Plus } from 'lucide-react';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import { useApp } from '../context/AppContext';
 import { useToast } from './Toast';
 import { parseReceiptImage } from '../services/geminiService';
@@ -26,6 +27,8 @@ export const ReceiptScannerModal: React.FC = () => {
 
   useEscapeClose(handleClose, showScanModal && !isAnalyzing);
   useScrollLock(showScanModal);
+
+  const dialogRef = useFocusTrap<HTMLDivElement>(showScanModal);
 
   if (!showScanModal) return null;
 
@@ -64,10 +67,7 @@ export const ReceiptScannerModal: React.FC = () => {
   const handleAddAllDetected = () => {
     detectedItems.forEach((item) => addIngredient(item));
     setIsDone(true);
-    toastSuccess(
-      t('scan_toastTitle', { n: detectedItems.length }),
-      t('scan_toastBody')
-    );
+    toastSuccess(t('scan_toastTitle', { n: detectedItems.length }), t('scan_toastBody'));
     setTimeout(() => {
       setIsDone(false);
       setSelectedImage(null);
@@ -78,19 +78,21 @@ export const ReceiptScannerModal: React.FC = () => {
 
   return (
     <AnimatePresence>
-      <motion.div
+      <m.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={() => {
           if (!isAnalyzing) handleClose();
         }}
+        ref={dialogRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={t('scanReceipt')}
         className="fixed inset-0 bg-black/70 backdrop-blur-md z-[180] flex items-end sm:items-center justify-center p-0 sm:p-4"
       >
-        <motion.div
+        <m.div
           initial={{ y: '100%', opacity: 0, scale: 0.96 }}
           animate={{ y: 0, opacity: 1, scale: 1 }}
           exit={{ y: '100%', opacity: 0, scale: 0.96 }}
@@ -123,9 +125,7 @@ export const ReceiptScannerModal: React.FC = () => {
               <div className="w-16 h-16 bg-mint/20 text-mint-ink rounded-full flex items-center justify-center mb-4 animate-bounce">
                 <CheckCircle2 size={40} />
               </div>
-              <h3 className="text-xl font-bold text-pestle-text mb-1">
-                {t('scan_addedSuccess')}
-              </h3>
+              <h3 className="text-xl font-bold text-pestle-text mb-1">{t('scan_addedSuccess')}</h3>
               <p className="text-xs text-gray-400">{t('scan_fridgeUpdated')}</p>
             </div>
           ) : (
@@ -140,9 +140,7 @@ export const ReceiptScannerModal: React.FC = () => {
                       <span className="text-sm font-bold text-pestle-text block">
                         {t('scan_uploadTitle')}
                       </span>
-                      <span className="text-[11px] text-gray-400">
-                        {t('scan_uploadHint')}
-                      </span>
+                      <span className="text-[11px] text-gray-400">{t('scan_uploadHint')}</span>
                     </div>
                     <input
                       type="file"
@@ -156,7 +154,11 @@ export const ReceiptScannerModal: React.FC = () => {
                 <div className="space-y-4">
                   {/* Preview Image */}
                   <div className="h-44 rounded-2xl overflow-hidden relative border border-pestle-border">
-                    <img src={selectedImage} alt={t('scanner_receiptAlt')} className="w-full h-full object-cover" />
+                    <img
+                      src={selectedImage}
+                      alt={t('scanner_receiptAlt')}
+                      className="w-full h-full object-cover"
+                    />
                     {isAnalyzing && (
                       <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center text-white p-4">
                         <Loader2 size={32} className="animate-spin text-mango-ink mb-2" />
@@ -204,7 +206,9 @@ export const ReceiptScannerModal: React.FC = () => {
                                 {item.category?.split(' ')[0] || '📦'}
                               </span>
                               <div className="min-w-0">
-                                <h4 className="text-xs font-bold text-pestle-text truncate">{item.name}</h4>
+                                <h4 className="text-xs font-bold text-pestle-text truncate">
+                                  {item.name}
+                                </h4>
                                 <span className="text-[10px] text-gray-400">
                                   {t('scan_expiryLabel', { n: item.expiryDays ?? 0 })}
                                 </span>
@@ -230,8 +234,8 @@ export const ReceiptScannerModal: React.FC = () => {
               )}
             </div>
           )}
-        </motion.div>
-      </motion.div>
+        </m.div>
+      </m.div>
     </AnimatePresence>
   );
 };

@@ -15,6 +15,7 @@ export const CATEGORIES: Category[] = [
   '🥛 Сүү, өндөг',
   '🧂 Амтлагч',
   '🍎 Жимс',
+  '🍞 Гурилан бүтээгдэхүүн',
 ];
 
 export const BANK_APPS: BankApp[] = [

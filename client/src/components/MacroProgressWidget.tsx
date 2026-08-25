@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 import { Flame, Activity, Zap, PieChart } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -39,8 +39,14 @@ export const MacroProgressWidget: React.FC<{
   const dailyTarget = targetsFor(targetCalories);
   const currentProgress = planned;
 
-  const calPercent = Math.min(100, Math.round((currentProgress.calories / dailyTarget.calories) * 100));
-  const proteinPercent = Math.min(100, Math.round((currentProgress.protein / dailyTarget.protein) * 100));
+  const calPercent = Math.min(
+    100,
+    Math.round((currentProgress.calories / dailyTarget.calories) * 100)
+  );
+  const proteinPercent = Math.min(
+    100,
+    Math.round((currentProgress.protein / dailyTarget.protein) * 100)
+  );
   const carbsPercent = Math.min(100, Math.round((currentProgress.carbs / dailyTarget.carbs) * 100));
   const fatPercent = Math.min(100, Math.round((currentProgress.fat / dailyTarget.fat) * 100));
 
@@ -70,7 +76,7 @@ export const MacroProgressWidget: React.FC<{
           <span className="text-mango-ink">{calPercent}%</span>
         </div>
         <div className="w-full bg-pestle-bg h-3 rounded-full border border-pestle-border overflow-hidden p-0.5">
-          <motion.div
+          <m.div
             initial={{ width: 0 }}
             animate={{ width: `${calPercent}%` }}
             transition={{ duration: 0.8, ease: 'easeOut' }}
@@ -87,9 +93,14 @@ export const MacroProgressWidget: React.FC<{
             <span>{t('protein')}</span>
             <span className="text-emerald-700 dark:text-emerald-400">{proteinPercent}%</span>
           </div>
-          <p className="text-xs font-black text-pestle-text">{currentProgress.protein}g / {dailyTarget.protein}g</p>
+          <p className="text-xs font-black text-pestle-text">
+            {currentProgress.protein}g / {dailyTarget.protein}g
+          </p>
           <div className="w-full bg-pestle-card h-1.5 rounded-full overflow-hidden">
-            <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${proteinPercent}%` }} />
+            <div
+              className="h-full bg-emerald-500 rounded-full"
+              style={{ width: `${proteinPercent}%` }}
+            />
           </div>
         </div>
 
@@ -99,9 +110,14 @@ export const MacroProgressWidget: React.FC<{
             <span>{t('carbs')}</span>
             <span className="text-blue-700 dark:text-blue-400">{carbsPercent}%</span>
           </div>
-          <p className="text-xs font-black text-pestle-text">{currentProgress.carbs}g / {dailyTarget.carbs}g</p>
+          <p className="text-xs font-black text-pestle-text">
+            {currentProgress.carbs}g / {dailyTarget.carbs}g
+          </p>
           <div className="w-full bg-pestle-card h-1.5 rounded-full overflow-hidden">
-            <div className="h-full bg-blue-500 rounded-full" style={{ width: `${carbsPercent}%` }} />
+            <div
+              className="h-full bg-blue-500 rounded-full"
+              style={{ width: `${carbsPercent}%` }}
+            />
           </div>
         </div>
 
@@ -111,7 +127,9 @@ export const MacroProgressWidget: React.FC<{
             <span>{t('fat')}</span>
             <span className="text-amber-700 dark:text-amber-400">{fatPercent}%</span>
           </div>
-          <p className="text-xs font-black text-pestle-text">{currentProgress.fat}g / {dailyTarget.fat}g</p>
+          <p className="text-xs font-black text-pestle-text">
+            {currentProgress.fat}g / {dailyTarget.fat}g
+          </p>
           <div className="w-full bg-pestle-card h-1.5 rounded-full overflow-hidden">
             <div className="h-full bg-amber-500 rounded-full" style={{ width: `${fatPercent}%` }} />
           </div>

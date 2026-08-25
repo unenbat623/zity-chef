@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { m, AnimatePresence } from 'motion/react';
 import {
   Flame,
   Clock,
@@ -23,12 +23,34 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useToast } from './Toast';
+import { useStoreProducts } from '../hooks/useStoreProducts';
+import { buildProductCartItem, matchIngredientToProduct } from '../lib/recipeStore';
 import { SmartImage } from './SmartImage';
 import { Recipe, RecipeStep } from '../types';
 import { formatDifficulty } from '../lib/format';
 
 export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe }) => {
-  const { lang, setActiveTab, t } = useApp();
+  const { lang, inventory, addToCart, setActiveTab, t } = useApp();
+  const { products: storeCatalog } = useStoreProducts();
+
+  /**
+   * What this step needs, that the fridge does not have and the shop does.
+   *
+   * Realising mid-recipe that an ingredient is missing had no answer inside
+   * cooking mode: the store was three taps away and the step list gave no hint
+   * that the thing could be bought at all.
+   */
+  const missingBuyable = useCallback(
+    (ingredientName: string) => {
+      const lower = ingredientName.toLowerCase();
+      const inFridge = inventory.some(
+        (item) => lower.includes(item.name.toLowerCase()) || item.name.toLowerCase().includes(lower)
+      );
+      if (inFridge) return null;
+      return matchIngredientToProduct(ingredientName, storeCatalog);
+    },
+    [inventory, storeCatalog]
+  );
   const { toastWarning, toastSuccess } = useToast();
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [isCompleted, setIsCompleted] = useState<boolean>(false);
@@ -118,7 +140,9 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
 
   const steps = recipe.steps;
   const step = steps[currentStep];
-  const stepTip = ((lang === 'mn' ? step.sisterTip : step.sisterTipEn || step.sisterTip) || '').trim();
+  const stepTip = (
+    (lang === 'mn' ? step.sisterTip : step.sisterTipEn || step.sisterTip) || ''
+  ).trim();
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -136,10 +160,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
 
   const toggleVoiceGuide = () => {
     if (!('speechSynthesis' in window)) {
-      toastWarning(
-        t('cooking_voiceUnsupportedTitle'),
-        t('cooking_voiceUnsupportedDesc')
-      );
+      toastWarning(t('cooking_voiceUnsupportedTitle'), t('cooking_voiceUnsupportedDesc'));
       return;
     }
 
@@ -170,7 +191,8 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
   };
 
   const toggleHandsFree = () => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       toastWarning(t('cooking_handsFreeUnsupportedTitle'), t('cooking_handsFreeUnsupportedDesc'));
       return;
@@ -189,7 +211,8 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
   // Continuous speech recognition listener
   useEffect(() => {
     if (!isListeningVoiceCommands) return;
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) return;
 
     let recognition: any;
@@ -205,15 +228,35 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
           const transcript = lastResult[0].transcript.toLowerCase().trim();
           setLastVoiceCommand(transcript);
 
-          if (transcript.includes('дараах') || transcript.includes('дараагийнх') || transcript.includes('next')) {
+          if (
+            transcript.includes('дараах') ||
+            transcript.includes('дараагийнх') ||
+            transcript.includes('next')
+          ) {
             handleNext();
-          } else if (transcript.includes('өмнөх') || transcript.includes('буцах') || transcript.includes('back')) {
+          } else if (
+            transcript.includes('өмнөх') ||
+            transcript.includes('буцах') ||
+            transcript.includes('back')
+          ) {
             handlePrev();
-          } else if (transcript.includes('эхлэх') || transcript.includes('ажиллуул') || transcript.includes('start')) {
+          } else if (
+            transcript.includes('эхлэх') ||
+            transcript.includes('ажиллуул') ||
+            transcript.includes('start')
+          ) {
             setIsTimerRunning(true);
-          } else if (transcript.includes('зогсоох') || transcript.includes('паус') || transcript.includes('pause')) {
+          } else if (
+            transcript.includes('зогсоох') ||
+            transcript.includes('паус') ||
+            transcript.includes('pause')
+          ) {
             setIsTimerRunning(false);
-          } else if (transcript.includes('унших') || transcript.includes('соносох') || transcript.includes('read')) {
+          } else if (
+            transcript.includes('унших') ||
+            transcript.includes('соносох') ||
+            transcript.includes('read')
+          ) {
             toggleVoiceGuide();
           }
         }
@@ -236,7 +279,11 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
 
       recognition.onend = () => {
         if (isListeningVoiceCommands) {
-          try { recognition.start(); } catch { /* ignore */ }
+          try {
+            recognition.start();
+          } catch {
+            /* ignore */
+          }
         }
       };
 
@@ -286,7 +333,8 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
                 {recipe.cuisine || t('recipe_categoryFallback')}
               </span>
               <span className="text-[10px] font-bold text-gray-400">
-                • {formatDifficulty(recipe.difficulty, t)} • {t('cooking_stepsCount', { n: steps.length })}
+                • {formatDifficulty(recipe.difficulty, t)} •{' '}
+                {t('cooking_stepsCount', { n: steps.length })}
               </span>
             </div>
             <h2 className="text-lg sm:text-2xl font-black text-pestle-text mt-1 leading-tight">
@@ -322,7 +370,9 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
             title={t('cooking_voiceGuideTitle')}
           >
             {isSpeaking ? <Volume2 size={16} /> : <VolumeX size={16} />}
-            <span className="hidden sm:inline">{isSpeaking ? t('cooking_reading') : t('cooking_voiceGuide')}</span>
+            <span className="hidden sm:inline">
+              {isSpeaking ? t('cooking_reading') : t('cooking_voiceGuide')}
+            </span>
           </button>
 
           <div className="flex items-center gap-1.5 bg-pestle-bg border border-pestle-border px-3 py-2 rounded-xl text-xs font-bold text-pestle-text">
@@ -334,7 +384,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
 
       {/* Hands-Free Live Voice Indicator Bar */}
       {isListeningVoiceCommands && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-gradient-to-r from-rose-500/15 via-red-500/10 to-amber-500/15 border border-rose-500/30 p-3 rounded-2xl flex flex-wrap items-center justify-between gap-2 shadow-xs"
@@ -351,11 +401,11 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
           <span className="text-[10px] font-bold text-gray-400 bg-pestle-card px-2.5 py-1 rounded-xl border border-pestle-border shrink-0">
             {t('cooking_voiceCommands')}
           </span>
-        </motion.div>
+        </m.div>
       )}
 
       {isCompleted ? (
-        <motion.div
+        <m.div
           initial={{ scale: 0.94, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           className="py-14 text-center bg-pestle-card border border-pestle-border rounded-[32px] p-8 shadow-2xl space-y-5"
@@ -401,7 +451,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
               {t('cooking_backToFridge')}
             </button>
           </div>
-        </motion.div>
+        </m.div>
       ) : (
         <div className="space-y-6">
           {/* Step Timeline Pills */}
@@ -409,16 +459,20 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
             <div className="flex justify-between items-center text-xs font-bold px-1">
               <span className="text-pestle-text flex items-center gap-1.5">
                 <Layers size={15} className="text-mango-ink" />
-                <span>{t('cooking_stepOf', { current: currentStep + 1, total: steps.length })}</span>
+                <span>
+                  {t('cooking_stepOf', { current: currentStep + 1, total: steps.length })}
+                </span>
               </span>
               <span className="text-mango-ink font-black">
-                {t('cooking_percentComplete', { n: Math.round(((currentStep + 1) / steps.length) * 100) })}
+                {t('cooking_percentComplete', {
+                  n: Math.round(((currentStep + 1) / steps.length) * 100),
+                })}
               </span>
             </div>
 
             {/* Step Progress Line */}
             <div className="w-full bg-pestle-bg h-2 rounded-full border border-pestle-border overflow-hidden">
-              <motion.div
+              <m.div
                 className="h-full bg-mango rounded-full"
                 animate={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
                 transition={{ duration: 0.3 }}
@@ -435,8 +489,8 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
                     idx === currentStep
                       ? 'bg-mango text-white border-mango shadow-sm'
                       : idx < currentStep
-                      ? 'bg-mint/15 text-mint-ink border-mint/30'
-                      : 'bg-pestle-bg text-gray-400 border-pestle-border hover:border-gray-400'
+                        ? 'bg-mint/15 text-mint-ink border-mint/30'
+                        : 'bg-pestle-bg text-gray-400 border-pestle-border hover:border-gray-400'
                   }`}
                 >
                   {idx + 1}. {s.title.split(' ')[0]}
@@ -447,7 +501,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
 
           {/* Current Step Detailed Card */}
           <AnimatePresence mode="wait">
-            <motion.div
+            <m.div
               key={currentStep}
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
@@ -507,6 +561,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
                         <div className="space-y-1.5">
                           {step.stepIngredients.map((item, i) => {
                             const isChecked = checkedIngredients[item];
+                            const shopFor = missingBuyable(item);
                             return (
                               <button
                                 key={i}
@@ -522,7 +577,41 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
                                 ) : (
                                   <Square size={14} className="text-gray-400 shrink-0" />
                                 )}
-                                <span>{item}</span>
+                                <span className="min-w-0 flex-1">{item}</span>
+                                {!isChecked && shopFor && (
+                                  <span
+                                    role="button"
+                                    tabIndex={0}
+                                    aria-label={t('cooking_orderIngredient', {
+                                      name: shopFor.name,
+                                    })}
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      addToCart(
+                                        buildProductCartItem(
+                                          shopFor,
+                                          lang === 'en' && shopFor.nameEn
+                                            ? shopFor.nameEn
+                                            : shopFor.name
+                                        )
+                                      );
+                                      toastSuccess(
+                                        t('cooking_orderedTitle'),
+                                        t('cooking_orderedBody', { name: shopFor.name })
+                                      );
+                                    }}
+                                    onKeyDown={(event) => {
+                                      if (event.key === 'Enter' || event.key === ' ') {
+                                        event.stopPropagation();
+                                        event.preventDefault();
+                                        addToCart(buildProductCartItem(shopFor, shopFor.name));
+                                      }
+                                    }}
+                                    className="shrink-0 rounded-lg bg-mango/15 px-2 py-1 text-[10px] font-black text-mango-ink hover:bg-mango hover:text-white transition-colors"
+                                  >
+                                    🛒
+                                  </span>
+                                )}
                               </button>
                             );
                           })}
@@ -605,7 +694,7 @@ export const CookingModeView: React.FC<{ recipe: Recipe | null }> = ({ recipe })
                   </p>
                 </div>
               )}
-            </motion.div>
+            </m.div>
           </AnimatePresence>
 
           {/* Navigation Controls */}

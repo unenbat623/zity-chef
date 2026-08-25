@@ -3,6 +3,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createApp } from './app.js';
+import { reconcileOdooOrders } from './routes/odoo.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -66,6 +67,43 @@ if (IS_PROD) {
   });
 }
 
+// ── Scheduled Odoo reconciliation ────────────────────────────────────────────
+// Drift between Chef and Odoo — an order that never synced, a total that no
+// longer matches, a cancellation only one side knows about — was only ever
+// found by an admin pressing a button. This walks the last 500 orders on a
+// timer and writes what it finds to the Odoo sync log, where the dashboard
+// already surfaces it.
+//
+// Long-running process only: the serverless entry (api/index.ts) has no timers,
+// so set ODOO_RECONCILE_INTERVAL_MINUTES=0 there and use a platform cron
+// against POST /api/odoo/reconcile instead.
+const reconcileMinutes = Number(process.env.ODOO_RECONCILE_INTERVAL_MINUTES ?? 60);
+const odooConfigured = Boolean(
+  process.env.ODOO_URL &&
+  process.env.ODOO_DB &&
+  process.env.ODOO_USERNAME &&
+  process.env.ODOO_API_KEY
+);
+
+if (odooConfigured && Number.isFinite(reconcileMinutes) && reconcileMinutes > 0) {
+  const intervalMs = Math.max(5, reconcileMinutes) * 60_000;
+  const timer = setInterval(() => {
+    void reconcileOdooOrders()
+      .then((summary) => {
+        const drift =
+          summary.missingInOdoo +
+          summary.missingInDelguur +
+          summary.amountMismatches +
+          summary.statusMismatches;
+        if (drift > 0) console.warn(`[Odoo reconcile] ${summary.message} (${drift})`);
+      })
+      .catch((err) => console.error('[Odoo reconcile]', (err as Error).message));
+  }, intervalMs);
+  // Never hold the process open for a scheduled check.
+  timer.unref();
+  console.log(`🧾 Odoo reconciliation every ${Math.max(5, reconcileMinutes)} min`);
+}
+
 // ── Start server ─────────────────────────────────────────────────────────────
 const server = app.listen(PORT, () => {
   console.log(
@@ -84,3 +122,21 @@ const gracefulShutdown = () => {
 
 process.on('SIGINT', gracefulShutdown);
 process.on('SIGTERM', gracefulShutdown);
+
+/**
+ * Last line of defence for a rejected promise nobody caught.
+ *
+ * Express 4 does not catch a rejection thrown out of an `async` route handler,
+ * so it surfaces as an unhandled rejection — and Node's default since v15 is to
+ * kill the process. One malformed request to a route that threw asynchronously
+ * therefore took the entire backend down for every user; an out-of-range
+ * `expiryDays` reaching `new Date(NaN).toISOString()` was exactly that.
+ *
+ * The individual routes validate their input, but staying up must not depend on
+ * every future handler being perfect. The request that caused it still hangs
+ * until the client times out — this keeps the outage to that one caller instead
+ * of the whole service, and makes the mistake loud in the logs.
+ */
+process.on('unhandledRejection', (reason) => {
+  console.error('[Unhandled rejection] request dropped, server kept alive:', reason);
+});

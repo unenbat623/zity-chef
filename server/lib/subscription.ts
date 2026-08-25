@@ -71,7 +71,11 @@ export async function setSubscriptionTier(
 
   const { error } = await supabaseAdmin
     .from('profiles')
-    .update({ subscription_tier: tier, subscription_expires_at: expiresAt, updated_at: new Date().toISOString() })
+    .update({
+      subscription_tier: tier,
+      subscription_expires_at: expiresAt,
+      updated_at: new Date().toISOString(),
+    })
     .eq('id', userId);
 
   if (error) {
@@ -104,7 +108,9 @@ async function consumeGlobalBudget(accessToken?: string): Promise<boolean> {
   if (accessToken && isSupabaseConfigured) {
     try {
       const db = getSupabaseForUser(accessToken);
-      const { data, error } = await db.rpc('consume_global_ai_budget', { p_limit: GLOBAL_DAILY_LIMIT });
+      const { data, error } = await db.rpc('consume_global_ai_budget', {
+        p_limit: GLOBAL_DAILY_LIMIT,
+      });
       const row = Array.isArray(data) ? data[0] : data;
       if (!error && row) return Boolean(row.allowed);
       if (error) console.warn('[subscription] global budget RPC unavailable:', error.message);

@@ -33,6 +33,32 @@ function rowToIngredient(r: Record<string, unknown>): Ingredient {
   };
 }
 
+/** Дэлгүүрийн бараа хамгийн ихдээ ийм хоног хадгалагдана. */
+const MAX_EXPIRY_DAYS = 3650;
+
+/**
+ * `days`-ийг хүчинтэй хугацаанд багтаана.
+ *
+ * `new Date(NaN).toISOString()` нь RangeError шиддэг. Express 4 нь async
+ * handler-ийн rejection-ыг барьдаггүй тул тэр алдаа unhandled rejection болж
+ * Node процессыг бүхэлд нь унагаадаг байв — `{"expiryDays":"abc"}` гэсэн ганц
+ * хүсэлт backend-ийг зогсооход хангалттай байсан.
+ */
+function normalizeExpiryDays(value: unknown): number | null {
+  // Only a number or a numeric string counts. `Number(null)` and `Number('')`
+  // are both 0, which would have quietly turned a nonsense field into "expires
+  // today" rather than telling the caller their request was wrong.
+  const numeric =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string' && value.trim() !== ''
+        ? Number(value)
+        : NaN;
+  const days = Math.trunc(numeric);
+  if (!Number.isFinite(days) || days < 0 || days > MAX_EXPIRY_DAYS) return null;
+  return days;
+}
+
 function expiryDateFromDays(days: number): string {
   const d = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
   return d.toISOString().slice(0, 10); // YYYY-MM-DD
@@ -64,19 +90,35 @@ router.post('/', async (req: AuthenticatedRequest, res) => {
   const userId = req.user!.id;
   const body = req.body as Partial<Ingredient>;
 
-  if (!body.name) {
+  const name = String(body.name ?? '').trim();
+  if (!name || name.length > 200) {
     return res.status(400).json({ error: 'name is required' });
+  }
+
+  const expiryDays = normalizeExpiryDays(body.expiryDays ?? 7);
+  if (expiryDays === null) {
+    return res.status(400).json({ error: 'INVALID_EXPIRY_DAYS' });
+  }
+
+  const quantity = Number(body.quantity ?? 1);
+  if (!Number.isFinite(quantity) || quantity <= 0 || quantity > 100_000) {
+    return res.status(400).json({ error: 'INVALID_QUANTITY' });
+  }
+
+  const pricePerUnit = Number(body.pricePerUnit ?? 3000);
+  if (!Number.isFinite(pricePerUnit) || pricePerUnit < 0 || pricePerUnit > 100_000_000) {
+    return res.status(400).json({ error: 'INVALID_PRICE' });
   }
 
   const item: Ingredient = {
     id: body.id || `item-${Date.now()}`,
-    name: body.name,
+    name,
     emoji: body.emoji || '📦',
     category: body.category || '🥦 Ногоо',
-    quantity: body.quantity ?? 1,
+    quantity,
     unit: body.unit || 'ш',
-    expiryDays: body.expiryDays ?? 7,
-    pricePerUnit: body.pricePerUnit ?? 3000,
+    expiryDays,
+    pricePerUnit,
   };
 
   if (usesDb(req)) {
@@ -117,13 +159,32 @@ router.put('/:id', async (req: AuthenticatedRequest, res) => {
   if (usesDb(req)) {
     const db = getSupabaseForUser(req.accessToken!);
     const patch: Record<string, unknown> = {};
-    if (body.name !== undefined) patch.name = body.name;
+    if (body.name !== undefined) patch.name = String(body.name).slice(0, 200);
     if (body.emoji !== undefined) patch.emoji = body.emoji;
     if (body.category !== undefined) patch.category = body.category;
-    if (body.quantity !== undefined) patch.quantity = body.quantity;
     if (body.unit !== undefined) patch.unit = body.unit;
-    if (body.expiryDays !== undefined) patch.expiry_date = expiryDateFromDays(body.expiryDays);
-    if (body.pricePerUnit !== undefined) patch.price_per_unit = body.pricePerUnit;
+
+    // Same bounds as the create path — an out-of-range `expiryDays` here reached
+    // `new Date(NaN).toISOString()` and took the process down with it.
+    if (body.expiryDays !== undefined) {
+      const expiryDays = normalizeExpiryDays(body.expiryDays);
+      if (expiryDays === null) return res.status(400).json({ error: 'INVALID_EXPIRY_DAYS' });
+      patch.expiry_date = expiryDateFromDays(expiryDays);
+    }
+    if (body.quantity !== undefined) {
+      const quantity = Number(body.quantity);
+      if (!Number.isFinite(quantity) || quantity <= 0 || quantity > 100_000) {
+        return res.status(400).json({ error: 'INVALID_QUANTITY' });
+      }
+      patch.quantity = quantity;
+    }
+    if (body.pricePerUnit !== undefined) {
+      const pricePerUnit = Number(body.pricePerUnit);
+      if (!Number.isFinite(pricePerUnit) || pricePerUnit < 0 || pricePerUnit > 100_000_000) {
+        return res.status(400).json({ error: 'INVALID_PRICE' });
+      }
+      patch.price_per_unit = pricePerUnit;
+    }
 
     const { data, error } = await db
       .from('inventory_items')

@@ -1,5 +1,5 @@
 import React, { lazy, Suspense } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import { AppProvider, useApp } from './context/AppContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './components/Toast';
@@ -31,6 +31,9 @@ const OfflineBanner = lazy(() =>
 const CookieBanner = lazy(() =>
   import('./components/CookieBanner').then((m) => ({ default: m.CookieBanner }))
 );
+const UpdatePrompt = lazy(() =>
+  import('./components/UpdatePrompt').then((m) => ({ default: m.UpdatePrompt }))
+);
 
 // ── Route-level code splitting ────────────────────────────────────────────────
 // FridgeView (the default tab) stays eager for an instant first paint; the rest
@@ -56,9 +59,7 @@ const ProfileView = lazy(() =>
 const ChefDashboardView = lazy(() =>
   import('./components/ChefDashboardView').then((m) => ({ default: m.ChefDashboardView }))
 );
-const HelpView = lazy(() =>
-  import('./components/HelpView').then((m) => ({ default: m.HelpView }))
-);
+const HelpView = lazy(() => import('./components/HelpView').then((m) => ({ default: m.HelpView })));
 const NotFoundView = lazy(() =>
   import('./components/NotFoundView').then((m) => ({ default: m.NotFoundView }))
 );
@@ -84,7 +85,17 @@ const AppContent: React.FC = () => {
   useRealtimeSync();
 
   // Tabs that are known/valid
-  const validTabs = ['fridge', 'calendar', 'cooking', 'store', 'recipe', 'community', 'dashboard', 'profile', 'help'];
+  const validTabs = [
+    'fridge',
+    'calendar',
+    'cooking',
+    'store',
+    'recipe',
+    'community',
+    'dashboard',
+    'profile',
+    'help',
+  ];
   const is404 = !validTabs.includes(activeTab);
 
   return (
@@ -106,28 +117,28 @@ const AppContent: React.FC = () => {
             four-column grid spread across ~2000px of empty space. */}
         <main className="flex-1 overflow-y-auto pb-24 md:pb-6">
           <div className="w-full max-w-5xl mx-auto">
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, x: 12 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -12 }}
-              transition={{ type: 'spring', stiffness: 380, damping: 34 }}
-            >
-              <Suspense fallback={<ViewFallback />}>
-                {activeTab === 'fridge' && <FridgeView />}
-                {activeTab === 'calendar' && <CalendarView />}
-                {activeTab === 'cooking' && <CookingModeView recipe={activeCookingRecipe} />}
-                {activeTab === 'store' && <StoreView />}
-                {activeTab === 'recipe' && <RecipeView />}
-                {activeTab === 'community' && <CommunityView />}
-                {activeTab === 'dashboard' && <ChefDashboardView />}
-                {activeTab === 'profile' && <ProfileView />}
-                {activeTab === 'help' && <HelpView />}
-                {is404 && <NotFoundView />}
-              </Suspense>
-            </motion.div>
-          </AnimatePresence>
+            <AnimatePresence mode="wait" initial={false}>
+              <m.div
+                key={activeTab}
+                initial={{ opacity: 0, x: 12 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -12 }}
+                transition={{ type: 'spring', stiffness: 380, damping: 34 }}
+              >
+                <Suspense fallback={<ViewFallback />}>
+                  {activeTab === 'fridge' && <FridgeView />}
+                  {activeTab === 'calendar' && <CalendarView />}
+                  {activeTab === 'cooking' && <CookingModeView recipe={activeCookingRecipe} />}
+                  {activeTab === 'store' && <StoreView />}
+                  {activeTab === 'recipe' && <RecipeView />}
+                  {activeTab === 'community' && <CommunityView />}
+                  {activeTab === 'dashboard' && <ChefDashboardView />}
+                  {activeTab === 'profile' && <ProfileView />}
+                  {activeTab === 'help' && <HelpView />}
+                  {is404 && <NotFoundView />}
+                </Suspense>
+              </m.div>
+            </AnimatePresence>
           </div>
         </main>
 
@@ -156,6 +167,7 @@ const AppContent: React.FC = () => {
         <PasswordRecoveryModal />
         <OfflineBanner />
         <CookieBanner />
+        <UpdatePrompt />
       </Suspense>
     </div>
   );

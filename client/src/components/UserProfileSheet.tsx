@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 import {
   X,
   UserPlus,
@@ -57,7 +57,7 @@ export const UserProfileSheet: React.FC<{
   ];
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -67,7 +67,7 @@ export const UserProfileSheet: React.FC<{
       aria-label={t('userProfile_title')}
       className="fixed inset-0 bg-black/70 backdrop-blur-md z-[360] flex items-end sm:items-center justify-center sm:p-4"
     >
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 40, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 40, scale: 0.97 }}
@@ -189,7 +189,7 @@ export const UserProfileSheet: React.FC<{
             {profile && profile.posts.length > 0 && <PostsGrid posts={profile.posts} />}
           </div>
         </div>
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useId, useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import {
   Camera,
   Edit3,
@@ -25,6 +25,7 @@ import {
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { useRecipes } from '../hooks/useRecipes';
+import { useLoyalty } from '../hooks/useLoyalty';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { StatRow, PostsGrid } from './ProfileParts';
 import { SmartImage } from './SmartImage';
@@ -35,14 +36,46 @@ import { FoodCostCalculatorModal } from './FoodCostCalculatorModal';
 
 // ── Theme Gradient Options ───────────────────────────────────────────────────
 const THEME_GRADIENTS = [
-  { labelKey: 'profile_themeViolet', value: 'from-violet-600 via-purple-600 to-fuchsia-600', accent: '#8B5CF6' },
-  { labelKey: 'profile_themePink', value: 'from-pink-500 via-rose-500 to-red-500', accent: '#EC4899' },
-  { labelKey: 'profile_themeBlue', value: 'from-blue-600 via-indigo-600 to-violet-600', accent: '#4F46E5' },
-  { labelKey: 'profile_themeGreen', value: 'from-emerald-500 via-teal-500 to-cyan-500', accent: '#10B981' },
-  { labelKey: 'profile_themeOrange', value: 'from-amber-500 via-orange-500 to-red-500', accent: '#F59E0B' },
-  { labelKey: 'profile_themeCyan', value: 'from-cyan-500 via-blue-500 to-indigo-600', accent: '#06B6D4' },
-  { labelKey: 'profile_themeStone', value: 'from-slate-600 via-gray-600 to-zinc-700', accent: '#475569' },
-  { labelKey: 'profile_themeRoseGold', value: 'from-fuchsia-600 via-pink-500 to-amber-400', accent: '#D946EF' },
+  {
+    labelKey: 'profile_themeViolet',
+    value: 'from-violet-600 via-purple-600 to-fuchsia-600',
+    accent: '#8B5CF6',
+  },
+  {
+    labelKey: 'profile_themePink',
+    value: 'from-pink-500 via-rose-500 to-red-500',
+    accent: '#EC4899',
+  },
+  {
+    labelKey: 'profile_themeBlue',
+    value: 'from-blue-600 via-indigo-600 to-violet-600',
+    accent: '#4F46E5',
+  },
+  {
+    labelKey: 'profile_themeGreen',
+    value: 'from-emerald-500 via-teal-500 to-cyan-500',
+    accent: '#10B981',
+  },
+  {
+    labelKey: 'profile_themeOrange',
+    value: 'from-amber-500 via-orange-500 to-red-500',
+    accent: '#F59E0B',
+  },
+  {
+    labelKey: 'profile_themeCyan',
+    value: 'from-cyan-500 via-blue-500 to-indigo-600',
+    accent: '#06B6D4',
+  },
+  {
+    labelKey: 'profile_themeStone',
+    value: 'from-slate-600 via-gray-600 to-zinc-700',
+    accent: '#475569',
+  },
+  {
+    labelKey: 'profile_themeRoseGold',
+    value: 'from-fuchsia-600 via-pink-500 to-amber-400',
+    accent: '#D946EF',
+  },
 ];
 
 // ── Edit Profile Modal ────────────────────────────────────────────────────────
@@ -87,13 +120,14 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     onClose();
   };
 
-  const selectedTheme = THEME_GRADIENTS.find((t) => t.value === form.coverGradient) || THEME_GRADIENTS[0];
+  const selectedTheme =
+    THEME_GRADIENTS.find((t) => t.value === form.coverGradient) || THEME_GRADIENTS[0];
   // The save button previews the theme being picked, so it cannot use the
   // global accent token — derive a contrast-safe pair from the selection.
   const saveBg = ensureContrast(selectedTheme.accent, '#FFFFFF', 4.5);
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -105,7 +139,7 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       aria-label={t('profile_editProfile')}
       className="fixed inset-0 bg-black/70 backdrop-blur-md z-[350] flex items-end sm:items-center justify-center p-0 sm:p-4"
     >
-      <motion.div
+      <m.div
         initial={{ scale: 0.92, y: 16 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.92, y: 16 }}
@@ -113,7 +147,9 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         className="w-full max-w-lg bg-pestle-card border border-pestle-border rounded-t-[32px] sm:rounded-[32px] overflow-hidden shadow-2xl flex flex-col max-h-[92dvh]"
       >
         {/* Header */}
-        <div className={`bg-gradient-to-r ${selectedTheme.value} p-4 sm:p-5 flex items-center justify-between gap-3 shrink-0`}>
+        <div
+          className={`bg-gradient-to-r ${selectedTheme.value} p-4 sm:p-5 flex items-center justify-between gap-3 shrink-0`}
+        >
           <h2 className="text-white font-black text-base flex items-center gap-2 min-w-0">
             <Edit3 size={18} className="shrink-0" />
             <span className="truncate">{t('profile_editProfile')}</span>
@@ -140,9 +176,13 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               }`}
             >
               {tab === 'info' ? (
-                <><User size={14} /> {t('profile_tabInfo')}</>
+                <>
+                  <User size={14} /> {t('profile_tabInfo')}
+                </>
               ) : (
-                <><Palette size={14} /> {t('profile_tabTheme')}</>
+                <>
+                  <Palette size={14} /> {t('profile_tabTheme')}
+                </>
               )}
             </button>
           ))}
@@ -158,7 +198,11 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     className={`w-24 h-24 rounded-full bg-gradient-to-br ${form.coverGradient} flex items-center justify-center overflow-hidden border-4 border-white shadow-xl`}
                   >
                     {avatarPreview ? (
-                      <img src={avatarPreview} alt="avatar" className="w-full h-full object-cover" />
+                      <img
+                        src={avatarPreview}
+                        alt="avatar"
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       <User size={36} className="text-white" />
                     )}
@@ -170,7 +214,13 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     <Camera size={14} />
                   </button>
                 </div>
-                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
                 <button
                   onClick={() => fileRef.current?.click()}
                   className="text-xs font-bold text-violet-600 dark:text-violet-400 hover:underline"
@@ -181,8 +231,18 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
               {/* Form Fields */}
               {[
-                { label: t('profile_nameLabel'), icon: User, key: 'name', placeholder: t('profile_namePlaceholder') },
-                { label: t('profile_usernameLabel'), icon: AtSign, key: 'username', placeholder: '@username' },
+                {
+                  label: t('profile_nameLabel'),
+                  icon: User,
+                  key: 'name',
+                  placeholder: t('profile_namePlaceholder'),
+                },
+                {
+                  label: t('profile_usernameLabel'),
+                  icon: AtSign,
+                  key: 'username',
+                  placeholder: '@username',
+                },
               ].map(({ label, icon: Icon, key, placeholder }) => (
                 <div key={key} className="space-y-1.5">
                   <label
@@ -228,7 +288,9 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               </p>
 
               {/* Live Preview */}
-              <div className={`w-full h-28 rounded-2xl bg-gradient-to-r ${form.coverGradient} flex items-center justify-center shadow-lg relative overflow-hidden`}>
+              <div
+                className={`w-full h-28 rounded-2xl bg-gradient-to-r ${form.coverGradient} flex items-center justify-center shadow-lg relative overflow-hidden`}
+              >
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/30" />
                 <div className="relative z-10 flex flex-col items-center gap-2">
                   <div className="w-14 h-14 rounded-full bg-white/20 border-2 border-white flex items-center justify-center overflow-hidden">
@@ -247,14 +309,22 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 {THEME_GRADIENTS.map((theme) => (
                   <button
                     key={theme.value}
-                    onClick={() => setForm((prev) => ({ ...prev, coverGradient: theme.value, accentColor: theme.accent }))}
+                    onClick={() =>
+                      setForm((prev) => ({
+                        ...prev,
+                        coverGradient: theme.value,
+                        accentColor: theme.accent,
+                      }))
+                    }
                     className={`group flex flex-col items-center gap-1.5 p-2 rounded-2xl border-2 transition-all ${
                       form.coverGradient === theme.value
                         ? 'border-violet-500 bg-violet-500/10 scale-105'
                         : 'border-transparent hover:border-pestle-border bg-pestle-bg'
                     }`}
                   >
-                    <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${theme.value} shadow-md`} />
+                    <div
+                      className={`w-10 h-10 rounded-full bg-gradient-to-br ${theme.value} shadow-md`}
+                    />
                     <span className="text-[9px] font-bold text-gray-400 group-hover:text-pestle-text truncate w-full text-center">
                       {t(theme.labelKey)}
                     </span>
@@ -285,22 +355,25 @@ const EditProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             )}
           </button>
         </div>
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 };
 
 // ── MAIN PROFILE VIEW ─────────────────────────────────────────────────────────
 export const ProfileView: React.FC = () => {
-  const { profile, setActiveTab, savedRecipeIds, toggleSaveRecipe, setActiveCookingRecipe, t } = useApp();
+  const { profile, setActiveTab, savedRecipeIds, toggleSaveRecipe, setActiveCookingRecipe, t } =
+    useApp();
   const { user: authUser, isAnonymous } = useAuth();
   const { recipes } = useRecipes();
+  const points = useLoyalty();
   const [showEdit, setShowEdit] = useState(false);
   const [showCostCalculator, setShowCostCalculator] = useState(false);
   const [activeGrid, setActiveGrid] = useState<'posts' | 'recipes'>('posts');
-  const accountLabel = authUser && !isAnonymous
-    ? authUser.email || authUser.phone || profile.username
-    : t('profile_guestAccount');
+  const accountLabel =
+    authUser && !isAnonymous
+      ? authUser.email || authUser.phone || profile.username
+      : t('profile_guestAccount');
 
   const savedRecipesList = recipes.filter((r) => savedRecipeIds.includes(r.id));
   // Posts, followers and the grid all come from the community service; the
@@ -343,7 +416,9 @@ export const ProfileView: React.FC = () => {
           className="absolute -bottom-12 left-5 sm:left-8 group"
         >
           <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl border-4 border-pestle-card shadow-2xl overflow-hidden">
-            <div className={`w-full h-full bg-gradient-to-br ${profile.coverGradient} flex items-center justify-center`}>
+            <div
+              className={`w-full h-full bg-gradient-to-br ${profile.coverGradient} flex items-center justify-center`}
+            >
               {profile.avatarUrl ? (
                 <SmartImage src={profile.avatarUrl} alt="" emoji="👨‍🍳" className="w-full h-full" />
               ) : (
@@ -378,7 +453,7 @@ export const ProfileView: React.FC = () => {
             </div>
           </div>
 
-          <motion.button
+          <m.button
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowEdit(true)}
             className="text-xs font-black py-2.5 px-4 rounded-2xl border transition-all shrink-0 flex items-center gap-1.5"
@@ -386,7 +461,7 @@ export const ProfileView: React.FC = () => {
           >
             <Edit3 size={13} />
             <span className="hidden sm:inline">{t('profile_editProfile')}</span>
-          </motion.button>
+          </m.button>
         </div>
 
         {/* Bio */}
@@ -402,38 +477,71 @@ export const ProfileView: React.FC = () => {
         {/* Quick Action Buttons — help lives here on mobile, where the sidebar
             (its only other entry point) doesn't exist. */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-          <motion.button
+          <m.button
             whileTap={{ scale: 0.97 }}
             onClick={() => setActiveTab('community')}
             className="py-3 px-2 rounded-2xl text-[11px] font-black flex flex-col items-center justify-center gap-1.5 shadow-lg on-accent"
           >
             <Users size={16} />
             <span className="leading-tight text-center">{t('profile_toCommunity')}</span>
-          </motion.button>
-          <motion.button
+          </m.button>
+          <m.button
             whileTap={{ scale: 0.97 }}
             onClick={() => setActiveTab('recipe')}
             className="py-3 px-2 rounded-2xl text-[11px] font-black border border-pestle-border text-pestle-text hover:border-mango flex flex-col items-center justify-center gap-1.5 bg-pestle-card transition-colors shadow-xs"
           >
             <ChefHat size={16} style={accentStyle} />
             <span className="leading-tight text-center">{t('profile_viewRecipes')}</span>
-          </motion.button>
-          <motion.button
+          </m.button>
+          <m.button
             whileTap={{ scale: 0.97 }}
             onClick={() => setShowCostCalculator(true)}
             className="py-3 px-2 rounded-2xl text-[11px] font-black border border-amber-500/30 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 flex flex-col items-center justify-center gap-1.5 bg-pestle-card transition-colors shadow-xs"
           >
             <Calculator size={16} />
             <span className="leading-tight text-center">{t('profile_costCalculator')}</span>
-          </motion.button>
-          <motion.button
+          </m.button>
+          <m.button
             whileTap={{ scale: 0.97 }}
             onClick={() => setActiveTab('help')}
             className="py-3 px-2 rounded-2xl text-[11px] font-black border border-pestle-border text-pestle-text hover:border-mango flex flex-col items-center justify-center gap-1.5 bg-pestle-card transition-colors shadow-xs"
           >
             <HelpCircle size={16} style={accentStyle} />
             <span className="leading-tight text-center">{t('sidebar_help')}</span>
-          </motion.button>
+          </m.button>
+        </div>
+
+        {/* Zity points — earned on every delivered order. The ledger has been
+            filling up server-side with nothing in the app to show for it. */}
+        <div className="pestle-card rounded-2xl p-4 space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <Sparkles size={16} style={accentStyle} className="shrink-0" />
+              <h3 className="text-xs font-black text-pestle-text truncate">{t('loyalty_title')}</h3>
+            </div>
+            <span className="text-base font-black tabular-nums" style={accentStyle}>
+              {points.balance}
+            </span>
+          </div>
+
+          {points.history.length === 0 ? (
+            <p className="text-[11px] font-semibold text-gray-400">{t('loyalty_empty')}</p>
+          ) : (
+            <div className="space-y-1.5">
+              {points.history.slice(0, 5).map((entry) => (
+                <div
+                  key={entry.id}
+                  className="flex items-center justify-between gap-2 text-[11px] font-bold text-gray-500"
+                >
+                  <span className="truncate">{entry.orderRef}</span>
+                  <span className="shrink-0 tabular-nums" style={accentStyle}>
+                    +{entry.points}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+          <p className="text-[10px] font-semibold text-gray-400">{t('loyalty_rate')}</p>
         </div>
 
         {/* ── POST GRID TABS ─────────────────────── */}
@@ -444,16 +552,22 @@ export const ProfileView: React.FC = () => {
                 key={tab}
                 onClick={() => setActiveGrid(tab)}
                 className={`flex-1 pt-2 pb-3 text-xs font-bold flex items-center justify-center gap-1.5 border-b-2 transition-all ${
-                  activeGrid === tab
-                    ? 'text-pestle-text'
-                    : 'text-gray-400 border-transparent'
+                  activeGrid === tab ? 'text-pestle-text' : 'text-gray-400 border-transparent'
                 }`}
-                style={activeGrid === tab ? { borderColor: 'var(--color-accent-ink)', color: 'var(--color-accent-ink)' } : {}}
+                style={
+                  activeGrid === tab
+                    ? { borderColor: 'var(--color-accent-ink)', color: 'var(--color-accent-ink)' }
+                    : {}
+                }
               >
                 {tab === 'posts' ? (
-                  <><Grid3x3 size={14} /> {t('profile_tabPosts')}</>
+                  <>
+                    <Grid3x3 size={14} /> {t('profile_tabPosts')}
+                  </>
                 ) : (
-                  <><BookOpen size={14} /> {t('profile_tabSavedRecipes')}</>
+                  <>
+                    <BookOpen size={14} /> {t('profile_tabSavedRecipes')}
+                  </>
                 )}
               </button>
             ))}
@@ -462,7 +576,7 @@ export const ProfileView: React.FC = () => {
           {/* Posts Grid */}
           <AnimatePresence mode="wait">
             {activeGrid === 'posts' && (
-              <motion.div
+              <m.div
                 key="posts"
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -485,7 +599,9 @@ export const ProfileView: React.FC = () => {
                       <Grid3x3 size={28} style={accentStyle} />
                     </div>
                     <div>
-                      <p className="text-sm font-black text-pestle-text">{t('profile_noPostsTitle')}</p>
+                      <p className="text-sm font-black text-pestle-text">
+                        {t('profile_noPostsTitle')}
+                      </p>
                       <p className="text-xs text-gray-400 font-medium mt-1 max-w-sm">
                         {t('profile_noPostsDesc')}
                       </p>
@@ -498,11 +614,11 @@ export const ProfileView: React.FC = () => {
                     </button>
                   </div>
                 )}
-              </motion.div>
+              </m.div>
             )}
 
             {activeGrid === 'recipes' && (
-              <motion.div
+              <m.div
                 key="recipes"
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -524,7 +640,9 @@ export const ProfileView: React.FC = () => {
                         <div className="flex-1 min-w-0 flex flex-col justify-between">
                           <div>
                             <div className="flex justify-between items-start gap-1">
-                              <h4 className="text-xs font-black text-pestle-text truncate">{r.title}</h4>
+                              <h4 className="text-xs font-black text-pestle-text truncate">
+                                {r.title}
+                              </h4>
                               <button
                                 onClick={() => toggleSaveRecipe(r.id)}
                                 className="text-mango-ink hover:scale-110 transition-transform p-0.5"
@@ -563,7 +681,9 @@ export const ProfileView: React.FC = () => {
                     >
                       <Sparkles size={28} style={accentStyle} />
                     </div>
-                    <p className="text-sm font-black text-pestle-text">{t('profile_noSavedRecipes')}</p>
+                    <p className="text-sm font-black text-pestle-text">
+                      {t('profile_noSavedRecipes')}
+                    </p>
                     <p className="text-xs text-gray-400 font-medium max-w-xs">
                       {t('profile_noSavedRecipesDesc')}
                     </p>
@@ -575,7 +695,7 @@ export const ProfileView: React.FC = () => {
                     </button>
                   </div>
                 )}
-              </motion.div>
+              </m.div>
             )}
           </AnimatePresence>
         </div>

@@ -1,6 +1,16 @@
 import React, { useEffect, useId, useState, useMemo } from 'react';
-import { motion } from 'motion/react';
-import { Calculator, X, Plus, Trash2, DollarSign, TrendingUp, Sparkles, ChefHat } from 'lucide-react';
+import { m } from 'motion/react';
+import {
+  Calculator,
+  X,
+  Plus,
+  Trash2,
+  DollarSign,
+  TrendingUp,
+  Sparkles,
+  ChefHat,
+} from 'lucide-react';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import { useApp } from '../context/AppContext';
 import { useEscapeClose } from '../hooks/useEscapeClose';
 import { useScrollLock } from '../hooks/useScrollLock';
@@ -71,10 +81,38 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
 
   const [ingredients, setIngredients] = useState<IngredientCostItem[]>(
     saved?.ingredients ?? [
-      { id: '1', name: 'Үхрийн цул мах', quantity: 600, unit: 'g', pricePerUnit: 22000 / 1000, wastePercentage: 5 },
-      { id: '2', name: 'Дээд гурил', quantity: 500, unit: 'g', pricePerUnit: 3500 / 1000, wastePercentage: 2 },
-      { id: '3', name: 'Сонгино, лууван', quantity: 250, unit: 'g', pricePerUnit: 4000 / 1000, wastePercentage: 12 },
-      { id: '4', name: 'Ургамлын тос & амтлагч', quantity: 1, unit: 'portion', pricePerUnit: 1500, wastePercentage: 0 },
+      {
+        id: '1',
+        name: 'Үхрийн цул мах',
+        quantity: 600,
+        unit: 'g',
+        pricePerUnit: 22000 / 1000,
+        wastePercentage: 5,
+      },
+      {
+        id: '2',
+        name: 'Дээд гурил',
+        quantity: 500,
+        unit: 'g',
+        pricePerUnit: 3500 / 1000,
+        wastePercentage: 2,
+      },
+      {
+        id: '3',
+        name: 'Сонгино, лууван',
+        quantity: 250,
+        unit: 'g',
+        pricePerUnit: 4000 / 1000,
+        wastePercentage: 12,
+      },
+      {
+        id: '4',
+        name: 'Ургамлын тос & амтлагч',
+        quantity: 1,
+        unit: 'portion',
+        pricePerUnit: 1500,
+        wastePercentage: 0,
+      },
     ]
   );
 
@@ -129,7 +167,9 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
   const updateShownPrice = (id: string, shownPrice: number) => {
     setIngredients((prev) =>
       prev.map((item) =>
-        item.id === id ? { ...item, pricePerUnit: shownPrice / getUnitMeta(item.unit).factor } : item
+        item.id === id
+          ? { ...item, pricePerUnit: shownPrice / getUnitMeta(item.unit).factor }
+          : item
       )
     );
   };
@@ -161,20 +201,24 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
   useEscapeClose(onClose, isOpen);
   useScrollLock(isOpen);
 
+  const dialogRef = useFocusTrap<HTMLDivElement>(isOpen);
+
   if (!isOpen) return null;
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
+      ref={dialogRef}
+      tabIndex={-1}
       role="dialog"
       aria-modal="true"
       aria-label={t('cost_title')}
       className="fixed inset-0 bg-black/80 backdrop-blur-md z-[350] flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
     >
-      <motion.div
+      <m.div
         initial={{ scale: 0.94, y: 20 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.94, y: 20 }}
@@ -194,9 +238,7 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
                   {t('cost_badge')}
                 </span>
               </h3>
-              <p className="text-xs text-gray-400 font-medium">
-                {t('cost_subtitle')}
-              </p>
+              <p className="text-xs text-gray-400 font-medium">{t('cost_subtitle')}</p>
             </div>
           </div>
 
@@ -212,7 +254,12 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
         {/* Top Controls: Dish Name & Portions */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-pestle-bg p-3.5 rounded-2xl border border-pestle-border/60">
           <div className="sm:col-span-2 space-y-1">
-            <label htmlFor={`${uid}-dish`} className="text-[10px] font-extrabold text-gray-400 uppercase">{t('cost_dishName')}</label>
+            <label
+              htmlFor={`${uid}-dish`}
+              className="text-[10px] font-extrabold text-gray-400 uppercase"
+            >
+              {t('cost_dishName')}
+            </label>
             <input
               id={`${uid}-dish`}
               type="text"
@@ -222,7 +269,12 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
             />
           </div>
           <div className="space-y-1">
-            <label htmlFor={`${uid}-portions`} className="text-[10px] font-extrabold text-gray-400 uppercase">{t('cost_portions')}</label>
+            <label
+              htmlFor={`${uid}-portions`}
+              className="text-[10px] font-extrabold text-gray-400 uppercase"
+            >
+              {t('cost_portions')}
+            </label>
             <input
               id={`${uid}-portions`}
               type="number"
@@ -239,19 +291,25 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
             letting it spill out of a 100px column. */}
         <div className="grid grid-cols-3 gap-2 sm:gap-3">
           <div className="bg-pestle-bg border border-pestle-border/80 p-2.5 sm:p-3 rounded-2xl text-center min-w-0">
-            <span className="text-[9px] font-extrabold text-gray-400 uppercase block leading-tight">{t('cost_totalCost')}</span>
+            <span className="text-[9px] font-extrabold text-gray-400 uppercase block leading-tight">
+              {t('cost_totalCost')}
+            </span>
             <p className="text-xs sm:text-base font-black text-pestle-text mt-0.5 tabular-nums break-words leading-tight">
               {formatPrice(Math.round(totalBatchCost))}
             </p>
           </div>
           <div className="bg-mango/10 border border-mango/25 p-2.5 sm:p-3 rounded-2xl text-center min-w-0">
-            <span className="text-[9px] font-extrabold text-mango-ink uppercase block leading-tight">{t('cost_perPortion')}</span>
+            <span className="text-[9px] font-extrabold text-mango-ink uppercase block leading-tight">
+              {t('cost_perPortion')}
+            </span>
             <p className="text-xs sm:text-base font-black text-mango-ink mt-0.5 tabular-nums break-words leading-tight">
               {formatPrice(Math.round(costPerPortion))}
             </p>
           </div>
           <div className="bg-mint/10 border border-mint/25 p-2.5 sm:p-3 rounded-2xl text-center min-w-0">
-            <span className="text-[9px] font-extrabold text-mint-ink uppercase block leading-tight">{t('cost_suggestedPrice')}</span>
+            <span className="text-[9px] font-extrabold text-mint-ink uppercase block leading-tight">
+              {t('cost_suggestedPrice')}
+            </span>
             <p className="text-xs sm:text-base font-black text-mint-ink mt-0.5 tabular-nums break-words leading-tight">
               {formatPrice(Math.round(recommendedSellingPrice))}
             </p>
@@ -264,7 +322,9 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
             <span className="text-pestle-text flex items-center gap-1.5">
               <TrendingUp size={14} className="text-mint-ink shrink-0" /> {t('cost_targetMargin')}
             </span>
-            <span className="text-mint-ink font-black font-mono">{targetMargin}% ({t('cost_foodCost')}: {foodCostPercentage}%)</span>
+            <span className="text-mint-ink font-black font-mono">
+              {targetMargin}% ({t('cost_foodCost')}: {foodCostPercentage}%)
+            </span>
           </div>
           <input
             type="range"
@@ -289,7 +349,9 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
             </button>
           </div>
 
-          <p className="text-[10px] text-gray-400 font-medium leading-snug">{t('cost_ingredientsHint')}</p>
+          <p className="text-[10px] text-gray-400 font-medium leading-snug">
+            {t('cost_ingredientsHint')}
+          </p>
 
           {/* No nested scroller on phones — the sheet itself scrolls, and two
               stacked scroll areas made the list nearly impossible to reach. */}
@@ -330,7 +392,10 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
                   {/* Labelled inputs: amount + unit + purchase price + waste */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     <div className="space-y-0.5">
-                      <label htmlFor={`${uid}-qty-${item.id}`} className="text-[9px] font-extrabold text-gray-400 uppercase block">
+                      <label
+                        htmlFor={`${uid}-qty-${item.id}`}
+                        className="text-[9px] font-extrabold text-gray-400 uppercase block"
+                      >
                         {t('cost_quantity')}
                       </label>
                       <div className="flex items-center bg-pestle-card border border-pestle-border rounded-lg px-2 focus-within:border-mango">
@@ -339,15 +404,22 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
                           type="number"
                           min={0}
                           value={item.quantity}
-                          onChange={(e) => updateRow(item.id, 'quantity', parseFloat(e.target.value) || 0)}
+                          onChange={(e) =>
+                            updateRow(item.id, 'quantity', parseFloat(e.target.value) || 0)
+                          }
                           className="w-full min-w-0 bg-transparent py-1.5 font-mono text-pestle-text focus:outline-none"
                         />
-                        <span className="text-[10px] font-bold text-gray-400 pl-1 shrink-0">{unitLabel}</span>
+                        <span className="text-[10px] font-bold text-gray-400 pl-1 shrink-0">
+                          {unitLabel}
+                        </span>
                       </div>
                     </div>
 
                     <div className="space-y-0.5">
-                      <label htmlFor={`${uid}-unit-${item.id}`} className="text-[9px] font-extrabold text-gray-400 uppercase block">
+                      <label
+                        htmlFor={`${uid}-unit-${item.id}`}
+                        className="text-[9px] font-extrabold text-gray-400 uppercase block"
+                      >
                         {t('cost_unit')}
                       </label>
                       <select
@@ -365,7 +437,10 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
                     </div>
 
                     <div className="space-y-0.5">
-                      <label htmlFor={`${uid}-price-${item.id}`} className="text-[9px] font-extrabold text-gray-400 uppercase block truncate">
+                      <label
+                        htmlFor={`${uid}-price-${item.id}`}
+                        className="text-[9px] font-extrabold text-gray-400 uppercase block truncate"
+                      >
                         {t('cost_purchasePrice', { unit: basisLabel })}
                       </label>
                       <div className="flex items-center bg-pestle-card border border-pestle-border rounded-lg px-2 focus-within:border-mango">
@@ -375,14 +450,19 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
                           type="number"
                           min={0}
                           value={shownPrice}
-                          onChange={(e) => updateShownPrice(item.id, parseFloat(e.target.value) || 0)}
+                          onChange={(e) =>
+                            updateShownPrice(item.id, parseFloat(e.target.value) || 0)
+                          }
                           className="w-full min-w-0 bg-transparent py-1.5 font-mono text-pestle-text focus:outline-none"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-0.5">
-                      <label htmlFor={`${uid}-waste-${item.id}`} className="text-[9px] font-extrabold text-gray-400 uppercase block truncate">
+                      <label
+                        htmlFor={`${uid}-waste-${item.id}`}
+                        className="text-[9px] font-extrabold text-gray-400 uppercase block truncate"
+                      >
                         {t('cost_waste')}
                       </label>
                       <div className="flex items-center bg-pestle-card border border-pestle-border rounded-lg px-2 focus-within:border-mango">
@@ -409,8 +489,10 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
                   {/* Plain-language formula so the line total is never a mystery number */}
                   <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-t border-pestle-border/60 pt-1.5">
                     <span className="text-[10px] text-gray-400 font-mono">
-                      {item.quantity.toLocaleString()} {unitLabel} × {formatPrice(shownPrice)}/{basisLabel}
-                      {item.wastePercentage > 0 && ` + ${item.wastePercentage}% ${t('cost_wasteShort')}`}
+                      {item.quantity.toLocaleString()} {unitLabel} × {formatPrice(shownPrice)}/
+                      {basisLabel}
+                      {item.wastePercentage > 0 &&
+                        ` + ${item.wastePercentage}% ${t('cost_wasteShort')}`}
                     </span>
                     <span className="font-mono font-black text-mango-ink">
                       = {formatPrice(lineTotal)}
@@ -429,7 +511,7 @@ export const FoodCostCalculatorModal: React.FC<{ isOpen: boolean; onClose: () =>
         >
           {t('cost_done')}
         </button>
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 };

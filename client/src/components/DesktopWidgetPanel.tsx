@@ -53,8 +53,6 @@ export const DesktopWidgetPanel: React.FC = () => {
     inventory,
     cart,
     totalCartAmount,
-    triggerPayment,
-    createOrder,
     activeCookingRecipe,
     setActiveCookingRecipe,
     setActiveTab,
@@ -286,8 +284,11 @@ export const DesktopWidgetPanel: React.FC = () => {
         {/* Water Tracker */}
         <div className="pt-2 border-t border-pestle-border/60 flex items-center justify-between gap-2 text-xs">
           <span className="font-bold text-pestle-text flex items-center gap-1 min-w-0">
-            <Droplets size={14} className="text-sky-700 dark:text-sky-400 shrink-0" /> {t('widget_water')}:{' '}
-            <strong className="text-sky-700 dark:text-sky-400">{dailyLog.waterGlasses * GLASS_ML}ml</strong>
+            <Droplets size={14} className="text-sky-700 dark:text-sky-400 shrink-0" />{' '}
+            {t('widget_water')}:{' '}
+            <strong className="text-sky-700 dark:text-sky-400">
+              {dailyLog.waterGlasses * GLASS_ML}ml
+            </strong>
           </span>
           <button
             onClick={addWater}
@@ -315,18 +316,19 @@ export const DesktopWidgetPanel: React.FC = () => {
         <div className="bg-gradient-to-br from-teal-500/10 to-emerald-500/10 border border-teal-500/20 rounded-2xl p-4 space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
-              <ShoppingBag size={14} className="text-teal-600" /> {t('widget_cart', { n: cart.length })}
+              <ShoppingBag size={14} className="text-teal-600" />{' '}
+              {t('widget_cart', { n: cart.length })}
             </span>
             <span className="text-xs font-black text-mango-ink">
               {formatPrice(totalCartAmount)}
             </span>
           </div>
+          {/* This used to take payment on the spot and file the order against a
+              hardcoded "Zity Tower 402" — every widget order was addressed to
+              someone else's building. Checkout, where the customer enters their
+              own address, is one click away. */}
           <button
-            onClick={() => {
-              triggerPayment(totalCartAmount, t('widget_qpayOrder'), (_method, invoiceId) => {
-                createOrder('Zity Tower 402', 'qpay', invoiceId);
-              });
-            }}
+            onClick={() => setActiveTab('store')}
             className="w-full bg-teal-600 text-white text-xs font-bold py-2.5 rounded-xl shadow-md shadow-teal-600/20 hover:bg-teal-700 transition-colors"
           >
             {t('widget_qpayOrder')}
@@ -336,7 +338,9 @@ export const DesktopWidgetPanel: React.FC = () => {
 
       {/* System Health / Cache Savings Badge — reflects the real health check */}
       <div className="pt-2 border-t border-pestle-border/60 flex items-center justify-between text-[10px] text-gray-400 font-bold">
-        <span className={`flex items-center gap-1 ${healthData ? 'text-mint-ink' : 'text-gray-400'}`}>
+        <span
+          className={`flex items-center gap-1 ${healthData ? 'text-mint-ink' : 'text-gray-400'}`}
+        >
           <CheckCircle2 size={12} /> {healthData ? t('widget_connected') : t('widget_connecting')}
         </span>
         {healthData?.cache?.totalCacheHits > 0 && (

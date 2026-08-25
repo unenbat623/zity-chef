@@ -1,9 +1,22 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useEscapeClose } from '../hooks/useEscapeClose';
-import { motion, AnimatePresence } from 'motion/react';
-import { Bell, AlertTriangle, Utensils, Sparkles, Check, Trash2, ShieldCheck, X } from 'lucide-react';
+import { m, AnimatePresence } from 'motion/react';
+import {
+  Bell,
+  AlertTriangle,
+  Utensils,
+  Sparkles,
+  Check,
+  Trash2,
+  ShieldCheck,
+  X,
+} from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { requestNotificationPermission, sendExpiryNotification, subscribeToPush } from '../lib/notificationService';
+import {
+  requestNotificationPermission,
+  sendExpiryNotification,
+  subscribeToPush,
+} from '../lib/notificationService';
 import { useToast } from './Toast';
 
 export interface NotificationItem {
@@ -43,9 +56,14 @@ function readNotificationState(accountId: string): NotificationReadState {
     return {
       readIds: Array.isArray(parsed.readIds) ? parsed.readIds : DEFAULT_READ_STATE.readIds,
       // Migrates the old permanent `cleared: true` flag onto the timed one.
-      clearedSignature: typeof parsed.clearedSignature === 'string' ? parsed.clearedSignature : null,
+      clearedSignature:
+        typeof parsed.clearedSignature === 'string' ? parsed.clearedSignature : null,
       clearedAt:
-        typeof parsed.clearedAt === 'number' ? parsed.clearedAt : parsed.cleared ? Date.now() : null,
+        typeof parsed.clearedAt === 'number'
+          ? parsed.clearedAt
+          : parsed.cleared
+            ? Date.now()
+            : null,
     };
   } catch {
     return DEFAULT_READ_STATE;
@@ -91,9 +109,13 @@ export const NotificationCenter: React.FC = () => {
     );
   }, [accountId, readIds, clearedSignature, clearedAt]);
 
-  const expiringNames = expiringItems.length > 0
-    ? expiringItems.map((i) => i.name).slice(0, 3).join(', ')
-    : t('notif_expiringFallback');
+  const expiringNames =
+    expiringItems.length > 0
+      ? expiringItems
+          .map((i) => i.name)
+          .slice(0, 3)
+          .join(', ')
+      : t('notif_expiringFallback');
 
   // Clearing hides what is on screen *now*. It used to set a permanent flag, so
   // one tap meant the user never saw another expiry warning — the list comes
@@ -183,7 +205,10 @@ export const NotificationCenter: React.FC = () => {
         aria-label={t('notif_centerTitle')}
         aria-expanded={isOpen}
       >
-        <Bell size={16} className={unreadCount > 0 ? 'text-mango-ink animate-bounce' : 'text-gray-400'} />
+        <Bell
+          size={16}
+          className={unreadCount > 0 ? 'text-mango-ink animate-bounce' : 'text-gray-400'}
+        />
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white font-black text-[9px] rounded-full flex items-center justify-center shadow-md animate-pulse">
             {unreadCount}
@@ -195,11 +220,8 @@ export const NotificationCenter: React.FC = () => {
       <AnimatePresence>
         {isOpen && (
           <>
-            <div
-              className="fixed inset-0 z-[160]"
-              onClick={() => setIsOpen(false)}
-            />
-            <motion.div
+            <div className="fixed inset-0 z-[160]" onClick={() => setIsOpen(false)} />
+            <m.div
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -240,8 +262,12 @@ export const NotificationCenter: React.FC = () => {
                 <div className="flex items-center gap-2 min-w-0">
                   <ShieldCheck size={16} className="text-mango-ink" />
                   <div className="min-w-0">
-                    <p className="text-[11px] font-bold text-pestle-text truncate">{t('notif_pushTitle')}</p>
-                    <p className="text-[9px] text-gray-400 font-medium truncate">{t('notif_pushSubtitle')}</p>
+                    <p className="text-[11px] font-bold text-pestle-text truncate">
+                      {t('notif_pushTitle')}
+                    </p>
+                    <p className="text-[9px] text-gray-400 font-medium truncate">
+                      {t('notif_pushSubtitle')}
+                    </p>
                   </div>
                 </div>
                 <button
@@ -276,14 +302,20 @@ export const NotificationCenter: React.FC = () => {
                       }`}
                     >
                       <div className="w-8 h-8 rounded-xl bg-pestle-bg border border-pestle-border flex items-center justify-center shrink-0 mt-0.5">
-                        {notif.type === 'warning' && <AlertTriangle size={15} className="text-amber-700 dark:text-amber-400" />}
+                        {notif.type === 'warning' && (
+                          <AlertTriangle size={15} className="text-amber-700 dark:text-amber-400" />
+                        )}
                         {notif.type === 'meal' && <Utensils size={15} className="text-mango-ink" />}
                         {notif.type === 'tip' && <Sparkles size={15} className="text-purple-500" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start">
-                          <h4 className="text-xs font-bold text-pestle-text line-clamp-1">{notif.title}</h4>
-                          <span className="text-[9px] text-gray-400 font-medium shrink-0">{notif.time}</span>
+                          <h4 className="text-xs font-bold text-pestle-text line-clamp-1">
+                            {notif.title}
+                          </h4>
+                          <span className="text-[9px] text-gray-400 font-medium shrink-0">
+                            {notif.time}
+                          </span>
                         </div>
                         <p className="text-[11px] text-gray-500 font-medium line-clamp-2 mt-0.5 leading-relaxed">
                           {notif.body}
@@ -305,7 +337,7 @@ export const NotificationCenter: React.FC = () => {
                   </button>
                 </div>
               )}
-            </motion.div>
+            </m.div>
           </>
         )}
       </AnimatePresence>

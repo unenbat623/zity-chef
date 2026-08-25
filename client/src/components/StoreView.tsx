@@ -12,8 +12,14 @@ import {
   Activity,
   LayoutDashboard,
   ChefHat,
+  Sparkles,
+  Refrigerator,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useToast } from './Toast';
+import { OrderError } from '../hooks/useOrders';
+import { validateCheckout } from '../hooks/useCheckoutValidation';
+import { useLoyalty } from '../hooks/useLoyalty';
 import { SmartImage } from './SmartImage';
 import { getIngredientImageUrl } from '../lib/imageService';
 import { useStoreProducts } from '../hooks/useStoreProducts';
@@ -22,6 +28,7 @@ import {
   CatalogProduct,
   buildProductCartItem,
   buildRecipeBundle,
+  matchIngredientToProduct,
 } from '../lib/recipeStore';
 
 type CatalogItem = CatalogProduct;
@@ -31,6 +38,9 @@ type CatalogItem = CatalogProduct;
 const ORDER_STATUS_KEYS: Record<string, string> = {
   pending: 'store_statusPending',
   paid: 'store_statusPaid',
+  packing: 'store_statusPacking',
+  shipping: 'store_statusShipping',
+  delivered: 'store_statusDelivered',
   delivering: 'store_statusDelivering',
   completed: 'store_statusCompleted',
   cancelled: 'store_statusCancelled',
@@ -39,19 +49,30 @@ const ORDER_STATUS_KEYS: Record<string, string> = {
 const ORDER_STATUS_STYLES: Record<string, string> = {
   pending: 'bg-amber-500/15 text-amber-700 dark:text-amber-400',
   paid: 'bg-mint/15 text-mint-ink',
+  packing: 'bg-amber-500/15 text-amber-700 dark:text-amber-400',
+  shipping: 'bg-blue-500/15 text-blue-700 dark:text-blue-400',
+  delivered: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
   delivering: 'bg-blue-500/15 text-blue-700 dark:text-blue-400',
   completed: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
   cancelled: 'bg-red-500/10 text-red-500',
 };
 
+/** Mirrors what POST /api/orders/:id/cancel accepts — anything already on its
+ *  way is refused there, so offering the button would only produce an error. */
+const CANCELLABLE_STATUSES = ['pending', 'paid', 'packing'];
+
 export const StoreView: React.FC = () => {
   const {
     cart,
+    inventory,
     addToCart,
+    repriceCart,
     removeFromCart,
     totalCartAmount,
     triggerPayment,
     createOrder,
+    cancelOrder,
+    cancellingOrder,
     orders,
     ordersLoading,
     ordersError,
@@ -61,9 +82,32 @@ export const StoreView: React.FC = () => {
     formatPrice,
     t,
   } = useApp();
-  const { products, loading, isError: catalogError } = useStoreProducts();
+  const { toastSuccess, toastError } = useToast();
+  const { balance: pointsBalance } = useLoyalty();
+  const [usePoints, setUsePoints] = useState(false);
+  const [validating, setValidating] = useState(false);
+  const { products, loading, isError: catalogError, refetch: refreshCatalog } = useStoreProducts();
   const { recipes } = useRecipes();
   const catalog: CatalogItem[] = products;
+
+  // A basket kept in localStorage otherwise quotes the price of the day it was
+  // filled, which the server will not honour.
+  useEffect(() => {
+    if (catalog.length === 0) return;
+    const priceById = new Map(catalog.map((product) => [product.id, product.pricePerUnit]));
+    repriceCart((productId) => priceById.get(productId) ?? null);
+  }, [catalog, repriceCart]);
+
+  // The shop had no idea what was already in the fridge, so it happily sold a
+  // second litre of milk to someone who had one at home.
+  const stockedProductIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const item of inventory) {
+      const product = matchIngredientToProduct(item.name, catalog);
+      if (product) ids.add(product.id);
+    }
+    return ids;
+  }, [inventory, catalog]);
   const nameOf = (item: CatalogItem) => (lang === 'en' && item.nameEn ? item.nameEn : item.name);
 
   const addressId = useId();
@@ -106,15 +150,87 @@ export const StoreView: React.FC = () => {
     );
   };
 
+  // Mirrors maxRedeemablePoints() on the server: one point is one tugrik, and
+  // at least MIN_PAYABLE has to stay chargeable so there is still an invoice.
+  const MIN_PAYABLE = 1000;
+  const redeemablePoints = Math.max(
+    0,
+    Math.min(pointsBalance, Math.floor(totalCartAmount - MIN_PAYABLE))
+  );
+  const pointsDiscount = usePoints ? redeemablePoints : 0;
+  const payableAmount = Math.max(0, totalCartAmount - pointsDiscount);
+
   const addressValid = address.trim().length >= 8;
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     // An empty or throwaway address used to sail straight through to payment.
     if (cart.length === 0 || !addressValid) return;
-    triggerPayment(totalCartAmount, t('store_checkoutTitle'), (paymentMethod, invoiceId) => {
-      createOrder(address, paymentMethod, invoiceId);
-      setActiveSubTab('orders');
-    }, 'qpay');
+
+    // Stock and prices are confirmed before the payment sheet opens, so a
+    // sold-out basket is refused while the customer still has their money.
+    setValidating(true);
+    const preflight = await validateCheckout(cart);
+    setValidating(false);
+    if (!preflight.ok) {
+      // Ordering groceries as a guest used to reach the payment sheet and then
+      // file the order into per-instance memory, so the money was real and the
+      // order was not.
+      if (preflight.code === 'AUTH_REQUIRED') {
+        toastError(t('store_signInRequiredTitle'), t('store_signInRequiredBody'));
+        return;
+      }
+      toastError(t('store_orderOutOfStockTitle'), preflight.message || t('store_orderFailedBody'));
+      return;
+    }
+    if (preflight.subtotal !== undefined && preflight.subtotal !== totalCartAmount) {
+      // Pull the new prices in and let the customer confirm the new total,
+      // rather than refusing a basket nothing was updating.
+      const fresh = await refreshCatalog();
+      const priceById = new Map(
+        (fresh.data ?? catalog).map((product) => [product.id, product.pricePerUnit])
+      );
+      repriceCart((productId) => priceById.get(productId) ?? null);
+      toastError(t('store_priceChangedTitle'), t('store_priceChangedBody'));
+      return;
+    }
+
+    triggerPayment(
+      payableAmount,
+      t('store_checkoutTitle'),
+      async (paymentMethod, invoiceId) => {
+        // The payment has already gone through by the time this runs, so a
+        // failure here is the one the customer most needs to hear about: the
+        // cart stays exactly as it was and the reason is named.
+        try {
+          const order = await createOrder(address, paymentMethod, invoiceId, pointsDiscount);
+          setActiveSubTab('orders');
+          toastSuccess(t('store_orderPlacedTitle'), t('store_orderPlacedBody', { ref: order.id }));
+        } catch (err) {
+          const failure = err as OrderError;
+          if (failure?.code === 'OUT_OF_STOCK') {
+            toastError(
+              t('store_orderOutOfStockTitle'),
+              t('store_orderOutOfStockBody', {
+                product: failure.product || '',
+                available: failure.available ?? 0,
+              })
+            );
+          } else {
+            toastError(t('store_orderFailedTitle'), t('store_orderFailedBody'));
+          }
+        }
+      },
+      'qpay'
+    );
+  };
+
+  const handleCancelOrder = async (orderId: string) => {
+    try {
+      await cancelOrder(orderId);
+      toastSuccess(t('store_orderCancelledTitle'), t('store_orderCancelledBody'));
+    } catch {
+      toastError(t('store_orderCancelFailedTitle'), t('store_orderCancelFailedBody'));
+    }
   };
 
   return (
@@ -130,7 +246,9 @@ export const StoreView: React.FC = () => {
             <h2 className="text-2xl sm:text-3xl font-black tracking-tight mt-3 text-white">
               {t('storeTitle')}
             </h2>
-            <p className="text-xs sm:text-sm font-semibold text-emerald-100/80 mt-1 max-w-xl">{t('storeSub')}</p>
+            <p className="text-xs sm:text-sm font-semibold text-emerald-100/80 mt-1 max-w-xl">
+              {t('storeSub')}
+            </p>
           </div>
 
           <div className="relative z-10 flex flex-wrap items-center gap-2">
@@ -154,24 +272,24 @@ export const StoreView: React.FC = () => {
       </header>
 
       <div className="grid grid-cols-3 bg-pestle-card border border-pestle-border p-1 rounded-2xl text-xs font-bold shadow-xs">
-          {[
-            ['catalog', t('store_subtabStore')],
-            ['cart', `${t('store_subtabCart')} (${cart.length})`],
-            ['orders', t('store_subtabOrders')],
-          ].map(([id, label]) => (
-            <button
-              key={id}
-              onClick={() => setActiveSubTab(id as 'catalog' | 'cart' | 'orders')}
-              aria-pressed={activeSubTab === id}
-              className={`px-2 sm:px-3 py-2 rounded-lg transition-all text-center truncate ${
-                activeSubTab === id
-                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm'
-                  : 'text-gray-400 hover:text-pestle-text'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+        {[
+          ['catalog', t('store_subtabStore')],
+          ['cart', `${t('store_subtabCart')} (${cart.length})`],
+          ['orders', t('store_subtabOrders')],
+        ].map(([id, label]) => (
+          <button
+            key={id}
+            onClick={() => setActiveSubTab(id as 'catalog' | 'cart' | 'orders')}
+            aria-pressed={activeSubTab === id}
+            className={`px-2 sm:px-3 py-2 rounded-lg transition-all text-center truncate ${
+              activeSubTab === id
+                ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm'
+                : 'text-gray-400 hover:text-pestle-text'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       {activeSubTab === 'catalog' && (
@@ -197,7 +315,10 @@ export const StoreView: React.FC = () => {
               [t('store_syncOrders'), orders.length],
               [t('store_syncDashboard'), t('store_syncLive')],
             ].map(([label, value]) => (
-              <div key={label} className="rounded-2xl border border-pestle-border bg-pestle-card p-3">
+              <div
+                key={label}
+                className="rounded-2xl border border-pestle-border bg-pestle-card p-3"
+              >
                 <p className="text-[10px] font-black uppercase text-gray-400">{label}</p>
                 <p className="mt-1 text-lg font-black text-pestle-text">{value}</p>
               </div>
@@ -309,53 +430,65 @@ export const StoreView: React.FC = () => {
                 </p>
               </div>
             ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
-              {catalog.map((item) => {
-                const displayName = nameOf(item);
-                return (
-                <div
-                  key={item.id}
-                  className="pestle-card rounded-3xl overflow-hidden flex flex-col hover:border-emerald-500/70 hover:shadow-lg transition-all group cursor-pointer"
-                >
-                  {/* Product Photo */}
-                  <SmartImage
-                    src={item.imageUrl || getIngredientImageUrl(item.name, item.nameEn ?? undefined)}
-                    alt={displayName}
-                    emoji={item.emoji}
-                    fallbackLabel={displayName}
-                    className="h-32 w-full"
-                  />
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
+                {catalog.map((item) => {
+                  const displayName = nameOf(item);
+                  return (
+                    <div
+                      key={item.id}
+                      className="pestle-card rounded-3xl overflow-hidden flex flex-col hover:border-emerald-500/70 hover:shadow-lg transition-all group cursor-pointer"
+                    >
+                      {/* Product Photo */}
+                      <SmartImage
+                        src={
+                          item.imageUrl ||
+                          getIngredientImageUrl(item.name, item.nameEn ?? undefined)
+                        }
+                        alt={displayName}
+                        emoji={item.emoji}
+                        fallbackLabel={displayName}
+                        className="h-32 w-full"
+                      />
 
-                  <div className="p-3 flex flex-col flex-1 justify-between">
-                    <div>
-                      <h4 className="font-bold text-xs text-pestle-text line-clamp-1">
-                        {displayName}
-                      </h4>
-                      <span className="text-[10px] text-gray-400 font-medium">
-                        {t('store_productTag')}
-                      </span>
-                    </div>
+                      <div className="p-3 flex flex-col flex-1 justify-between">
+                        <div>
+                          <h4 className="font-bold text-xs text-pestle-text line-clamp-1">
+                            {displayName}
+                          </h4>
+                          {stockedProductIds.has(item.id) ? (
+                            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                              <Refrigerator size={11} className="shrink-0" />
+                              {t('store_inYourFridge')}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-gray-400 font-medium">
+                              {t('store_productTag')}
+                            </span>
+                          )}
+                        </div>
 
-                    <div className="mt-2 flex items-center justify-between">
-                      <div>
-                        <span className="text-[9px] text-gray-400 font-bold block">{t('store_unitPrice')}</span>
-                        <span className="text-xs font-black text-mango-ink">
-                          {formatPrice(item.pricePerUnit || 3000)}
-                        </span>
+                        <div className="mt-2 flex items-center justify-between">
+                          <div>
+                            <span className="text-[9px] text-gray-400 font-bold block">
+                              {t('store_unitPrice')}
+                            </span>
+                            <span className="text-xs font-black text-mango-ink">
+                              {formatPrice(item.pricePerUnit || 3000)}
+                            </span>
+                          </div>
+
+                          <button
+                            onClick={() => handleAddToCart(item, displayName)}
+                            className="w-8 h-8 bg-emerald-600 text-white rounded-xl flex items-center justify-center active:scale-95 transition-transform shadow-md shadow-emerald-600/20"
+                          >
+                            <Plus size={16} />
+                          </button>
+                        </div>
                       </div>
-
-                      <button
-                        onClick={() => handleAddToCart(item, displayName)}
-                        className="w-8 h-8 bg-emerald-600 text-white rounded-xl flex items-center justify-center active:scale-95 transition-transform shadow-md shadow-emerald-600/20"
-                      >
-                        <Plus size={16} />
-                      </button>
                     </div>
-                  </div>
-                </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
             )}
           </div>
         </div>
@@ -380,7 +513,10 @@ export const StoreView: React.FC = () => {
               {/* Cart List */}
               <div className="space-y-3">
                 {cart.map((item) => (
-                  <div key={item.id} className="pestle-card p-3.5 sm:p-4 flex justify-between items-center gap-3">
+                  <div
+                    key={item.id}
+                    className="pestle-card p-3.5 sm:p-4 flex justify-between items-center gap-3"
+                  >
                     <div className="flex items-center gap-3 min-w-0">
                       <span className="text-2xl shrink-0">{item.emoji}</span>
                       <div className="min-w-0">
@@ -409,7 +545,10 @@ export const StoreView: React.FC = () => {
 
               {/* Delivery Address Input */}
               <div className="space-y-2">
-                <label htmlFor={addressId} className="text-xs font-bold text-pestle-text flex items-center gap-1.5">
+                <label
+                  htmlFor={addressId}
+                  className="text-xs font-bold text-pestle-text flex items-center gap-1.5"
+                >
                   <MapPin size={14} className="text-mango-ink" />
                   <span>{t('deliveryAddress')}</span>
                 </label>
@@ -423,7 +562,9 @@ export const StoreView: React.FC = () => {
                   className="w-full bg-pestle-card border border-pestle-border rounded-xl px-4 py-3 text-xs font-medium text-pestle-text focus:outline-none focus:border-mango"
                 />
                 {!addressValid && (
-                  <p className="text-[10px] font-semibold text-red-500">{t('store_addressRequired')}</p>
+                  <p className="text-[10px] font-semibold text-red-500">
+                    {t('store_addressRequired')}
+                  </p>
                 )}
               </div>
 
@@ -436,14 +577,46 @@ export const StoreView: React.FC = () => {
                   </span>
                 </div>
 
+                {/* Points had nowhere to go: they accumulated and could never be
+                    spent on anything. One point is one tugrik off. */}
+                {redeemablePoints > 0 && (
+                  <label className="flex items-center justify-between gap-3 rounded-2xl border border-mango/25 bg-mango/8 px-4 py-3 cursor-pointer">
+                    <span className="flex items-center gap-2 min-w-0">
+                      <input
+                        type="checkbox"
+                        checked={usePoints}
+                        onChange={(event) => setUsePoints(event.target.checked)}
+                        className="h-4 w-4 shrink-0 accent-emerald-600"
+                      />
+                      <span className="text-xs font-bold text-pestle-text min-w-0">
+                        {t('loyalty_usePoints', { n: redeemablePoints })}
+                      </span>
+                    </span>
+                    <span className="text-xs font-black text-mango-ink shrink-0 tabular-nums">
+                      −{formatPrice(redeemablePoints)}
+                    </span>
+                  </label>
+                )}
+
+                {pointsDiscount > 0 && (
+                  <div className="flex items-center justify-between text-xs font-bold text-gray-500">
+                    <span>{t('loyalty_afterPoints')}</span>
+                    <span className="tabular-nums text-pestle-text font-black">
+                      {formatPrice(payableAmount)}
+                    </span>
+                  </div>
+                )}
+
                 <button
                   onClick={handleCheckout}
-                  disabled={!addressValid}
+                  disabled={!addressValid || validating}
                   className="w-full btn-primary py-4 font-bold flex items-center justify-center gap-2 shadow-xl shadow-mango/25 disabled:opacity-50"
                 >
                   <ShieldCheck size={20} />
                   <span>
-                    {t('checkout')} ({formatPrice(totalCartAmount)})
+                    {validating
+                      ? t('store_checkingStock')
+                      : `${t('checkout')} (${formatPrice(payableAmount)})`}
                   </span>
                 </button>
               </div>
@@ -454,9 +627,15 @@ export const StoreView: React.FC = () => {
 
       {activeSubTab === 'orders' && (
         <div className="space-y-4">
-          <h3 className="text-sm font-bold text-pestle-text">
-            {t('store_orderHistory', { n: orders.length })}
-          </h3>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-sm font-bold text-pestle-text">
+              {t('store_orderHistory', { n: orders.length })}
+            </h3>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-mango/10 px-3 py-1.5 text-[11px] font-black text-mango-ink border border-mango/20">
+              <Sparkles size={12} className="shrink-0" />
+              {t('loyalty_balance', { n: pointsBalance })}
+            </span>
+          </div>
           {ordersLoading ? (
             <div className="space-y-3">
               {[0, 1].map((i) => (
@@ -475,15 +654,20 @@ export const StoreView: React.FC = () => {
               <div key={order.id} className="pestle-card p-4 space-y-3">
                 <div className="flex justify-between items-start gap-2">
                   <div className="min-w-0">
-                    <span className="text-xs font-bold text-pestle-text block truncate">{order.id}</span>
-                    <span className="text-[10px] text-gray-400 block truncate">{order.createdAt}</span>
+                    <span className="text-xs font-bold text-pestle-text block truncate">
+                      {order.id}
+                    </span>
+                    <span className="text-[10px] text-gray-400 block truncate">
+                      {order.createdAt}
+                    </span>
                   </div>
                   <span
                     className={`text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shrink-0 whitespace-nowrap ${
                       ORDER_STATUS_STYLES[order.status] ?? ORDER_STATUS_STYLES.paid
                     }`}
                   >
-                    <CheckCircle size={10} className="shrink-0" /> {t(ORDER_STATUS_KEYS[order.status] ?? 'store_statusPaid')}
+                    <CheckCircle size={10} className="shrink-0" />{' '}
+                    {t(ORDER_STATUS_KEYS[order.status] ?? 'store_statusPaid')}
                   </span>
                 </div>
 
@@ -492,11 +676,30 @@ export const StoreView: React.FC = () => {
                 </div>
 
                 <div className="flex justify-between items-start gap-3 pt-2 border-t border-pestle-border/60 text-xs">
-                  <span className="text-gray-400 font-medium min-w-0 line-clamp-2">{order.address}</span>
+                  <span className="text-gray-400 font-medium min-w-0 line-clamp-2">
+                    {order.address}
+                  </span>
                   <span className="font-black text-mango-ink shrink-0 tabular-nums">
                     {formatPrice(order.totalAmount)}
                   </span>
                 </div>
+
+                {/* Cancelling was server-only until now: the endpoint existed,
+                    releases the stock and reverses the Odoo invoice, but no
+                    screen ever called it. Only orders that have not left the
+                    building can still be stopped. */}
+                {CANCELLABLE_STATUSES.includes(order.status) && (
+                  <button
+                    type="button"
+                    disabled={cancellingOrder}
+                    onClick={() => {
+                      if (window.confirm(t('store_orderCancelTitle'))) handleCancelOrder(order.id);
+                    }}
+                    className="w-full min-h-11 rounded-xl border border-red-500/30 text-red-500 text-[11px] font-black hover:bg-red-500/10 disabled:opacity-50 transition-colors"
+                  >
+                    {t('store_orderCancel')}
+                  </button>
+                )}
               </div>
             ))
           )}

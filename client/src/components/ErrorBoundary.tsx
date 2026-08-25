@@ -41,10 +41,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <p className="text-sm text-gray-400">
             Хуудсыг дахин ачаалж үзнэ үү. / Please reload the page and try again.
           </p>
-          <button
-            onClick={this.handleReload}
-            className="btn-primary w-full py-3 text-sm font-bold"
-          >
+          <button onClick={this.handleReload} className="btn-primary w-full py-3 text-sm font-bold">
             Дахин ачаалах / Reload
           </button>
           {import.meta.env.DEV && this.state.error && (

@@ -22,6 +22,9 @@ export function formatDifficulty(value: string | undefined, t: Translate): strin
 const ORDER_STATUS_KEYS: Record<string, string> = {
   pending: 'store_statusPending',
   paid: 'store_statusPaid',
+  packing: 'store_statusPacking',
+  shipping: 'store_statusShipping',
+  delivered: 'store_statusDelivered',
   delivering: 'store_statusDelivering',
   completed: 'store_statusCompleted',
   cancelled: 'store_statusCancelled',

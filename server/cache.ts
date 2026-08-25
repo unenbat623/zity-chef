@@ -57,7 +57,12 @@ class LRUStore implements CacheStore {
         totalHits += entry.hitCount;
       }
     });
-    return { backend: 'memory', size: this.cache.size, validEntries: valid, totalCacheHits: totalHits };
+    return {
+      backend: 'memory',
+      size: this.cache.size,
+      validEntries: valid,
+      totalCacheHits: totalHits,
+    };
   }
 }
 

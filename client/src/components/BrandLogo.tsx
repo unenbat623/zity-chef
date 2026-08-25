@@ -14,7 +14,10 @@ interface BrandLogoProps {
  * the same geometry is mirrored in `client/public/favicon.svg`, which the PWA
  * icons are rendered from, so the home-screen icon and the in-app mark match.
  */
-export const BrandLogo: React.FC<BrandLogoProps> = ({ className = 'w-9 h-9', title = 'Zity Chef' }) => {
+export const BrandLogo: React.FC<BrandLogoProps> = ({
+  className = 'w-9 h-9',
+  title = 'Zity Chef',
+}) => {
   // Gradient ids must stay unique — the logo renders more than once per page.
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
   const bg = `zc-bg-${uid}`;

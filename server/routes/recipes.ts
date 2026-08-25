@@ -60,7 +60,10 @@ router.get('/', async (_req, res) => {
     return catalogUnavailable(res);
   }
 
-  return res.json({ recipes: (data || []).map((r) => toRecipe(r as RecipeRow)), source: 'supabase' });
+  return res.json({
+    recipes: (data || []).map((r) => toRecipe(r as RecipeRow)),
+    source: 'supabase',
+  });
 });
 
 // ── GET /api/recipes/:id (single recipe) ────────────────────────────────────

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import {
   Search,
   ChevronDown,
@@ -57,9 +57,24 @@ const FAQS: FAQ[] = [
   { id: 'a2', category: 'account', questionKey: 'help_faqA2Q', answerKey: 'help_faqA2A' },
   { id: 'a3', category: 'account', questionKey: 'help_faqA3Q', answerKey: 'help_faqA3A' },
   // Subscription
-  { id: 'sub1', category: 'subscription', questionKey: 'help_faqSub1Q', answerKey: 'help_faqSub1A' },
-  { id: 'sub2', category: 'subscription', questionKey: 'help_faqSub2Q', answerKey: 'help_faqSub2A' },
-  { id: 'sub3', category: 'subscription', questionKey: 'help_faqSub3Q', answerKey: 'help_faqSub3A' },
+  {
+    id: 'sub1',
+    category: 'subscription',
+    questionKey: 'help_faqSub1Q',
+    answerKey: 'help_faqSub1A',
+  },
+  {
+    id: 'sub2',
+    category: 'subscription',
+    questionKey: 'help_faqSub2Q',
+    answerKey: 'help_faqSub2A',
+  },
+  {
+    id: 'sub3',
+    category: 'subscription',
+    questionKey: 'help_faqSub3Q',
+    answerKey: 'help_faqSub3A',
+  },
   // AI
   { id: 'ai1', category: 'ai', questionKey: 'help_faqAi1Q', answerKey: 'help_faqAi1A' },
   { id: 'ai2', category: 'ai', questionKey: 'help_faqAi2Q', answerKey: 'help_faqAi2A' },
@@ -82,17 +97,21 @@ const FaqItem: React.FC<{ faq: FAQ; isOpen: boolean; onToggle: () => void }> = (
         onClick={onToggle}
         className="w-full flex items-center justify-between p-4 text-left bg-pestle-card hover:bg-pestle-bg transition-colors cursor-pointer gap-3"
       >
-        <span className={`text-sm font-bold leading-snug ${isOpen ? 'text-mango-ink' : 'text-pestle-text'}`}>
+        <span
+          className={`text-sm font-bold leading-snug ${isOpen ? 'text-mango-ink' : 'text-pestle-text'}`}
+        >
           {t(faq.questionKey)}
         </span>
-        <div className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors ${isOpen ? 'bg-mango text-white' : 'bg-pestle-bg border border-pestle-border text-gray-400'}`}>
+        <div
+          className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors ${isOpen ? 'bg-mango text-white' : 'bg-pestle-bg border border-pestle-border text-gray-400'}`}
+        >
           {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </div>
       </button>
 
       <AnimatePresence initial={false}>
         {isOpen && (
-          <motion.div
+          <m.div
             key="content"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
@@ -108,7 +127,7 @@ const FaqItem: React.FC<{ faq: FAQ; isOpen: boolean; onToggle: () => void }> = (
                 </p>
               </div>
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>
@@ -140,14 +159,14 @@ export const HelpView: React.FC = () => {
         <div className="relative space-y-2">
           <div className="flex items-center gap-2 text-mango-ink">
             <HelpCircle size={22} />
-            <span className="text-xs font-extrabold uppercase tracking-widest">{t('help_center')}</span>
+            <span className="text-xs font-extrabold uppercase tracking-widest">
+              {t('help_center')}
+            </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-pestle-text leading-tight">
             {t('help_heading')}
           </h1>
-          <p className="text-sm text-gray-500 font-medium max-w-md">
-            {t('help_subtitle')}
-          </p>
+          <p className="text-sm text-gray-500 font-medium max-w-md">{t('help_subtitle')}</p>
         </div>
 
         {/* Search Bar */}
@@ -171,7 +190,10 @@ export const HelpView: React.FC = () => {
           return (
             <button
               key={cat.id}
-              onClick={() => { setActiveCategory(cat.id); setOpenFaqId(null); }}
+              onClick={() => {
+                setActiveCategory(cat.id);
+                setOpenFaqId(null);
+              }}
               className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap border transition-all cursor-pointer shrink-0 ${
                 isActive
                   ? 'bg-mango text-white border-mango shadow-md shadow-mango/20'
@@ -213,7 +235,10 @@ export const HelpView: React.FC = () => {
               </p>
             </div>
             <button
-              onClick={() => { setSearchQuery(''); setActiveCategory('all'); }}
+              onClick={() => {
+                setSearchQuery('');
+                setActiveCategory('all');
+              }}
               className="btn-secondary text-xs px-4 py-2"
             >
               {t('help_clearSearch')}
@@ -230,12 +255,42 @@ export const HelpView: React.FC = () => {
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {[
-            { label: t('help_linkFridge'), tab: 'fridge', icon: Refrigerator, color: 'bg-green-500/10 text-green-600 border-green-500/20' },
-            { label: t('help_linkRecipe'), tab: 'recipe', icon: BookOpen, color: 'bg-blue-500/10 text-blue-600 border-blue-500/20' },
-            { label: t('help_linkCooking'), tab: 'cooking', icon: Flame, color: 'bg-orange-500/10 text-orange-600 border-orange-500/20' },
-            { label: t('help_linkStore'), tab: 'store', icon: ShoppingCart, color: 'bg-purple-500/10 text-purple-600 border-purple-500/20' },
-            { label: t('help_linkProfile'), tab: 'profile', icon: User, color: 'bg-pink-500/10 text-pink-600 border-pink-500/20' },
-            { label: t('help_linkPro'), tab: 'profile', icon: Sparkles, color: 'bg-amber-500/10 text-amber-600 border-amber-500/20' },
+            {
+              label: t('help_linkFridge'),
+              tab: 'fridge',
+              icon: Refrigerator,
+              color: 'bg-green-500/10 text-green-600 border-green-500/20',
+            },
+            {
+              label: t('help_linkRecipe'),
+              tab: 'recipe',
+              icon: BookOpen,
+              color: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+            },
+            {
+              label: t('help_linkCooking'),
+              tab: 'cooking',
+              icon: Flame,
+              color: 'bg-orange-500/10 text-orange-600 border-orange-500/20',
+            },
+            {
+              label: t('help_linkStore'),
+              tab: 'store',
+              icon: ShoppingCart,
+              color: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
+            },
+            {
+              label: t('help_linkProfile'),
+              tab: 'profile',
+              icon: User,
+              color: 'bg-pink-500/10 text-pink-600 border-pink-500/20',
+            },
+            {
+              label: t('help_linkPro'),
+              tab: 'profile',
+              icon: Sparkles,
+              color: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+            },
           ].map((link) => {
             const Icon = link.icon;
             return (
@@ -247,10 +302,14 @@ export const HelpView: React.FC = () => {
                 onClick={() => setActiveTab(link.tab)}
                 className="flex items-center gap-2.5 p-3 sm:p-3.5 rounded-2xl border border-pestle-border text-left transition-all cursor-pointer hover:shadow-md hover:border-mango active:scale-[0.98] bg-pestle-card min-w-0"
               >
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${link.color}`}>
+                <div
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${link.color}`}
+                >
                   <Icon size={16} />
                 </div>
-                <span className="text-xs font-bold text-pestle-text leading-snug min-w-0">{link.label}</span>
+                <span className="text-xs font-bold text-pestle-text leading-snug min-w-0">
+                  {link.label}
+                </span>
               </button>
             );
           })}

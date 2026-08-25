@@ -44,10 +44,13 @@ export function useUserProfile(target: ProfileTarget | null, onFollowError?: () 
 
   const followMutation = useMutation({
     mutationFn: async (follow: boolean) => {
-      const res = await authedFetch(`/api/community/users/${encodeURIComponent(target!.id!)}/follow`, {
-        method: 'POST',
-        body: JSON.stringify({ follow }),
-      });
+      const res = await authedFetch(
+        `/api/community/users/${encodeURIComponent(target!.id!)}/follow`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ follow }),
+        }
+      );
       if (!res.ok) throw new Error('Failed to update follow');
       return res.json() as Promise<{ following: boolean; followers: number }>;
     },

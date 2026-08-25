@@ -1,12 +1,32 @@
 import { getAccessToken, refreshAccessToken } from './supabase';
 
-function getDefaultApiBase(): string {
-  if (typeof window === 'undefined') return 'http://localhost:3002';
-  if (import.meta.env.PROD) return '';
-  return `${window.location.protocol}//${window.location.hostname}:3002`;
+/**
+ * Where the API lives, from the client's point of view.
+ *
+ * Exported (and parameterised) so the rule can be tested: a production build
+ * must call its own origin. `.env` carries the *server's* NODE_ENV, which Vite
+ * reads when it loads VITE_* variables, and a build stamped as development left
+ * `isProd` false here — so the deployed app called `<host>:3002`, which serves
+ * nothing. vite.config.ts pins the flag now; this is the behaviour it decides.
+ */
+export function resolveApiBase(options: {
+  configured?: string;
+  isProd: boolean;
+  protocol?: string;
+  hostname?: string;
+}): string {
+  if (options.configured) return options.configured;
+  if (options.isProd) return '';
+  if (!options.protocol || !options.hostname) return 'http://localhost:3002';
+  return `${options.protocol}//${options.hostname}:3002`;
 }
 
-export const API_BASE = import.meta.env.VITE_API_URL || getDefaultApiBase();
+export const API_BASE = resolveApiBase({
+  configured: import.meta.env.VITE_API_URL,
+  isProd: import.meta.env.PROD,
+  protocol: typeof window === 'undefined' ? undefined : window.location.protocol,
+  hostname: typeof window === 'undefined' ? undefined : window.location.hostname,
+});
 
 const GUEST_ID_KEY = 'zity_guest_id';
 

@@ -17,6 +17,19 @@
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="mn_MN" />
     <meta property="og:site_name" content="Zity Chef" />
+    <!-- A link shared to Messenger, Facebook or Telegram had no picture at all.
+         The path is relative on purpose — the app is deployed under more than
+         one domain, and every major scraper resolves it against the page URL. -->
+    <meta property="og:image" content="/icon-512.png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta property="og:image:alt" content="Zity Chef" />
+
+    <!-- ── Twitter / X ────────────────────────────────────────── -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Zity Chef — Ухаалаг AI Тогооч Туслагч" />
+    <meta name="twitter:description" content="AI тогооч туслагч, хөргөгчийн материал бүртгэл, долоо хоногийн хоолны хуваарь." />
+    <meta name="twitter:image" content="/icon-512.png" />
 
     <!-- ── PWA Core ───────────────────────────────────────────── -->
     <!-- Match the app header (pestle-bg) so the status bar blends into the UI. -->
@@ -42,6 +55,10 @@
     <!-- Sets the colour scheme before the first paint (no flash of light theme).
          External, not inline, so the CSP can forbid inline scripts. -->
     <script src="/theme-init.js"></script>
+
+    <!-- The first data request goes to Supabase; opening the connection during
+         parse saves a DNS + TLS round trip on a mobile network. -->
+    <link rel="preconnect" href="%VITE_SUPABASE_URL%" crossorigin />
 
     <!-- ── Preconnect Fonts ───────────────────────────────────── -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />

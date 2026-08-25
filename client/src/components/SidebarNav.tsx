@@ -15,15 +15,7 @@ import { useApp } from '../context/AppContext';
 import { BrandLogo } from './BrandLogo';
 
 export const SidebarNav: React.FC = () => {
-  const {
-    activeTab,
-    setActiveTab,
-    subscription,
-    cart,
-    inventory,
-    profile,
-    t,
-  } = useApp();
+  const { activeTab, setActiveTab, subscription, cart, inventory, profile, t } = useApp();
 
   const mainNavItems = [
     { id: 'fridge', label: t('tabFridge'), icon: Refrigerator, count: inventory.length },

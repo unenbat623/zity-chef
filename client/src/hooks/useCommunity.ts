@@ -1,4 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { authedFetch } from '../lib/apiClient';
 
 /**
@@ -32,11 +33,22 @@ export interface FeedPost {
   comments: FeedComment[];
 }
 
-async function fetchFeed(): Promise<FeedPost[]> {
-  const res = await authedFetch('/api/community/posts');
+const FEED_PAGE_SIZE = 20;
+
+interface FeedPage {
+  posts: FeedPost[];
+  nextOffset: number | null;
+}
+
+async function fetchFeedPage(offset: number): Promise<FeedPage> {
+  const res = await authedFetch(`/api/community/posts?limit=${FEED_PAGE_SIZE}&offset=${offset}`);
   if (!res.ok) throw new Error('Failed to load feed');
   const data = await res.json();
-  return data.posts || [];
+  const posts: FeedPost[] = data.posts || [];
+  return {
+    posts,
+    nextOffset: data.hasMore ? Number(data.nextOffset ?? offset + posts.length) : null,
+  };
 }
 
 async function fetchStories(): Promise<any[]> {
@@ -55,10 +67,19 @@ const NO_STORY_GROUPS: any[] = [];
 export function useCommunity() {
   const queryClient = useQueryClient();
 
-  const query = useQuery({
+  // Paged rather than "the newest 50, for ever": older posts were unreachable,
+  // and every poll re-fetched the whole feed.
+  const query = useInfiniteQuery({
     queryKey: ['community', 'feed'],
-    queryFn: fetchFeed,
-    refetchInterval: 10_000,
+    queryFn: ({ pageParam }) => fetchFeedPage(pageParam as number),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage: FeedPage) => lastPage.nextOffset,
+    // A poll refetches *every* loaded page, so a reader five pages deep was
+    // pulling five requests every ten seconds. Realtime already invalidates
+    // this query on new posts, likes and comments, so the timer is only a
+    // fallback — and `maxPages` caps what any refetch can cost.
+    refetchInterval: 60_000,
+    maxPages: 5,
     refetchOnWindowFocus: true,
   });
   const storiesQuery = useQuery({
@@ -93,7 +114,15 @@ export function useCommunity() {
   });
 
   const commentMutation = useMutation({
-    mutationFn: ({ postId, text, authorName }: { postId: string; text: string; authorName: string }) =>
+    mutationFn: ({
+      postId,
+      text,
+      authorName,
+    }: {
+      postId: string;
+      text: string;
+      authorName: string;
+    }) =>
       authedFetch(`/api/community/posts/${postId}/comments`, {
         method: 'POST',
         body: JSON.stringify({ text, authorName }),
@@ -115,9 +144,19 @@ export function useCommunity() {
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['community', 'feed'] }),
   });
 
+  const feedPosts = useMemo(
+    () => query.data?.pages.flatMap((page) => page.posts) ?? NO_POSTS,
+    [query.data]
+  );
+
   return {
-    feedPosts: query.data ?? NO_POSTS,
+    feedPosts,
     feedLoading: query.isLoading,
+    hasMorePosts: query.hasNextPage,
+    loadingMorePosts: query.isFetchingNextPage,
+    loadMorePosts: () => {
+      if (query.hasNextPage && !query.isFetchingNextPage) void query.fetchNextPage();
+    },
     serverStoryGroups: storiesQuery.data ?? NO_STORY_GROUPS,
     persistStory: (payload: {
       imageUrl?: string | null;

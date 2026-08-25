@@ -49,6 +49,9 @@ export function renderCatalog(entries: CatalogEntry[], limit = 40): string {
   if (!entries.length) return '';
   return entries
     .slice(0, limit)
-    .map((r) => `- ${r.id} | ${r.title}${r.category ? ` (${r.category})` : ''} | ${r.ingredients.slice(0, 6).join(', ')}`)
+    .map(
+      (r) =>
+        `- ${r.id} | ${r.title}${r.category ? ` (${r.category})` : ''} | ${r.ingredients.slice(0, 6).join(', ')}`
+    )
     .join('\n');
 }

@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Search, Scan, AlertTriangle, Edit, Sparkles } from 'lucide-react';
+import { m, AnimatePresence } from 'motion/react';
+import { Plus, Search, Scan, AlertTriangle, Edit, Sparkles, ShoppingCart } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useToast } from './Toast';
+import { useStoreProducts } from '../hooks/useStoreProducts';
+import { buildProductCartItem, matchIngredientToProduct } from '../lib/recipeStore';
 import { CATEGORIES } from '../constants';
 import { Ingredient } from '../types';
 import { formatQuantity } from '../lib/utils';
@@ -19,9 +22,14 @@ export const FridgeView: React.FC = () => {
     removeIngredient,
     updateIngredient,
     setShowScanModal,
+    addToCart,
+    setActiveTab,
+    lang,
     unitSystem,
     t,
   } = useApp();
+  const { products: catalog } = useStoreProducts();
+  const { toastSuccess, toastError } = useToast();
   const [showPicker, setShowPicker] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCat, setSelectedCat] = useState<string>('all');
@@ -30,6 +38,36 @@ export const FridgeView: React.FC = () => {
 
   const expiringItems = inventory.filter((item) => item.expiryDays <= 3);
   const expiringCount = expiringItems.length;
+
+  /**
+   * Restocking what is about to run out is the reason the shop is in this app,
+   * and the fridge had no way to reach it: the expiring alert only ever offered
+   * to filter the list.
+   */
+  const handleRestockExpiring = () => {
+    const restocked = expiringItems
+      .map((item) => matchIngredientToProduct(item.name, catalog))
+      .filter((product): product is NonNullable<typeof product> => Boolean(product));
+
+    if (restocked.length === 0) {
+      toastError(t('fridge_restockNoneTitle'), t('fridge_restockNoneBody'));
+      return;
+    }
+
+    const seen = new Set<string>();
+    for (const product of restocked) {
+      if (seen.has(product.id)) continue;
+      seen.add(product.id);
+      addToCart(
+        buildProductCartItem(
+          product,
+          lang === 'en' && product.nameEn ? product.nameEn : product.name
+        )
+      );
+    }
+    toastSuccess(t('fridge_restockedTitle'), t('fridge_restockedBody', { n: seen.size }));
+    setActiveTab('store');
+  };
 
   const filteredInventory = inventory.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -64,7 +102,7 @@ export const FridgeView: React.FC = () => {
 
       {/* Expiring Soon Alert Card */}
       {expiringCount > 0 && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           onClick={() => setFilterExpiringOnly(!filterExpiringOnly)}
@@ -87,10 +125,27 @@ export const FridgeView: React.FC = () => {
               </p>
             </div>
           </div>
-          <span className="text-xs font-extrabold underline shrink-0">
-            {filterExpiringOnly ? t('fridge_view') : t('fridge_filter')}
-          </span>
-        </motion.div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                handleRestockExpiring();
+              }}
+              className={`min-h-11 rounded-xl px-3 text-[11px] font-black flex items-center gap-1.5 transition-colors ${
+                filterExpiringOnly
+                  ? 'bg-white/20 text-white hover:bg-white/30'
+                  : 'bg-red-500 text-white hover:bg-red-600'
+              }`}
+            >
+              <ShoppingCart size={14} />
+              <span className="hidden xs:inline sm:inline">{t('fridge_restock')}</span>
+            </button>
+            <span className="text-xs font-extrabold underline">
+              {filterExpiringOnly ? t('fridge_view') : t('fridge_filter')}
+            </span>
+          </div>
+        </m.div>
       )}
 
       {/* Search & Categories Bar */}
@@ -164,76 +219,76 @@ export const FridgeView: React.FC = () => {
 
       {/* Inventory Grid */}
       {!inventoryError && (
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5">
-        {filteredInventory.map((item) => {
-          const isExpiring = item.expiryDays <= 3;
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5">
+          {filteredInventory.map((item) => {
+            const isExpiring = item.expiryDays <= 3;
 
-          return (
-            <motion.div
-              key={item.id}
-              layout
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              onClick={() => setEditingIngredient(item)}
-              className={`pestle-card p-3.5 flex flex-col items-center text-center cursor-pointer relative overflow-hidden transition-all hover:border-mango group ${
-                isExpiring ? 'border-red-400/50 bg-red-500/5' : ''
-              }`}
-            >
-              {/* Ingredient Photo with shimmer + emoji fallback */}
-              <div className="mb-3 w-full h-28 relative overflow-hidden rounded-xl">
-                <IngredientImage
-                  src={item.imageUrl || getIngredientImageUrl(item.name, item.nameEn)}
-                  emoji={item.emoji}
-                  name={item.name}
-                  size="full"
-                />
-                {isExpiring && (
-                  <div className="absolute inset-0 bg-red-500/10 rounded-xl border border-red-400/40" />
-                )}
+            return (
+              <m.div
+                key={item.id}
+                layout
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                onClick={() => setEditingIngredient(item)}
+                className={`pestle-card p-3.5 flex flex-col items-center text-center cursor-pointer relative overflow-hidden transition-all hover:border-mango group ${
+                  isExpiring ? 'border-red-400/50 bg-red-500/5' : ''
+                }`}
+              >
+                {/* Ingredient Photo with shimmer + emoji fallback */}
+                <div className="mb-3 w-full h-28 relative overflow-hidden rounded-xl">
+                  <IngredientImage
+                    src={item.imageUrl || getIngredientImageUrl(item.name, item.nameEn)}
+                    emoji={item.emoji}
+                    name={item.name}
+                    size="full"
+                  />
+                  {isExpiring && (
+                    <div className="absolute inset-0 bg-red-500/10 rounded-xl border border-red-400/40" />
+                  )}
 
-                {/* Edit affordance. Hover-only meant a touch user had no hint
+                  {/* Edit affordance. Hover-only meant a touch user had no hint
                     the card was editable at all, so phones get a permanent
                     corner badge and pointers keep the full-cover overlay. */}
-                <span className="md:hidden absolute top-1.5 right-1.5 w-7 h-7 rounded-lg bg-black/45 backdrop-blur-sm text-white flex items-center justify-center">
-                  <Edit size={13} />
-                </span>
-                <div className="hidden md:flex absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity items-center justify-center text-white text-xs font-bold gap-1">
-                  <Edit size={14} /> {t('fridge_edit')}
+                  <span className="md:hidden absolute top-1.5 right-1.5 w-7 h-7 rounded-lg bg-black/45 backdrop-blur-sm text-white flex items-center justify-center">
+                    <Edit size={13} />
+                  </span>
+                  <div className="hidden md:flex absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity items-center justify-center text-white text-xs font-bold gap-1">
+                    <Edit size={14} /> {t('fridge_edit')}
+                  </div>
                 </div>
-              </div>
 
-              <h3 className="font-bold text-xs text-pestle-text tracking-tight mb-1 line-clamp-1 w-full text-center">
-                {item.name}
-              </h3>
-              <span className="text-[11px] font-mono font-semibold text-mango-ink mb-2">
-                {formatQuantity(item.quantity, item.unit, unitSystem)}
-              </span>
+                <h3 className="font-bold text-xs text-pestle-text tracking-tight mb-1 line-clamp-1 w-full text-center">
+                  {item.name}
+                </h3>
+                <span className="text-[11px] font-mono font-semibold text-mango-ink mb-2">
+                  {formatQuantity(item.quantity, item.unit, unitSystem)}
+                </span>
 
-              {/* Freshness Bar */}
-              <div className="w-full bg-pestle-bg rounded-full h-1.5 overflow-hidden border border-pestle-border/40">
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ${
-                    item.expiryDays <= 2
-                      ? 'bg-red-500'
-                      : item.expiryDays <= 5
-                        ? 'bg-amber-400'
-                        : 'bg-emerald-600 dark:bg-emerald-400'
-                  }`}
-                  style={{ width: `${Math.min(100, (item.expiryDays / 14) * 100)}%` }}
-                />
-              </div>
+                {/* Freshness Bar */}
+                <div className="w-full bg-pestle-bg rounded-full h-1.5 overflow-hidden border border-pestle-border/40">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      item.expiryDays <= 2
+                        ? 'bg-red-500'
+                        : item.expiryDays <= 5
+                          ? 'bg-amber-400'
+                          : 'bg-emerald-600 dark:bg-emerald-400'
+                    }`}
+                    style={{ width: `${Math.min(100, (item.expiryDays / 14) * 100)}%` }}
+                  />
+                </div>
 
-              <span className="text-[10px] text-gray-400 font-medium mt-1">
-                {item.expiryDays <= 1 ? (
-                  <span className="text-red-500 font-bold">{t('expiringToday')}</span>
-                ) : (
-                  t('expiryDays', { days: item.expiryDays })
-                )}
-              </span>
-            </motion.div>
-          );
-        })}
-      </div>
+                <span className="text-[10px] text-gray-400 font-medium mt-1">
+                  {item.expiryDays <= 1 ? (
+                    <span className="text-red-500 font-bold">{t('expiringToday')}</span>
+                  ) : (
+                    t('expiryDays', { days: item.expiryDays })
+                  )}
+                </span>
+              </m.div>
+            );
+          })}
+        </div>
       )}
 
       {!inventoryLoading && !inventoryError && filteredInventory.length === 0 && (
@@ -247,14 +302,14 @@ export const FridgeView: React.FC = () => {
       )}
 
       {/* Add Floating Action Button */}
-      <motion.button
+      <m.button
         whileTap={{ scale: 0.95 }}
         onClick={() => setShowPicker(true)}
         className="btn-primary w-full py-4 flex items-center justify-center gap-2 shadow-xl shadow-mango/25 text-sm font-bold"
       >
         <Plus size={20} />
         <span>{t('addIngredient')}</span>
-      </motion.button>
+      </m.button>
 
       {/* Modal Picker */}
       <AnimatePresence>

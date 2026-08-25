@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import { X, KeyRound, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import { useAuth } from '../context/AuthContext';
 import { useApp } from '../context/AppContext';
 import { useEscapeClose } from '../hooks/useEscapeClose';
@@ -22,6 +23,8 @@ export const PasswordRecoveryModal: React.FC = () => {
   const [done, setDone] = useState(false);
 
   useEscapeClose(clearPasswordRecovery, passwordRecovery && !loading);
+
+  const dialogRef = useFocusTrap<HTMLDivElement>(Boolean(passwordRecovery));
 
   if (!passwordRecovery) return null;
 
@@ -52,19 +55,21 @@ export const PasswordRecoveryModal: React.FC = () => {
 
   return (
     <AnimatePresence>
-      <motion.div
+      <m.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={() => {
           if (!loading) clearPasswordRecovery();
         }}
+        ref={dialogRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={t('auth_recoveryTitle')}
         className="fixed inset-0 bg-black/70 backdrop-blur-md z-[220] flex items-end sm:items-center justify-center p-0 sm:p-4"
       >
-        <motion.div
+        <m.div
           initial={{ scale: 0.94, y: 24, opacity: 0 }}
           animate={{ scale: 1, y: 0, opacity: 1 }}
           exit={{ scale: 0.94, y: 24, opacity: 0 }}
@@ -156,8 +161,8 @@ export const PasswordRecoveryModal: React.FC = () => {
               </>
             )}
           </div>
-        </motion.div>
-      </motion.div>
+        </m.div>
+      </m.div>
     </AnimatePresence>
   );
 };

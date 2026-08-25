@@ -46,9 +46,18 @@ async function getQpayToken(): Promise<string> {
   return cachedToken.token;
 }
 
-/** Asks QPay itself whether an invoice has been paid. The callback body is
- *  never trusted — anyone can POST to the callback URL. */
-async function queryQpayPaid(invoiceId: string): Promise<boolean> {
+/**
+ * Asks QPay itself whether an invoice has been paid. The callback body is
+ * never trusted — anyone can POST to the callback URL.
+ *
+ * Returns the settling payment's id alongside the verdict. Refunds are issued
+ * against a payment id, not an invoice id, and this response is the only place
+ * QPay hands it to us: discarding it (as this used to) left a paid order with
+ * no way to ever return the money automatically.
+ */
+async function queryQpayPaid(
+  invoiceId: string
+): Promise<{ paid: boolean; paymentId: string; paidAmount: number }> {
   const token = await getQpayToken();
   const r = await fetch(`${QPAY_BASE}/payment/check`, {
     method: 'POST',
@@ -61,7 +70,42 @@ async function queryQpayPaid(invoiceId: string): Promise<boolean> {
   });
   const data = (await r.json()) as any;
   if (!r.ok) throw new Error(`QPay check failed: ${r.status}`);
-  return Number(data.paid_amount) > 0 || (Array.isArray(data.rows) && data.rows.length > 0);
+
+  const rows: any[] = Array.isArray(data.rows) ? data.rows : [];
+  const paidAmount = Number(data.paid_amount) || 0;
+  // A part-paid invoice can carry several rows; the refund targets the one that
+  // actually settled it, so prefer a PAID row over whatever happens to be first.
+  const settling =
+    rows.find((row) => String(row?.payment_status || '').toUpperCase() === 'PAID') || rows[0];
+
+  return {
+    paid: paidAmount > 0 || rows.length > 0,
+    paymentId: String(settling?.payment_id || ''),
+    paidAmount: paidAmount || Number(settling?.payment_amount) || 0,
+  };
+}
+
+/**
+ * Whether QPay has collected the whole invoice.
+ *
+ * "Any payment at all" used to count as settled, so a part payment bought a
+ * full order or a subscription. The intent knows what the invoice was for, so
+ * the amount is checked against it; an invoice we have no intent for keeps the
+ * old behaviour, since there is nothing to compare against.
+ */
+async function isFullySettled(
+  invoiceId: string,
+  check: { paid: boolean; paidAmount: number }
+): Promise<boolean> {
+  if (!check.paid) return false;
+  const intent = await getIntent(invoiceId);
+  const expected = intent ? Math.round(intent.amount) : 0;
+  if (expected <= 0) return true;
+  if (Math.round(check.paidAmount) >= expected) return true;
+  console.warn(
+    `[QPay] invoice ${invoiceId} underpaid: ${Math.round(check.paidAmount)} of ${expected}`
+  );
+  return false;
 }
 
 // ── Simulated invoice store (when QPay isn't configured; dev/demo only) ───────
@@ -200,10 +244,23 @@ export async function consumePaidOrderIntent(
 }
 
 /** Settles a verified payment: marks the intent paid (once) and, for plan
- *  purchases, grants the tier. Returns the granted tier, if any. */
-async function settlePaidInvoice(invoiceId: string): Promise<Tier | null> {
+ *  purchases, grants the tier. Returns the granted tier, if any.
+ *
+ *  `qpayPaymentId` is stored on the way through — it is the only handle a
+ *  later refund has on the money, and it is unavailable anywhere else. */
+async function settlePaidInvoice(invoiceId: string, qpayPaymentId = ''): Promise<Tier | null> {
   const intent = await markIntentPaid(invoiceId);
   if (!intent) return null;
+  if (qpayPaymentId && supabaseAdmin) {
+    const { error } = await supabaseAdmin
+      .from('payment_intents')
+      .update({ qpay_payment_id: qpayPaymentId })
+      .eq('invoice_id', invoiceId);
+    if (error) {
+      // Not fatal to the purchase, but it costs the automatic refund later.
+      console.error(`[payments] ${invoiceId}: could not store QPay payment id:`, error.message);
+    }
+  }
   if (intent.kind === 'plan' && intent.tier) {
     const ok = await setSubscriptionTier(intent.userId, intent.tier, intent.months);
     if (!ok) {
@@ -245,11 +302,16 @@ router.post('/qpay/create', authenticateToken, async (req: AuthenticatedRequest,
   const userId = req.user?.id;
   if (!userId) return res.status(401).json({ error: 'UNAUTHENTICATED' });
 
-  // A subscription purchase must be tied to a real, recoverable account.
+  // Every purchase must be tied to a real, recoverable account.
   // `isGuestId` alone is not enough: an anonymous Supabase user carries a real
   // uuid, so they passed this check and could buy a plan attached to a session
   // they can never sign back into — the tier would be paid for and then lost.
-  if (tier && (isGuestId(userId) || req.user?.isAnonymous)) {
+  //
+  // The same was true of grocery orders, and worse: a guest could pay for a
+  // basket and then have the order filed into per-instance memory, with no
+  // payment verification, no delivery, no Odoo, and nothing left after a
+  // restart. Real money, no order. Both kinds of invoice now need an account.
+  if (isGuestId(userId) || req.user?.isAnonymous) {
     return res.status(401).json({ error: 'SIGN_IN_REQUIRED' });
   }
 
@@ -296,7 +358,11 @@ router.post('/qpay/create', authenticateToken, async (req: AuthenticatedRequest,
   // Real QPay v2 invoice.
   try {
     const token = await getQpayToken();
-    const senderInvoiceNo = orderRef || `ZITY-${Date.now()}`;
+    // QPay requires `sender_invoice_no` to be unique for the merchant. A
+    // millisecond timestamp is not: two checkouts in the same tick collide and
+    // QPay rejects the second one. A random suffix removes that entirely.
+    const senderInvoiceNo =
+      String(orderRef || '').trim() || `ZITY-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
     const body: Record<string, unknown> = {
       invoice_code: QPAY_INVOICE_CODE,
       sender_invoice_no: senderInvoiceNo,
@@ -314,8 +380,13 @@ router.post('/qpay/create', authenticateToken, async (req: AuthenticatedRequest,
     });
     const data = (await r.json()) as any;
     if (!r.ok) {
+      // Logged in full, but not returned: QPay's error body carries merchant
+      // and terminal details that have no business reaching a browser.
       console.error('[QPay create error]', data);
-      return res.status(502).json({ error: 'QPay invoice creation failed', detail: data });
+      return res.status(502).json({
+        error: 'QPay invoice creation failed',
+        ...(IS_PROD ? {} : { detail: data }),
+      });
     }
     await saveIntent(intentFor(String(data.invoice_id)));
     return res.json({
@@ -353,13 +424,25 @@ router.post('/qpay/check', authenticateToken, async (req: AuthenticatedRequest, 
     if (!inv) return res.json({ paid: false, status: 'NOT_FOUND' });
     if (!inv.paid && Date.now() - inv.createdAt > 2500) inv.paid = true;
     const granted = inv.paid ? await settlePaidInvoice(id) : null;
-    return res.json({ paid: inv.paid, status: inv.paid ? 'PAID' : 'PENDING', simulated: true, tier: granted });
+    return res.json({
+      paid: inv.paid,
+      status: inv.paid ? 'PAID' : 'PENDING',
+      simulated: true,
+      tier: granted,
+    });
   }
 
   try {
-    const paid = await queryQpayPaid(id);
-    const granted = paid ? await settlePaidInvoice(id) : null;
-    return res.json({ paid, status: paid ? 'PAID' : 'PENDING', tier: granted });
+    const check = await queryQpayPaid(id);
+    const settled = await isFullySettled(id, check);
+    const granted = settled ? await settlePaidInvoice(id, check.paymentId) : null;
+    return res.json({
+      paid: settled,
+      // A part payment is neither paid nor still pending — say so, rather than
+      // letting the client wait for a completion that has already happened.
+      status: settled ? 'PAID' : check.paid ? 'PARTIAL' : 'PENDING',
+      tier: granted,
+    });
   } catch (err) {
     console.error('[QPay check exception]', err);
     return res.status(502).json({ error: 'QPay unavailable' });
@@ -375,8 +458,9 @@ router.all('/qpay/callback', async (req, res) => {
   const invoice = String(req.query.invoice || req.body?.invoice || req.body?.object_id || '');
   if (invoice && isQpayConfigured && !invoice.startsWith('SIM-')) {
     try {
-      if (await queryQpayPaid(invoice)) {
-        await settlePaidInvoice(invoice);
+      const check = await queryQpayPaid(invoice);
+      if (await isFullySettled(invoice, check)) {
+        await settlePaidInvoice(invoice, check.paymentId);
         console.log(`[QPay callback] invoice ${invoice} verified and settled`);
       }
     } catch (err) {
@@ -386,6 +470,212 @@ router.all('/qpay/callback', async (req, res) => {
   }
   return res.json({ received: true });
 });
+
+// ── Refunds ───────────────────────────────────────────────────────────────────
+
+/**
+ * What happened to a refund attempt.
+ *
+ * `manual` is the important one: it means the money has NOT moved and a person
+ * has to move it. The cancellation still succeeds — refusing to cancel because
+ * a gateway cannot be reached would be worse — but the obligation is recorded
+ * rather than swallowed. Nothing here ever reports success it did not get from
+ * the gateway.
+ */
+export type RefundOutcome = {
+  status: 'refunded' | 'manual' | 'failed' | 'already';
+  reason: string;
+  refundRef?: string;
+};
+
+/**
+ * QPay v2 refunds a payment with `DELETE /payment/refund/{payment_id}`.
+ *
+ * This path has not been exercised against the live merchant API — there are no
+ * credentials yet, and a refund cannot be rehearsed without a real payment to
+ * reverse. The first production cancellation is the real test; if QPay answers
+ * with something other than success the refund is recorded as `failed` and is
+ * retryable from `POST /api/payments/refunds/:invoiceId/retry`, so nothing is
+ * lost either way.
+ */
+async function qpayRefund(paymentId: string, note: string): Promise<string> {
+  const token = await getQpayToken();
+  const r = await fetch(`${QPAY_BASE}/payment/refund/${encodeURIComponent(paymentId)}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      callback_url: QPAY_CALLBACK_URL || undefined,
+      note: note.slice(0, 100),
+    }),
+  });
+  const text = await r.text();
+  if (!r.ok) throw new Error(`QPay refund ${r.status}: ${text.slice(0, 200)}`);
+  try {
+    const data = JSON.parse(text || '{}');
+    return String(data.refund_id || data.payment_id || paymentId);
+  } catch {
+    return paymentId;
+  }
+}
+
+/**
+ * Returns the money for a cancelled order, at most once.
+ *
+ * Idempotency is the conditional UPDATE that claims the refund: only a row
+ * whose `refund_status` is still null (or a previous `failed`, which is
+ * retryable) transitions to `pending`, so two cancellations racing — the
+ * customer's and an admin's — cannot refund twice.
+ *
+ * Callers must not let this throw a cancellation: the order is already
+ * cancelled by the time we get here, and an unreachable gateway must leave a
+ * recorded obligation, not an exception.
+ */
+export async function refundOrderPayment(params: {
+  invoiceId: string;
+  amount?: number;
+  reason?: string;
+}): Promise<RefundOutcome> {
+  const invoiceId = String(params.invoiceId || '').trim();
+  const reason = params.reason || 'Order cancelled';
+  if (!invoiceId) return { status: 'manual', reason: 'No payment invoice recorded on the order' };
+  if (!supabaseAdmin) return { status: 'manual', reason: 'Supabase admin is not configured' };
+
+  const intent = await getIntent(invoiceId);
+  if (!intent) return { status: 'manual', reason: `No payment intent for invoice ${invoiceId}` };
+  if (intent.status === 'pending') {
+    // Never paid, so there is nothing to send back.
+    return { status: 'already', reason: 'Invoice was never paid' };
+  }
+
+  // Claim the refund. `.is('refund_status', null)` and a retry of a previous
+  // failure are the only two states allowed to proceed.
+  const claim = await supabaseAdmin
+    .from('payment_intents')
+    .update({
+      refund_status: 'pending',
+      refund_amount: Math.round(Number(params.amount ?? intent.amount)),
+      refund_reason: reason.slice(0, 200),
+      refund_attempted_at: new Date().toISOString(),
+      refund_error: null,
+    })
+    .eq('invoice_id', invoiceId)
+    .or('refund_status.is.null,refund_status.eq.failed')
+    .select('invoice_id,qpay_payment_id,refund_amount')
+    .maybeSingle();
+
+  if (claim.error) {
+    console.error(`[refund] ${invoiceId}: claim failed:`, claim.error.message);
+    return { status: 'failed', reason: claim.error.message };
+  }
+  if (!claim.data) {
+    // Someone else already refunded it, or it is awaiting a human.
+    return { status: 'already', reason: 'Refund already recorded for this payment' };
+  }
+
+  const paymentId = String((claim.data as any).qpay_payment_id || '');
+  const amount = Number((claim.data as any).refund_amount || 0);
+
+  const settle = async (patch: Record<string, unknown>) => {
+    await supabaseAdmin!.from('payment_intents').update(patch).eq('invoice_id', invoiceId);
+  };
+
+  // Simulated mode collected no money, so there is none to send back — but say
+  // so explicitly rather than reporting a refund that never happened.
+  if (!isQpayConfigured) {
+    const why = 'QPay is in simulated mode — no money was collected to refund';
+    await settle({ refund_status: 'manual', refund_error: why });
+    return { status: 'manual', reason: why };
+  }
+  if (!paymentId) {
+    const why =
+      'No QPay payment id recorded for this invoice — refund it from the QPay merchant console';
+    await settle({ refund_status: 'manual', refund_error: why });
+    return { status: 'manual', reason: why };
+  }
+
+  try {
+    const refundRef = await qpayRefund(paymentId, reason);
+    await settle({
+      refund_status: 'refunded',
+      refund_ref: refundRef,
+      refunded_at: new Date().toISOString(),
+      refund_error: null,
+    });
+    console.log(`[refund] ${invoiceId}: ${amount}₮ returned (ref ${refundRef})`);
+    return { status: 'refunded', reason: `Refunded ${amount}`, refundRef };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'QPay refund failed';
+    // Left as `failed`, which the claim above lets a retry pick up again.
+    await settle({ refund_status: 'failed', refund_error: message.slice(0, 500) });
+    console.error(`[refund] ${invoiceId}: ${message}`);
+    return { status: 'failed', reason: message };
+  }
+}
+
+// ── GET /api/payments/refunds/outstanding ─────────────────────────────────────
+// Every refund that did not complete on its own. A `manual` row is money the
+// business still owes a customer, so it needs somewhere to be seen.
+router.get('/refunds/outstanding', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  const admins = (process.env.CHEF_ADMIN_EMAILS || '')
+    .split(',')
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+  if (!admins.includes((req.user?.email || '').toLowerCase())) {
+    return res.status(403).json({ ok: false, message: 'CHEF_ADMIN_REQUIRED' });
+  }
+  if (!supabaseAdmin) {
+    return res.status(503).json({ ok: false, message: 'Supabase admin is not configured' });
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from('payment_intents')
+    .select(
+      'invoice_id,user_id,amount,refund_status,refund_amount,refund_error,refund_reason,refund_attempted_at,qpay_payment_id'
+    )
+    .in('refund_status', ['pending', 'manual', 'failed'])
+    .order('refund_attempted_at', { ascending: false })
+    .limit(200);
+  if (error) {
+    console.error('[refund] outstanding lookup failed:', error.message);
+    return res.status(502).json({ ok: false, message: 'Failed to load refunds' });
+  }
+
+  return res.json({
+    ok: true,
+    refunds: (data || []).map((row: any) => ({
+      invoiceId: row.invoice_id,
+      userId: row.user_id,
+      amount: Number(row.refund_amount ?? row.amount ?? 0),
+      status: row.refund_status,
+      reason: row.refund_reason || '',
+      error: row.refund_error || '',
+      attemptedAt: row.refund_attempted_at,
+      hasGatewayPaymentId: Boolean(row.qpay_payment_id),
+    })),
+  });
+});
+
+// ── POST /api/payments/refunds/:invoiceId/retry ───────────────────────────────
+// Retries a `failed` refund. A `manual` one stays manual by design — retrying
+// it would just fail the same way, and the point is that a human acts on it.
+router.post(
+  '/refunds/:invoiceId/retry',
+  authenticateToken,
+  async (req: AuthenticatedRequest, res) => {
+    const admins = (process.env.CHEF_ADMIN_EMAILS || '')
+      .split(',')
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
+    if (!admins.includes((req.user?.email || '').toLowerCase())) {
+      return res.status(403).json({ ok: false, message: 'CHEF_ADMIN_REQUIRED' });
+    }
+    const outcome = await refundOrderPayment({
+      invoiceId: String(req.params.invoiceId || ''),
+      reason: 'Manual retry',
+    });
+    return res.status(outcome.status === 'failed' ? 502 : 200).json({ ok: true, ...outcome });
+  }
+);
 
 // ── GET /api/payments/config ──────────────────────────────────────────────────
 router.get('/config', (_req, res) => {

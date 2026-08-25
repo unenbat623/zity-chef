@@ -1,6 +1,16 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { Ingredient, SubscriptionTier, CartItem, Order, Language, Recipe, UserProfile, Currency, UnitSystem } from '../types';
-import { translations } from '../lib/i18n';
+import {
+  Ingredient,
+  SubscriptionTier,
+  CartItem,
+  Order,
+  Language,
+  Recipe,
+  UserProfile,
+  Currency,
+  UnitSystem,
+} from '../types';
+import { translations, loadLanguage } from '../lib/i18n';
 import { formatCurrency } from '../lib/currency';
 import { ensureContrast, readableTextOn } from '../lib/contrast';
 import { useInventory } from '../hooks/useInventory';
@@ -43,11 +53,25 @@ interface AppContextType {
   addToCart: (item: CartItem) => void;
   removeFromCart: (id: string) => void;
   clearCart: () => void;
+  /** Brings every cart line back in line with the catalog's current price. */
+  repriceCart: (priceOf: (productId: string) => number | null | undefined) => void;
   totalCartAmount: number;
   orders: Order[];
   ordersLoading: boolean;
   ordersError: boolean;
-  createOrder: (address: string, paymentMethod: 'qpay' | 'socialpay' | 'card', invoiceId?: string) => Order;
+  /**
+   * Places the paid basket. Resolves with the order the server actually
+   * created — never a locally invented one — or rejects with an OrderError the
+   * caller is expected to show. The cart is only cleared on success.
+   */
+  createOrder: (
+    address: string,
+    paymentMethod: 'qpay' | 'socialpay' | 'card',
+    invoiceId?: string,
+    redeemPoints?: number
+  ) => Promise<Order>;
+  cancelOrder: (orderId: string) => Promise<void>;
+  cancellingOrder: boolean;
   activeTab: string;
   setActiveTab: (tab: string) => void;
   activeCookingRecipe: Recipe | null;
@@ -81,7 +105,17 @@ interface AppContextType {
   t: (key: string, params?: Record<string, string | number>) => string;
 }
 
-const VALID_TABS = ['fridge', 'calendar', 'cooking', 'store', 'recipe', 'community', 'dashboard', 'profile', 'help'];
+const VALID_TABS = [
+  'fridge',
+  'calendar',
+  'cooking',
+  'store',
+  'recipe',
+  'community',
+  'dashboard',
+  'profile',
+  'help',
+];
 const SUPPORTED_LANGUAGES: Language[] = ['mn', 'en'];
 const DEFAULT_SAVED_RECIPE_IDS: string[] = [];
 const DEFAULT_PROFILE: UserProfile = {
@@ -152,6 +186,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return getStoredLanguage();
   });
 
+  // Switching to a language whose chunk is not here yet: load it, then re-render
+  // so `t()` stops falling back to Mongolian.
+  const [languageRevision, setLanguageRevision] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    void loadLanguage(lang).then(() => {
+      if (!cancelled) setLanguageRevision((revision) => revision + 1);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [lang]);
+
   const [currency, setCurrency] = useState<Currency>(() => {
     return (localStorage.getItem('zity_currency') as Currency) || 'MNT';
   });
@@ -165,7 +212,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // pre-hydration script in index.html, so React agrees with the first paint).
     const stored = localStorage.getItem('zity_theme');
     if (stored) return stored === 'dark';
-    return typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return (
+      typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
+    );
   });
 
   // ── TanStack Query server state ──────────────────────────────────────────
@@ -183,6 +232,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     isLoading: ordersLoading,
     isError: ordersError,
     createOrder: createOrderMutation,
+    cancelOrder,
+    cancellingOrder,
   } = useOrders();
 
   // The tier of record lives in Postgres. localStorage is only a first paint
@@ -253,7 +304,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const toggleSaveRecipe = useCallback((recipeId: string) => {
     setSavedRecipeIds((prev) => {
-      const next = prev.includes(recipeId) ? prev.filter((id) => id !== recipeId) : [...prev, recipeId];
+      const next = prev.includes(recipeId)
+        ? prev.filter((id) => id !== recipeId)
+        : [...prev, recipeId];
       return next;
     });
   }, []);
@@ -297,8 +350,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       authUser?.email?.split('@')[0] ||
       authUser?.phone ||
       DEFAULT_PROFILE.name;
-    const username =
-      authUser?.email ? `@${authUser.email.split('@')[0]}` : authUser?.phone ? `@${authUser.phone}` : DEFAULT_PROFILE.username;
+    const username = authUser?.email
+      ? `@${authUser.email.split('@')[0]}`
+      : authUser?.phone
+        ? `@${authUser.phone}`
+        : DEFAULT_PROFILE.username;
     const avatarUrl =
       (metadata.avatar_url as string | undefined) ||
       (metadata.picture as string | undefined) ||
@@ -354,7 +410,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setSubscriptionState(
       (localStorage.getItem(accountStorage.subscription) as SubscriptionTier | null) ||
-        (legacyAllowed ? (localStorage.getItem('zity_subscription') as SubscriptionTier | null) : null) ||
+        (legacyAllowed
+          ? (localStorage.getItem('zity_subscription') as SubscriptionTier | null)
+          : null) ||
         'free'
     );
     setCart(
@@ -381,9 +439,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [aiQuota.tier, aiQuota.limit, subscription]);
 
-  const formatPrice = useCallback((amountInMNT: number) => {
-    return formatCurrency(amountInMNT, currency);
-  }, [currency]);
+  const formatPrice = useCallback(
+    (amountInMNT: number) => {
+      return formatCurrency(amountInMNT, currency);
+    },
+    [currency]
+  );
 
   useEffect(() => {
     if (isDark) {
@@ -503,30 +564,59 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const clearCart = useCallback(() => setCart([]), []);
 
+  /**
+   * Re-prices the basket from the catalog.
+   *
+   * The cart is persisted in localStorage and used to keep whatever price a
+   * line had the day it was added. The server re-prices every order from the
+   * catalog, so a stale cart could never be paid for — and the pre-flight check
+   * that now catches it would have refused the same basket for ever, because
+   * nothing updated the prices it was complaining about.
+   */
+  const repriceCart = useCallback((priceOf: (productId: string) => number | null | undefined) => {
+    setCart((prev) => {
+      let changed = false;
+      const next = prev.map((item) => {
+        const price = item.productId ? priceOf(item.productId) : null;
+        if (price == null || price === item.pricePerUnit) return item;
+        changed = true;
+        return {
+          ...item,
+          pricePerUnit: price,
+          totalPrice: Math.round(price * item.quantity),
+        };
+      });
+      // Same array when nothing moved: a new identity every catalog poll would
+      // re-render the store and rewrite localStorage twenty times a minute.
+      return changed ? next : prev;
+    });
+  }, []);
+
   const totalCartAmount = cart.reduce((sum, item) => sum + item.totalPrice, 0);
 
   const handleCreateOrder = useCallback(
-    (address: string, paymentMethod: 'qpay' | 'socialpay' | 'card', invoiceId?: string): Order => {
-      const newOrder: Order = {
-        id: `ZITY-${Math.floor(100000 + Math.random() * 900000)}`,
-        items: [...cart],
-        totalAmount: totalCartAmount,
-        status: 'paid',
-        paymentMethod,
-        createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        address,
-      };
-
-      createOrderMutation({
+    async (
+      address: string,
+      paymentMethod: 'qpay' | 'socialpay' | 'card',
+      invoiceId?: string,
+      redeemPoints?: number
+    ): Promise<Order> => {
+      // The order the server writes is the order — its reference, total and
+      // status. A locally invented one used to be returned instead, so the
+      // customer memorised an order number that existed nowhere, and a failed
+      // request (out of stock, unverified payment, database down) still emptied
+      // the cart and looked like success.
+      const order = await createOrderMutation({
         items: cart,
         totalAmount: totalCartAmount,
         deliveryAddress: address,
         paymentMethod,
         invoiceId,
+        redeemPoints,
       });
 
       clearCart();
-      return newOrder;
+      return order;
     },
     [cart, totalCartAmount, createOrderMutation, clearCart]
   );
@@ -560,7 +650,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return str;
     },
-    [lang]
+    // `languageRevision` is what re-renders the tree after a language chunk
+    // arrives; without it the callback identity never changes and the UI keeps
+    // the fallback wording.
+    [lang, languageRevision]
   );
 
   const handleRefetchInventory = useCallback(() => {
@@ -591,11 +684,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addToCart,
       removeFromCart,
       clearCart,
+      repriceCart,
       totalCartAmount,
       orders: orders as unknown as Order[],
       ordersLoading,
       ordersError,
       createOrder: handleCreateOrder,
+      cancelOrder,
+      cancellingOrder,
       activeTab,
       setActiveTab,
       activeCookingRecipe,
@@ -634,11 +730,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addToCart,
       removeFromCart,
       clearCart,
+      repriceCart,
       totalCartAmount,
       orders,
       ordersLoading,
       ordersError,
       handleCreateOrder,
+      cancelOrder,
+      cancellingOrder,
       activeTab,
       activeCookingRecipe,
       profile,

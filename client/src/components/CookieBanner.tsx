@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import { ShieldCheck, Cookie, X } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useEscapeClose } from '../hooks/useEscapeClose';
@@ -29,7 +29,7 @@ export const CookieBanner: React.FC = () => {
     <>
       <AnimatePresence>
         {showBanner && (
-          <motion.div
+          <m.div
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
@@ -45,7 +45,8 @@ export const CookieBanner: React.FC = () => {
               </div>
               <div className="flex-1 min-w-0">
                 <h4 className="text-xs font-black text-pestle-text flex items-center gap-1.5 pr-6">
-                  <ShieldCheck size={14} className="text-emerald-700 dark:text-emerald-400" /> GDPR & Cookie Notice
+                  <ShieldCheck size={14} className="text-emerald-700 dark:text-emerald-400" /> GDPR
+                  & Cookie Notice
                 </h4>
                 <p className="hidden sm:block text-[11px] text-gray-500 font-medium mt-1 leading-relaxed line-clamp-2">
                   {t('cookieNotice')}
@@ -89,14 +90,14 @@ export const CookieBanner: React.FC = () => {
                 {t('declineCookies')}
               </button>
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 
       {/* Terms & Privacy Modal */}
       <AnimatePresence>
         {showModal && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -106,7 +107,7 @@ export const CookieBanner: React.FC = () => {
             aria-label={showModal === 'privacy' ? t('privacyPolicy') : t('termsOfService')}
             className="fixed inset-0 bg-black/70 backdrop-blur-md z-[210] flex items-end sm:items-center justify-center p-0 sm:p-4"
           >
-            <motion.div
+            <m.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
@@ -159,8 +160,8 @@ export const CookieBanner: React.FC = () => {
               >
                 {t('close')}
               </button>
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
         )}
       </AnimatePresence>
     </>

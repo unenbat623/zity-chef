@@ -12,9 +12,9 @@ function hasRealSupabaseConfig(url: string, key: string): boolean {
   const placeholders = ['your-project-ref', 'your_supabase', 'your-'];
   return Boolean(
     url &&
-      key &&
-      url.includes('.supabase.co') &&
-      !placeholders.some((placeholder) => url.includes(placeholder) || key.includes(placeholder))
+    key &&
+    url.includes('.supabase.co') &&
+    !placeholders.some((placeholder) => url.includes(placeholder) || key.includes(placeholder))
   );
 }
 

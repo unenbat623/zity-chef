@@ -1,6 +1,7 @@
 import React, { useId, useState, useRef } from 'react';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 import { X, Plus, Minus, Camera, Upload, Trash2, CheckCircle2 } from 'lucide-react';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import { Ingredient, Category } from '../types';
 import { CATEGORIES } from '../constants';
 import { useApp } from '../context/AppContext';
@@ -102,18 +103,23 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
     onClose();
   };
 
+  // Always mounted by its parent only while open, so the trap is always active.
+  const dialogRef = useFocusTrap<HTMLDivElement>(true);
+
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
+      ref={dialogRef}
+      tabIndex={-1}
       role="dialog"
       aria-modal="true"
       aria-label={t('edit_title')}
       className="fixed inset-0 bg-black/65 backdrop-blur-md z-[210] flex items-end sm:items-center sm:justify-center p-0 sm:p-4"
     >
-      <motion.div
+      <m.div
         initial={{ y: '100%', opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: '100%', opacity: 0 }}
@@ -144,7 +150,9 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
             {/* A caption, not a <label>: the real control is the dropzone below. */}
             <p className="text-xs font-bold text-pestle-text flex justify-between">
               <span>{t('edit_ingredientImage')}</span>
-              <span className="text-[10px] text-mango-ink font-semibold">{t('edit_tapToChange')}</span>
+              <span className="text-[10px] text-mango-ink font-semibold">
+                {t('edit_tapToChange')}
+              </span>
             </p>
 
             <input
@@ -187,7 +195,9 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor={`${uid}-name`} className="text-xs font-bold text-pestle-text">{t('edit_name')}</label>
+            <label htmlFor={`${uid}-name`} className="text-xs font-bold text-pestle-text">
+              {t('edit_name')}
+            </label>
             <input
               id={`${uid}-name`}
               type="text"
@@ -200,7 +210,9 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label htmlFor={`${uid}-category`} className="text-xs font-bold text-pestle-text">{t('edit_category')}</label>
+              <label htmlFor={`${uid}-category`} className="text-xs font-bold text-pestle-text">
+                {t('edit_category')}
+              </label>
               <select
                 id={`${uid}-category`}
                 value={category}
@@ -216,7 +228,9 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
             </div>
 
             <div className="space-y-1.5">
-              <label htmlFor={`${uid}-expiry`} className="text-xs font-bold text-pestle-text">{t('edit_expiryDays')}</label>
+              <label htmlFor={`${uid}-expiry`} className="text-xs font-bold text-pestle-text">
+                {t('edit_expiryDays')}
+              </label>
               <input
                 id={`${uid}-expiry`}
                 type="number"
@@ -234,7 +248,9 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
             {/* Wraps rather than overflowing: label + three unit chips do not fit
                 on one line at 320px. */}
             <div className="flex flex-wrap justify-between items-center gap-2">
-              <label htmlFor={`${uid}-quantity`} className="text-xs font-bold text-pestle-text">{t('edit_quantityAndUnit')}</label>
+              <label htmlFor={`${uid}-quantity`} className="text-xs font-bold text-pestle-text">
+                {t('edit_quantityAndUnit')}
+              </label>
               <div className="flex bg-pestle-bg p-1 rounded-xl border border-pestle-border text-xs font-bold">
                 {(['гр', 'л', 'ш'] as const).map((u) => (
                   <button
@@ -245,7 +261,11 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
                       unit === u ? 'bg-mango text-white' : 'text-gray-400'
                     }`}
                   >
-                    {u === 'гр' ? t('edit_unitGram') : u === 'л' ? t('edit_unitLiter') : t('edit_unitPiece')}
+                    {u === 'гр'
+                      ? t('edit_unitGram')
+                      : u === 'л'
+                        ? t('edit_unitLiter')
+                        : t('edit_unitPiece')}
                   </button>
                 ))}
               </div>
@@ -307,7 +327,7 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
             </button>
           </div>
         </form>
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 };

@@ -143,53 +143,56 @@ export function useDirectMessages(recipient: ChatRecipient) {
   }, [recipientId, recipientName]);
 
   /** Writes a message that is already in local state, or marks it failed. */
-  const deliver = useCallback(
-    async (tempId: string, text: string) => {
-      if (!supabase || !convRef.current) {
-        // Local development without Supabase: the message stays on this device.
-        // It used to be answered by a canned reply attributed to the recipient,
-        // so the thread showed words the other person never wrote.
-        setMessages((prev) =>
-          prev.map((m) => (m.id === tempId ? { ...m, status: 'sent' as const } : m))
-        );
-        return;
-      }
+  const deliver = useCallback(async (tempId: string, text: string) => {
+    if (!supabase || !convRef.current) {
+      // Local development without Supabase: the message stays on this device.
+      // It used to be answered by a canned reply attributed to the recipient,
+      // so the thread showed words the other person never wrote.
+      setMessages((prev) =>
+        prev.map((m) => (m.id === tempId ? { ...m, status: 'sent' as const } : m))
+      );
+      return;
+    }
 
-      const { data, error } = await supabase
-        .from('direct_messages')
-        .insert({
-          conversation_id: convRef.current,
-          sender_id: uidRef.current,
-          sender_name: nameRef.current,
-          text,
-        })
-        .select()
-        .single();
+    const { data, error } = await supabase
+      .from('direct_messages')
+      .insert({
+        conversation_id: convRef.current,
+        sender_id: uidRef.current,
+        sender_name: nameRef.current,
+        text,
+      })
+      .select()
+      .single();
 
-      // A failed insert used to be swallowed: the bubble stayed on screen as if
-      // it had been delivered and silently vanished on the next open.
-      if (error || !data) {
-        setMessages((prev) =>
-          prev.map((m) => (m.id === tempId ? { ...m, status: 'failed' as const } : m))
-        );
-        return;
-      }
+    // A failed insert used to be swallowed: the bubble stayed on screen as if
+    // it had been delivered and silently vanished on the next open.
+    if (error || !data) {
+      setMessages((prev) =>
+        prev.map((m) => (m.id === tempId ? { ...m, status: 'failed' as const } : m))
+      );
+      return;
+    }
 
-      seen.current.add(data.id);
-      setMessages((prev) => {
-        // Realtime can deliver our own INSERT before this promise resolves. If
-        // it already did, drop the optimistic copy instead of renaming it onto
-        // an id that is now on screen twice (duplicate React keys).
-        if (prev.some((m) => m.id === data.id)) return prev.filter((m) => m.id !== tempId);
-        return prev.map((m) =>
-          m.id === tempId
-            ? { ...m, id: data.id, time: hhmm(data.created_at), createdAt: data.created_at, status: 'sent' }
-            : m
-        );
-      });
-    },
-    []
-  );
+    seen.current.add(data.id);
+    setMessages((prev) => {
+      // Realtime can deliver our own INSERT before this promise resolves. If
+      // it already did, drop the optimistic copy instead of renaming it onto
+      // an id that is now on screen twice (duplicate React keys).
+      if (prev.some((m) => m.id === data.id)) return prev.filter((m) => m.id !== tempId);
+      return prev.map((m) =>
+        m.id === tempId
+          ? {
+              ...m,
+              id: data.id,
+              time: hhmm(data.created_at),
+              createdAt: data.created_at,
+              status: 'sent',
+            }
+          : m
+      );
+    });
+  }, []);
 
   const send = useCallback(
     (text: string) => {
