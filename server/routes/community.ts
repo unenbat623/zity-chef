@@ -151,8 +151,15 @@ router.post('/posts', async (req: AuthenticatedRequest, res) => {
   ) {
     return res.status(400).json({ error: 'IMAGE_URL_INVALID' });
   }
-  const caption = rawCaption;
+  const caption = rawCaption.trim();
   const imageUrl = rawImageUrl;
+
+  // A post with neither words nor a picture is not a post. The feed accepted
+  // them, so an empty tap put a blank card in front of every reader — and any
+  // caller could fill the table with rows carrying nothing at all.
+  if (!caption && !imageUrl) {
+    return res.status(400).json({ error: 'EMPTY_POST' });
+  }
 
   if (!usesDb(req)) {
     const post: FeedPost = {

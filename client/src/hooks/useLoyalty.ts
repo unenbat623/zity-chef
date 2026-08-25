@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { authedFetch } from '../lib/apiClient';
+import { useAuth } from '../context/AuthContext';
 
 /**
  * Zity Points — 1% of every delivered basket, one award per order.
@@ -33,9 +34,16 @@ async function fetchHistory(): Promise<PointsEntry[]> {
 }
 
 export function useLoyalty() {
+  // Points belong to an account. Asking for them as a signed-out visitor —
+  // which the store and profile screens both did on every visit — earned two
+  // 401s per page load, in the console and in error reporting.
+  const { user, isAnonymous } = useAuth();
+  const signedIn = Boolean(user) && !isAnonymous;
+
   const query = useQuery({
     queryKey: ['loyalty', 'points'],
     queryFn: fetchBalance,
+    enabled: signedIn,
     staleTime: 60_000,
     retry: false,
   });
@@ -43,6 +51,7 @@ export function useLoyalty() {
   const historyQuery = useQuery({
     queryKey: ['loyalty', 'history'],
     queryFn: fetchHistory,
+    enabled: signedIn,
     staleTime: 60_000,
     retry: false,
   });
