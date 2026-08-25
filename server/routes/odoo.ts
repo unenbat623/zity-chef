@@ -1878,8 +1878,13 @@ router.get(
       .select(
         'id,order_ref,status,total_amount,created_at,odoo_sync_error,odoo_last_sync_attempt_at,profiles(display_name,email)'
       )
+      // Any payable order that is not in Odoo, not only the ones that recorded
+      // an error. An order nobody ever attempted has no error to filter on, so
+      // requiring one hid exactly the orders most worth chasing — the operator
+      // screen showed nothing while revenue sat outside the ledger. Same rule
+      // reconciliation and /status now use.
       .is('odoo_order_ref', null)
-      .not('odoo_sync_error', 'is', null)
+      .in('status', SYNCABLE_ORDER_STATUSES)
       .order('odoo_last_sync_attempt_at', { ascending: false, nullsFirst: false })
       .limit(50);
     if (error) {
@@ -1894,6 +1899,8 @@ router.get(
           id: order.order_ref || order.id,
           status: order.status,
           totalAmount: Number(order.total_amount || 0),
+          /** No error recorded means the sync was never attempted, not that it passed. */
+          neverAttempted: !order.odoo_sync_error,
           customerName: profile?.display_name || profile?.email?.split('@')[0] || '',
           customerEmail: profile?.email || '',
           syncError: order.odoo_sync_error || '',
