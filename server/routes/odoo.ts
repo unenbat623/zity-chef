@@ -1711,9 +1711,12 @@ router.post(
           userId: isChefAdmin(req) ? undefined : req.user!.id,
         });
         if (!order) return res.status(404).json({ success: false, message: 'ORDER_NOT_FOUND' });
+        // Scope the sync the same way the lookup above was scoped, or an admin
+        // acting on someone else's order gets past the first check and then
+        // fails inside the sync with the same "not found".
         const sync = await syncChefOrderToOdoo({
           orderKey,
-          userId: req.user!.id,
+          userId: isChefAdmin(req) ? undefined : req.user!.id,
           userEmail: req.user!.email,
           payload: req.body,
         });

@@ -639,10 +639,18 @@ describe('Odoo status disclosure', () => {
  * edit to the same string, and nothing failed until the money did.
  */
 describe('order sync select list', () => {
-  const selectList = readFileSync(
-    new URL('./routes/odoo.ts', import.meta.url),
-    'utf8'
-  ).match(/'id,user_id,order_ref[^']*'/)?.[0];
+  // Vitest runs with `client/` as its root, so the route is one level up —
+  // but not when the suite is invoked from the repo root. Try both.
+  const source = ['../server/routes/odoo.ts', 'server/routes/odoo.ts']
+    .map((candidate) => {
+      try {
+        return readFileSync(candidate, 'utf8');
+      } catch {
+        return '';
+      }
+    })
+    .find(Boolean);
+  const selectList = source?.match(/'id,user_id,order_ref[^']*'/)?.[0];
 
   it('loads the order', () => {
     expect(selectList).toBeTruthy();
