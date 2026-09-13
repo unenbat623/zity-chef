@@ -7,7 +7,7 @@ import {
 } from '../middleware/auth.js';
 import { isSupabaseConfigured, getSupabaseForUser, supabaseAdmin } from '../supabase.js';
 import { releaseStock, reserveStock } from '../lib/stock.js';
-import { consumePaidOrderIntent } from './payments.js';
+import { consumePaidOrderIntent, revertConsumedIntentToPaid } from './payments.js';
 import { computeDiscount, deliveryFeeFor, resolveCoupon } from './store.js';
 import { cancelChefOrderInOdoo, syncChefOrderToOdoo } from './odoo.js';
 import {
@@ -264,6 +264,11 @@ router.post('/', async (req: AuthenticatedRequest, res) => {
       // back rather than leaking it out of the catalog.
       await releaseStock(canonicalItems);
       if (redemption.redemptionId) await releaseReservedPoints(redemption.redemptionId);
+      // The intent was already flipped to 'consumed' above. Left that way with
+      // no order to show for it, the customer's money is stuck: unretryable
+      // and invisible to the refund queue. Put it back to 'paid' so the same
+      // invoice can be consumed by a retry.
+      await revertConsumedIntentToPaid(String(invoiceId || ''));
       return res.status(502).json({ error: 'Failed to create order' });
     }
     if (redemption.redemptionId) await attachRedemptionToOrder(redemption.redemptionId, data.id);
@@ -335,11 +340,28 @@ router.post('/:id/cancel', requireSignedIn, async (req: AuthenticatedRequest, re
     if (['shipping', 'delivered', 'delivering', 'completed'].includes(status)) {
       return res.status(409).json({ ok: false, message: 'ORDER_CANNOT_BE_CANCELLED' });
     }
+    if (status === 'cancelled') {
+      // Already done — a repeat call (double-submit, retry) must not release
+      // stock, refund points, or refund the payment a second time.
+      return res.json({ ok: true });
+    }
 
-    const { error } = await db.from('orders').update({ status: 'cancelled' }).eq('id', order.id);
+    // `.neq('status', 'cancelled')` makes this the single point where the
+    // order actually transitions: a concurrent second cancel finds no row to
+    // update and skips every side effect below instead of running them twice.
+    const { data: updated, error } = await db
+      .from('orders')
+      .update({ status: 'cancelled' })
+      .eq('id', order.id)
+      .neq('status', 'cancelled')
+      .select('id')
+      .maybeSingle();
     if (error) {
       console.error('[Supabase Order Cancel Error]', error.message);
       return res.status(502).json({ ok: false, message: 'Failed to cancel order' });
+    }
+    if (!updated) {
+      return res.json({ ok: true });
     }
 
     // What the cancelled order was holding goes back on the shelf, and any

@@ -244,10 +244,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return (localStorage.getItem('zity_subscription') as SubscriptionTier) || 'free';
   });
 
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    const saved = localStorage.getItem('zity_cart');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [cart, setCart] = useState<CartItem[]>(() => readStoredJson<CartItem[]>('zity_cart', []));
 
   const [activeTab, setActiveTabState] = useState<string>(getTabFromUrl);
   const [activeCookingRecipe, setActiveCookingRecipe] = useState<Recipe | null>(null);
@@ -297,10 +294,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     [authUser, isAnonymous]
   );
 
-  const [savedRecipeIds, setSavedRecipeIds] = useState<string[]>(() => {
-    const saved = localStorage.getItem('zity_saved_recipes');
-    return saved ? JSON.parse(saved) : DEFAULT_SAVED_RECIPE_IDS;
-  });
+  const [savedRecipeIds, setSavedRecipeIds] = useState<string[]>(() =>
+    readStoredJson<string[]>('zity_saved_recipes', DEFAULT_SAVED_RECIPE_IDS)
+  );
 
   const toggleSaveRecipe = useCallback((recipeId: string) => {
     setSavedRecipeIds((prev) => {
@@ -391,7 +387,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
 
     // The database is authoritative across devices — reconcile once the row
-    // is read, without waiting for it on first paint.
+    // is read, without waiting for it on first paint. `cancelled` guards
+    // against signing out of A and into B while A's query is still in
+    // flight: without it, A's row would land on B's profile once it resolves.
+    let cancelled = false;
     if (hasRealAccount && supabase && authUser) {
       void supabase
         .from('profiles')
@@ -399,7 +398,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         .eq('id', authUser.id)
         .maybeSingle()
         .then(({ data }) => {
-          if (!data) return;
+          if (!data || cancelled) return;
           setProfileState((prev) => ({
             ...prev,
             name: (data.display_name as string) || prev.name,
@@ -430,6 +429,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           : DEFAULT_SAVED_RECIPE_IDS
     );
     setHydratedAccount(accountId);
+    return () => {
+      cancelled = true;
+    };
   }, [accountId, accountStorage, authUser, isAnonymous]);
 
   // Server tier wins as soon as it arrives — the local value is a hint only.
@@ -541,11 +543,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   const addToCart = useCallback((item: CartItem) => {
+    // Matching on `name` merged different products that share a display name
+    // (e.g. a recipe ingredient's Mongolian name vs. the same product's
+    // English name from StoreView) into one line — keeping the first line's
+    // price and productId, so the second product was billed wrong and never
+    // actually ordered. `productId` is what the server re-prices by; `id` is
+    // the fallback for lines that don't resolve to a store product yet.
+    const key = (cartItem: CartItem) => cartItem.productId ?? cartItem.id;
     setCart((prev) => {
-      const existing = prev.find((i) => i.name === item.name);
+      const existing = prev.find((i) => key(i) === key(item));
       if (existing) {
         return prev.map((i) =>
-          i.name === item.name
+          key(i) === key(item)
             ? {
                 ...i,
                 quantity: i.quantity + item.quantity,

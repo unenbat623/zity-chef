@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -41,18 +41,17 @@ export function useRealtimeSync() {
   const queryClient = useQueryClient();
   const { user, configured } = useAuth();
   const [status, setStatus] = useState<RealtimeStatus>('disabled');
-
-  const realtimeTables = useMemo(() => REALTIME_TABLES, []);
+  const userId = user?.id;
 
   useEffect(() => {
-    if (!configured || !supabase || !user) {
+    if (!configured || !supabase || !userId) {
       setStatus('disabled');
       return;
     }
 
     setStatus('connecting');
 
-    const channel = realtimeTables.reduce(
+    const channel = REALTIME_TABLES.reduce(
       (nextChannel, table) => {
         return nextChannel.on('postgres_changes', { event: '*', schema: 'public', table }, () => {
           invalidateByTable[table].forEach((queryKey) => {
@@ -60,7 +59,10 @@ export function useRealtimeSync() {
           });
         });
       },
-      supabase.channel(`zity-live-${user.id}`)
+      // `user` itself gets a new identity on every session refresh (including
+      // silent token refreshes), which used to tear down and resubscribe this
+      // 11-table channel on each one — depending on just the id avoids that.
+      supabase.channel(`zity-live-${userId}`)
     );
 
     channel.subscribe((nextStatus) => {
@@ -72,7 +74,7 @@ export function useRealtimeSync() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [configured, queryClient, realtimeTables, user]);
+  }, [configured, queryClient, userId]);
 
-  return { tables: realtimeTables, status };
+  return { tables: REALTIME_TABLES, status };
 }

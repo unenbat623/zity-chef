@@ -9,3 +9,4 @@ coverage/
 
 # Local scratch harnesses (playwright probes)
 *.tmp.mjs
+.vercel

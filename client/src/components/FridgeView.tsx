@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { m, AnimatePresence } from 'motion/react';
-import { Plus, Search, Scan, AlertTriangle, Edit, Sparkles, ShoppingCart } from 'lucide-react';
+import { Plus, Search, AlertTriangle, Edit, Sparkles, ShoppingCart } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useToast } from './Toast';
 import { useStoreProducts } from '../hooks/useStoreProducts';
@@ -21,7 +21,6 @@ export const FridgeView: React.FC = () => {
     refetchInventory,
     removeIngredient,
     updateIngredient,
-    setShowScanModal,
     addToCart,
     setActiveTab,
     lang,
@@ -88,16 +87,6 @@ export const FridgeView: React.FC = () => {
             {t('fridgeSub', { count: inventory.length })}
           </p>
         </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowScanModal(true)}
-            className="w-full sm:w-auto justify-center bg-mint/15 text-mint-ink border border-mint/30 px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 hover:bg-mint hover:text-white transition-all active:scale-95 shadow-sm"
-          >
-            <Scan size={16} />
-            <span>{t('scanReceipt')}</span>
-          </button>
-        </div>
       </header>
 
       {/* Expiring Soon Alert Card */}
@@ -162,30 +151,34 @@ export const FridgeView: React.FC = () => {
           />
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 sm:-mx-6 px-4 sm:px-6 no-scrollbar">
-          <button
-            onClick={() => setSelectedCat('all')}
-            className={`px-3 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-              selectedCat === 'all'
-                ? 'bg-mango text-white'
-                : 'bg-pestle-card border border-pestle-border text-gray-400 hover:text-pestle-text'
-            }`}
-          >
-            {t('fridge_all')}
-          </button>
-          {CATEGORIES.map((cat) => (
+        <div className="relative -mx-4 sm:-mx-6">
+          <div className="flex gap-2 overflow-x-auto pb-1 px-4 sm:px-6 no-scrollbar">
             <button
-              key={cat}
-              onClick={() => setSelectedCat(cat)}
+              onClick={() => setSelectedCat('all')}
               className={`px-3 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                selectedCat === cat
+                selectedCat === 'all'
                   ? 'bg-mango text-white'
                   : 'bg-pestle-card border border-pestle-border text-gray-400 hover:text-pestle-text'
               }`}
             >
-              {cat}
+              {t('fridge_all')}
             </button>
-          ))}
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCat(cat)}
+                className={`px-3 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                  selectedCat === cat
+                    ? 'bg-mango text-white'
+                    : 'bg-pestle-card border border-pestle-border text-gray-400 hover:text-pestle-text'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+          {/* Signals more chips off-screen instead of an abrupt hard clip at the viewport edge */}
+          <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-pestle-bg to-transparent" />
         </div>
       </div>
 
@@ -296,7 +289,7 @@ export const FridgeView: React.FC = () => {
           <div className="w-12 h-12 rounded-2xl bg-mango/10 text-mango-ink mx-auto flex items-center justify-center mb-3">
             <Plus size={22} />
           </div>
-          <p className="text-sm font-black text-pestle-text">{t('fridge_noItems')}</p>
+          <p className="text-sm font-extrabold text-pestle-text">{t('fridge_noItems')}</p>
           <p className="text-xs font-semibold text-gray-400 mt-1">{t('store_cartEmptyHint')}</p>
         </div>
       )}

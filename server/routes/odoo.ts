@@ -942,8 +942,11 @@ function mapOdooStateToStore(state: string | undefined): string | null {
 
 async function invoiceFromIds(invoiceIds: number[] | undefined) {
   if (!invoiceIds?.length) return null;
-  // `read` takes no `limit` — Odoo rejects the whole call ("read() got an
-  // unexpected keyword argument 'limit'"), so the ids are sliced instead.
+  // `sale.order.invoice_ids` holds every account.move linked to the order,
+  // including credit notes raised by a cancellation — `[0]` isn't necessarily
+  // the customer invoice, so every id is read and an `out_invoice` is
+  // preferred over a reversal (which `postAndMaybePayInvoice` must never try
+  // to "pay").
   const invoices = await executeKw<
     Array<{
       id: number;
@@ -951,11 +954,12 @@ async function invoiceFromIds(invoiceIds: number[] | undefined) {
       payment_reference?: string;
       payment_state?: string;
       state?: string;
+      move_type?: string;
     }>
-  >('account.move', 'read', [invoiceIds.slice(0, 1)], {
-    fields: ['id', 'name', 'payment_reference', 'payment_state', 'state'],
+  >('account.move', 'read', [invoiceIds], {
+    fields: ['id', 'name', 'payment_reference', 'payment_state', 'state', 'move_type'],
   });
-  const invoice = invoices[0];
+  const invoice = invoices.find((inv) => inv.move_type === 'out_invoice') || invoices[0];
   if (!invoice) return null;
   return {
     id: invoice.id,
@@ -1545,12 +1549,15 @@ async function syncOdooProductsToStore(products: any[]) {
       if (!stockIsUnloaded && product.is_storable !== false && sellable !== null) {
         patch.stock_quantity = Math.max(0, Math.floor(sellable));
       }
+      // A product can be keyed by either column depending on whether the row
+      // was imported from Odoo or seeded manually — one update matching
+      // either, instead of two separate writes (which also doubled the
+      // "updates" count returned below).
       return [
-        supabaseAdmin.from('store_products').update(patch).eq('sku', product.default_code),
         supabaseAdmin
           .from('store_products')
           .update(patch)
-          .eq('odoo_product_sku', product.default_code),
+          .or(`sku.eq.${product.default_code},odoo_product_sku.eq.${product.default_code}`),
       ];
     });
   await Promise.all(updates);
@@ -1700,6 +1707,16 @@ router.post(
   authenticateToken,
   requireSignedIn,
   async (req: AuthenticatedRequest, res) => {
+    // Pushes a status straight through to Odoo (confirming the sale order,
+    // validating the warehouse delivery, stocking the customer's fridge and
+    // awarding loyalty points on 'delivered') with no proof the transition
+    // actually happened — a signed-in caller could self-declare their own
+    // order delivered before it shipped. No client in either app calls this
+    // route; it's an operator/admin tool, so it must require admin.
+    if (!isChefAdmin(req)) {
+      return res.status(403).json({ success: false, message: 'CHEF_ADMIN_REQUIRED' });
+    }
+
     if (req.body?.orderId || req.body?.externalOrderId || req.body?.orderRef) {
       const orderKey = firstString(
         req.body?.externalOrderId,
@@ -2071,7 +2088,7 @@ export async function reconcileOdooOrders() {
 
   const { data: localOrders, error } = await supabaseAdmin
     .from('orders')
-    .select('id,order_ref,total_amount,status,odoo_order_ref,odoo_order_id')
+    .select('id,order_ref,total_amount,status,odoo_order_ref,odoo_order_id,created_at')
     .not('odoo_order_ref', 'is', null)
     .order('created_at', { ascending: false })
     .limit(500);
@@ -2116,6 +2133,17 @@ export async function reconcileOdooOrders() {
   // Delguur" when nothing was missing at all. Skipping the last few minutes of
   // Odoo orders removes the race; a genuinely orphaned one is still reported on
   // the next run.
+  //
+  // `localOrders` is the 500 *newest* local orders; without a matching lower
+  // bound here, this side had no ordering at all and could return an entirely
+  // different (e.g. oldest-first) 500 Odoo orders once there are more than 500
+  // total — every one of them then reported as "missing in Delguur" even
+  // though it's perfectly synced, just outside the local snapshot's window.
+  const oldestLocalCreatedAt = (localOrders || []).reduce<string | null>(
+    (oldest, order: any) =>
+      !oldest || (order.created_at && order.created_at < oldest) ? order.created_at || oldest : oldest,
+    null
+  );
   const remoteByExternal = await executeKw<OdooOrderRef[]>(
     'sale.order',
     'search_read',
@@ -2123,6 +2151,9 @@ export async function reconcileOdooOrders() {
       [
         ['client_order_ref', 'ilike', 'ZITY-'],
         ['create_date', '<', odooDateTime(Date.now() - SYNC_GRACE_MS)],
+        ...(oldestLocalCreatedAt
+          ? [['create_date', '>=', odooDateTime(new Date(oldestLocalCreatedAt).getTime())]]
+          : []),
       ],
     ],
     {

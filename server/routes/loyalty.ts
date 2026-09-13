@@ -94,6 +94,14 @@ router.post('/points', async (req: AuthenticatedRequest, res) => {
       return res.status(502).json({ error: 'Failed to award points' });
     }
     if (!order) return res.status(404).json({ error: 'ORDER_NOT_FOUND' });
+    // Every order row is already paid (orders.ts only inserts them that way),
+    // so this had no status check at all — a customer could self-award points
+    // the moment they checked out, then cancel for a refund and keep them.
+    // `awardPointsForOrder` (the path delivery actually goes through) only
+    // ever fires once the order is delivered; this route must match it.
+    if (order.status !== 'delivered') {
+      return res.status(409).json({ error: 'ORDER_NOT_DELIVERED' });
+    }
 
     const points = pointsForAmount(order.total_amount);
     if (points === null) return res.status(400).json({ error: 'INVALID_ORDER_AMOUNT' });

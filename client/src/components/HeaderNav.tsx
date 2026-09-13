@@ -95,7 +95,7 @@ export const HeaderNav: React.FC = () => {
             whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.9 }}
             onClick={toggleDarkMode}
-            className={`relative w-8 h-8 border rounded-xl flex items-center justify-center shadow-xs transition-all shrink-0 cursor-pointer overflow-hidden ${
+            className={`relative w-10 h-10 border rounded-xl flex items-center justify-center shadow-xs transition-all shrink-0 cursor-pointer overflow-hidden ${
               isDark
                 ? 'bg-slate-900 border-slate-700 hover:border-amber-400/60'
                 : 'bg-amber-500/10 border-amber-500/30 hover:border-mango'

@@ -73,13 +73,14 @@ async function queryQpayPaid(
 
   const rows: any[] = Array.isArray(data.rows) ? data.rows : [];
   const paidAmount = Number(data.paid_amount) || 0;
-  // A part-paid invoice can carry several rows; the refund targets the one that
-  // actually settled it, so prefer a PAID row over whatever happens to be first.
-  const settling =
-    rows.find((row) => String(row?.payment_status || '').toUpperCase() === 'PAID') || rows[0];
+  // A part-paid invoice can carry several rows, some still NEW/pending. Only a
+  // row QPay marked PAID proves money moved — falling back to rows[0] treated
+  // a pending row as settled and let its amount count toward "paid".
+  const paidRows = rows.filter((row) => String(row?.payment_status || '').toUpperCase() === 'PAID');
+  const settling = paidRows[0];
 
   return {
-    paid: paidAmount > 0 || rows.length > 0,
+    paid: paidAmount > 0 || paidRows.length > 0,
     paymentId: String(settling?.payment_id || ''),
     paidAmount: paidAmount || Number(settling?.payment_amount) || 0,
   };
@@ -206,6 +207,25 @@ async function revertIntentToPending(invoiceId: string): Promise<void> {
   }
   const mem = memoryIntents.get(invoiceId);
   if (mem && mem.status === 'paid') mem.status = 'pending';
+}
+
+/**
+ * Order creation consumes the intent before inserting the order row (so two
+ * concurrent checkouts can't both spend it), but the insert can still fail
+ * afterwards. Left as 'consumed' with no order, the invoice can never be
+ * retried or refunded automatically — put it back to 'paid' so the same
+ * invoice can be consumed again by a retry.
+ */
+export async function revertConsumedIntentToPaid(invoiceId: string): Promise<void> {
+  if (supabaseAdmin) {
+    await supabaseAdmin
+      .from('payment_intents')
+      .update({ status: 'paid' })
+      .eq('invoice_id', invoiceId)
+      .eq('status', 'consumed');
+  }
+  const mem = memoryIntents.get(invoiceId);
+  if (mem && mem.status === 'consumed') mem.status = 'paid';
 }
 
 /**
@@ -411,8 +431,10 @@ router.post('/qpay/check', authenticateToken, async (req: AuthenticatedRequest, 
 
   // Only the invoice's owner may poll it — checking used to be anonymous, so
   // anyone holding an invoice id could complete someone else's purchase flow.
+  // A missing intent isn't a free pass either: every invoice this server
+  // issues gets one via saveIntent, so no intent means a forged/foreign id.
   const intent = await getIntent(id);
-  if (intent && intent.userId !== req.user?.id) {
+  if (!intent || intent.userId !== req.user?.id) {
     return res.status(403).json({ error: 'FORBIDDEN' });
   }
 

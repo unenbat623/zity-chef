@@ -12,10 +12,16 @@
      text on top clears WCAG AA. `text-mango-ink` is the text/icon counterpart. */
   --color-mango: var(--color-accent, #047857);
   --color-mango-ink: var(--color-accent-ink, #047857);
-  /* Same split for the secondary green: `bg-mint` is a filled surface behind
-     white text, `text-mint-ink` is the readable text/icon shade. */
-  --color-mint: #047857;
-  --color-mint-ink: #047857;
+  /* `mint` is the same brand green as `mango` — it used to be a second
+     hardcoded copy of the accent hex that would drift out of sync with it.
+     It's kept as a separate name (existing call sites use both), now aliased
+     to the same token instead of duplicating its value. */
+  --color-mint: var(--color-accent, #047857);
+  --color-mint-ink: var(--color-accent-ink, #047857);
+  /* Secondary brand hue used only for the two-tone header gradients (matches
+     the teal midpoint in zity-shop's --zity-brand-gradient) — token-backed so
+     it isn't a raw, unrelated Tailwind color at the call site. */
+  --color-brand-teal: #0d9488;
 
   --color-pestle-bg: #F8FAFB;
   --color-pestle-card: #FFFFFF;
@@ -33,6 +39,10 @@
 }
 
 :root {
+  /* Matches zity-shop's --zity-primary — one brand green across both apps.
+     Kept at emerald-700 (not the lighter emerald-600) because this is also
+     the fill behind white button/badge text: #047857 clears WCAG AA normal-
+     text contrast (5.48:1); emerald-600 (#059669) does not (3.77:1). */
   --color-accent: #047857;
   --color-accent-ink: #047857;
   --color-accent-fg: #FFFFFF;
@@ -121,7 +131,7 @@
      compositor layers for the life of the page. It is a hint for an imminent
      animation, not a decoration. */
   .pestle-card {
-    @apply bg-pestle-card border border-pestle-border/80 rounded-2xl shadow-sm transition-all duration-200;
+    @apply bg-pestle-card border border-pestle-border/80 rounded-[1.25rem] shadow-sm transition-all duration-200;
   }
 
   .btn-primary {
@@ -129,8 +139,8 @@
     color: var(--color-accent-fg, #FFFFFF);
     font-weight: 700;
     padding: 0.875rem 1.5rem;
-    border-radius: 0.75rem;
-    box-shadow: 0 4px 14px var(--color-accent-shadow, rgba(16, 185, 129, 0.3));
+    border-radius: 1rem;
+    box-shadow: 0 4px 14px var(--color-accent-shadow, rgba(4, 120, 87, 0.3));
     transition: all 0.2s ease-in-out;
     cursor: pointer;
     user-select: none;
@@ -139,7 +149,7 @@
   .btn-primary:hover {
     filter: brightness(1.08);
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px var(--color-accent-shadow, rgba(16, 185, 129, 0.4));
+    box-shadow: 0 6px 20px var(--color-accent-shadow, rgba(4, 120, 87, 0.4));
   }
 
   /* Filled accent surface with a foreground picked for contrast. Use this rather
@@ -244,8 +254,8 @@ input:focus,
 select:focus,
 textarea:focus {
   outline: none;
-  box-shadow: 0 0 0 2.5px var(--color-accent-shadow, rgba(16, 185, 129, 0.35));
-  border-color: var(--color-accent, #10B981) !important;
+  box-shadow: 0 0 0 2.5px var(--color-accent-shadow, rgba(4, 120, 87, 0.35));
+  border-color: var(--color-accent, #047857) !important;
 }
 
 .btn-primary:active {

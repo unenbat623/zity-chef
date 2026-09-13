@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { m, AnimatePresence } from 'motion/react';
-import { MessageCircle, X, ChevronRight, Sparkles, Send } from 'lucide-react';
+import { MessageCircle, X, ChevronRight, Sparkles, Send, Scan } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getSisterAdvice } from '../services/geminiService';
 import { useRecipes } from '../hooks/useRecipes';
 import { useAiQuota } from '../hooks/useAiQuota';
 
 export const FloatingAssistant: React.FC = () => {
-  const { lang, inventory, setActiveCookingRecipe, setActiveTab, t } = useApp();
+  const { lang, inventory, setActiveCookingRecipe, setActiveTab, setShowScanModal, t } = useApp();
   const { recipes } = useRecipes();
   const { quota, refresh: refreshQuota } = useAiQuota();
   const [showBubble, setShowBubble] = useState<boolean>(false);
@@ -104,16 +104,26 @@ export const FloatingAssistant: React.FC = () => {
           )}
         </AnimatePresence>
 
-        <m.button
-          onClick={() => setIsOpen(!isOpen)}
-          aria-label={t('assistantName')}
-          aria-expanded={isOpen}
-          animate={{ scale: [1, 1.04, 1] }}
-          transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-          className="w-12 h-12 sm:w-14 sm:h-14 bg-mango rounded-full shadow-xl flex items-center justify-center text-white active:scale-90 transition-transform pointer-events-auto border-2 border-white dark:border-slate-900 cursor-pointer"
-        >
-          {isOpen ? <X size={22} /> : <MessageCircle size={22} />}
-        </m.button>
+        <div role="group" aria-label="AI хэрэгслүүд" className="flex flex-col items-end gap-2 pointer-events-none">
+          <button
+            onClick={() => setShowScanModal(true)}
+            aria-label={t('scanReceipt')}
+            className="w-11 h-11 sm:w-12 sm:h-12 bg-mint rounded-full shadow-xl flex items-center justify-center text-white active:scale-90 transition-transform pointer-events-auto border-2 border-white dark:border-slate-900 cursor-pointer"
+          >
+            <Scan size={20} />
+          </button>
+
+          <m.button
+            onClick={() => setIsOpen(!isOpen)}
+            aria-label={t('assistantName')}
+            aria-expanded={isOpen}
+            animate={{ scale: [1, 1.04, 1] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+            className="w-12 h-12 sm:w-14 sm:h-14 bg-mango rounded-full shadow-xl flex items-center justify-center text-white active:scale-90 transition-transform pointer-events-auto border-2 border-white dark:border-slate-900 cursor-pointer"
+          >
+            {isOpen ? <X size={22} /> : <MessageCircle size={22} />}
+          </m.button>
+        </div>
       </div>
 
       {/* Floating Chat Modal */}
@@ -126,7 +136,7 @@ export const FloatingAssistant: React.FC = () => {
             className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom,0px))] md:bottom-24 right-3 left-3 sm:left-auto sm:right-6 sm:w-80 bg-pestle-card border border-pestle-border rounded-[28px] shadow-2xl z-[150] overflow-hidden flex flex-col h-[420px] max-h-[68vh]"
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-mango to-teal-600 p-3.5 text-white flex items-center justify-between shrink-0 shadow-sm">
+            <div className="bg-gradient-to-r from-mango to-brand-teal p-3.5 text-white flex items-center justify-between shrink-0 shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center font-bold text-base">
                   👨‍🍳
