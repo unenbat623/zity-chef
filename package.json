@@ -10,6 +10,10 @@
     "build": "NODE_ENV=production vite build",
     "test": "vitest run",
     "test:watch": "vitest",
+    "mobile:preflight": "node scripts/mobile-preflight.mjs",
+    "mobile:build": "npm run mobile:preflight && npm run build && cap sync",
+    "android:open": "cap open android",
+    "ios:open": "cap open ios",
     "db:push": "node scripts/apply-supabase-migrations.mjs",
     "odoo:smoke": "node scripts/odoo-smoke-test.mjs",
     "odoo:credentials": "node scripts/odoo-smoke-credentials.mjs",
@@ -50,6 +54,10 @@
     "web-push": "^3.6.7"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/cli": "^8.5.2",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/ios": "^8.5.2",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
     "@types/cors": "^2.8.19",
@@ -69,5 +77,8 @@
     "typescript": "~5.8.2",
     "vite": "^6.2.0",
     "vitest": "^4.1.10"
+  },
+  "overrides": {
+    "qs": "^6.16.0"
   }
 }
