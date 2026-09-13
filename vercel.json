@@ -34,7 +34,6 @@
       ]
     },
     {
-      "comment": "Vercel serves the SPA straight from its CDN, so the helmet config in server/app.ts never sees these responses — the HTML shipped with no security headers at all. Mirrors helmet's directives.",
       "source": "/(.*)",
       "headers": [
         { "key": "X-Content-Type-Options", "value": "nosniff" },
