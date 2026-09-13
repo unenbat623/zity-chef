@@ -104,7 +104,11 @@ export const FloatingAssistant: React.FC = () => {
           )}
         </AnimatePresence>
 
-        <div role="group" aria-label="AI хэрэгслүүд" className="flex flex-col items-end gap-2 pointer-events-none">
+        <div
+          role="group"
+          aria-label="AI хэрэгслүүд"
+          className="flex flex-col items-end gap-2 pointer-events-none"
+        >
           <button
             onClick={() => setShowScanModal(true)}
             aria-label={t('scanReceipt')}

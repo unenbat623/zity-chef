@@ -2141,7 +2141,9 @@ export async function reconcileOdooOrders() {
   // though it's perfectly synced, just outside the local snapshot's window.
   const oldestLocalCreatedAt = (localOrders || []).reduce<string | null>(
     (oldest, order: any) =>
-      !oldest || (order.created_at && order.created_at < oldest) ? order.created_at || oldest : oldest,
+      !oldest || (order.created_at && order.created_at < oldest)
+        ? order.created_at || oldest
+        : oldest,
     null
   );
   const remoteByExternal = await executeKw<OdooOrderRef[]>(
